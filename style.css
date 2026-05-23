@@ -604,6 +604,9 @@ footer {
   .nav-toggle { display: flex; }
   .topbar-inner { padding: 14px 24px; }
   .wrap { padding: 0 24px; }
+  /* .section과 .hero의 padding shorthand가 .wrap 좌우 패딩을 덮어쓰는 문제 보정 */
+  .section.wrap { padding-left: 24px; padding-right: 24px; }
+  .hero.wrap    { padding-left: 24px; padding-right: 24px; }
 }
 
 /* ── Responsive: Mobile (≤640px) ── */
@@ -611,6 +614,9 @@ footer {
   body { overflow-x: hidden; }
   .topbar-inner { padding: 12px 20px; }
   .wrap { padding: 0 20px; }
+  /* 좌우 여백 보정: .section / .hero 의 padding 단축형이 좌우를 0으로 덮어쓰는 현상 수정 */
+  .section.wrap { padding-left: 20px; padding-right: 20px; }
+  .hero.wrap    { padding-left: 20px; padding-right: 20px; }
   .hero { padding: 36px 0 56px; }
   .hero h1 { font-size: 40px; }
   .hero-quote { font-size: 16px; margin-top: 20px; }
