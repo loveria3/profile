@@ -1,0 +1,33 @@
+{
+  "_comment": "숫자와 설명을 수정하고 저장하면 메인 페이지에 자동 반영됩니다.",
+  "stats": [
+    {
+      "num": "370",
+      "plus": true,
+      "unit": "시간",
+      "label": "Specialized Training",
+      "desc": "디지털 강사 마스터 과정 이수"
+    },
+    {
+      "num": "20",
+      "plus": true,
+      "unit": "개소",
+      "label": "Field Verified",
+      "desc": "초·중·고교 및 공공기관 출강"
+    },
+    {
+      "num": "10",
+      "plus": true,
+      "unit": "종",
+      "label": "Digital Core License",
+      "desc": "에듀테크·SW·AI 전문 자격"
+    },
+    {
+      "num": "20",
+      "plus": false,
+      "unit": "년",
+      "label": "IT Background",
+      "desc": "제주대 연구센터 행정·강의 경력"
+    }
+  ]
+}
