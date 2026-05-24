@@ -1638,18 +1638,35 @@ async function triggerLiveUpdate() {
 
   const cnt = monitoredSources.length;
 
-  // 4) 브라우저 알림 전송
+  // 4) 카카오톡 알림 요청 플래그 → Apps Script "알림요청" 시트에 저장
+  //    30분 주기 스케줄 태스크가 이 플래그를 보고 카카오톡 전송
+  requestKakaoNotification();
+
+  // 5) 브라우저 알림 전송 (즉시 피드백)
   resetBtn();
   if (notifGranted) {
     const { title, body } = buildAlertSummary(monitoredSources, programData);
     sendBrowserNotification(title, body);
-    showToast(`✅ ${cnt}개 기관 수집 완료 · 🔔 알림 전송!`);
+    showToast(`✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 요청됨`);
   } else {
-    showToast(`✅ ${cnt}개 기관 수집 완료 · 🔔 버튼으로 알림을 켜보세요`);
-    // 알림 미설정이면 패널 자동 오픈
-    const panel = document.getElementById('notifSetupPanel');
-    if (panel) panel.style.display = 'block';
+    showToast(`✅ ${cnt}개 기관 수집 완료 · 📱 카카오톡 알림이 곧 전송됩니다`);
   }
+}
+
+// 카카오톡 알림 요청 플래그 저장 (30분 주기 태스크가 감지해서 전송)
+function requestKakaoNotification() {
+  if (!isConfigured()) return;
+  const timestamp = new Date().toISOString();
+  try {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify({
+        sheet: '알림요청',
+        data: [['요청시각', '상태'], [timestamp, 'pending']]
+      })
+    });
+  } catch(e) { /* no-cors라 오류 무시 */ }
 }
 
 // ── 공고 카드 렌더링 ──
