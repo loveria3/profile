@@ -1487,7 +1487,17 @@ async function sendKakaoMessage(text) {
         }
       },
       success() { resolve(true); },
-      fail(e)   { console.warn('카카오 메시지 전송 실패', e); resolve(false); }
+      fail(e) {
+        console.warn('카카오 메시지 전송 실패', e);
+        // 인증 오류(401/403)면 토큰 만료로 간주 → 재로그인 필요 상태로
+        if (e && (e.status === 401 || e.status === -401)) {
+          kakaoLoggedIn = false;
+          lsSet('kakaoToken', null);
+          updateKakaoUI('ready');
+          showToast('카카오 토큰이 만료됐습니다. 🔔 버튼으로 재로그인해 주세요.', 'error');
+        }
+        resolve(false);
+      }
     });
   });
 }
@@ -1530,6 +1540,10 @@ const isConfigured = () => APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
 
 async function loadFromSheets() {
   if (!isConfigured()) return;
+
+  // ★ 패치 전 현재 로컬 기관 목록을 백업 (시트 덮어쓰기로 누락되지 않도록)
+  const preFetchSources = [...monitoredSources];
+
   try {
     const srcRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=수집기관`);
     const srcData = await srcRes.json();
@@ -1537,27 +1551,34 @@ async function loadFromSheets() {
       const sheetSrc = srcData.data.slice(1)
         .filter(r => r[0])
         .map(r => ({ id: r[0], name: r[1], url: r[2], icon: r[3], type: r[4] }));
-      // 시트 데이터 + localStorage 사용자 추가 기관 병합
-      const userAdded = lsGet('userAddedSources', []);
-      const sheetIds  = new Set(sheetSrc.map(s => String(s.id)));
-      const extras    = userAdded.filter(s => !sheetIds.has(String(s.id)));
-      monitoredSources = [...sheetSrc, ...extras];
+
+      // ★ 시트에 없는 로컬 기관 전부 보존 (userAdded 플래그 유무 무관)
+      const sheetIds   = new Set(sheetSrc.map(s => String(s.id)));
+      const localExtra = preFetchSources.filter(s => !sheetIds.has(String(s.id)));
+      monitoredSources = [...sheetSrc, ...localExtra];
       lsSet('monitoredSources', monitoredSources);
+      // userAdded 목록도 최신화
+      lsSet('userAddedSources', localExtra);
     }
+
     const prgRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=공고목록`);
     const prgData = await prgRes.json();
     if (prgData.success && prgData.data && prgData.data.length > 1) {
-      programData = prgData.data.slice(1)
+      // 로컬에서 직접 등록한 공고(시트 id가 아닌 timestamp id) 보존
+      const sheetPrg    = prgData.data.slice(1)
         .filter(r => r[0])
         .map(r => ({
           id: r[0], 제목: r[1], 대상: r[2], 필터: r[3],
           일시: r[4], 장소: r[5], 주요내용: r[6], 신청링크: r[7], 상태: r[8]
         }));
+      const sheetPrgIds = new Set(sheetPrg.map(p => String(p.id)));
+      const localPrg    = programData.filter(p => !sheetPrgIds.has(String(p.id)));
+      programData = [...sheetPrg, ...localPrg];
       lsSet('programData', programData);
     }
-    showToast('구글 시트에서 최신 데이터를 불러왔습니다.');
   } catch (e) {
     console.warn('Google Sheets 연결 실패, 로컬 데이터로 동작합니다.', e);
+    // 실패해도 preFetchSources 유지 (monitoredSources 변경 없음)
   }
 }
 
@@ -1654,6 +1675,12 @@ async function triggerLiveUpdate() {
   btn.style.opacity = '0.75';
   icon.classList.add('spinning');
 
+  function resetBtn() {
+    btn.disabled      = false;
+    btn.style.opacity = '1';
+    icon.classList.remove('spinning');
+  }
+
   // 1) 구글 시트에서 최신 데이터 재로드
   await loadFromSheets();
 
@@ -1667,16 +1694,21 @@ async function triggerLiveUpdate() {
   lsSet('lastAutoUpdate', now);
   updateLastUpdateInfo();
 
-  // 4) 카카오 알림 전송
+  const cnt = monitoredSources.length;
+
+  // 4) 카카오 알림 전송 분기
   if (kakaoLoggedIn) {
+    // ── 로그인 완료 → 즉시 발송
+    resetBtn();
     const summary = buildAlertSummary(monitoredSources, programData);
     const ok      = await sendKakaoMessage(summary);
     showToast(ok
-      ? `✅ ${monitoredSources.length}개 기관 수집 완료 · 카카오 알림 전송!`
-      : `✅ ${monitoredSources.length}개 기관 수집 완료 (카카오 전송 실패)`);
+      ? `✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 전송!`
+      : `✅ ${cnt}개 기관 수집 완료 (카카오 전송 실패 — 콘솔 확인)`);
+
   } else if (kakaoReady) {
-    // 앱 키는 있으나 로그인 안 된 경우 → 자동 로그인 시도 후 전송
-    showToast('카카오 로그인 중...');
+    // ── 앱 키 있으나 로그인 안 됨 → 팝업 로그인 후 발송
+    showToast('카카오 로그인 팝업을 확인해주세요...');
     Kakao.Auth.login({
       success: async (authObj) => {
         kakaoLoggedIn = true;
@@ -1684,20 +1716,26 @@ async function triggerLiveUpdate() {
         updateKakaoUI('loggedIn');
         const summary = buildAlertSummary(monitoredSources, programData);
         const ok      = await sendKakaoMessage(summary);
-        showToast(ok ? '✅ 수집 완료 · 카카오 알림 전송!' : '✅ 수집 완료 (알림 전송 실패)');
+        showToast(ok
+          ? `✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 전송!`
+          : `✅ ${cnt}개 기관 수집 완료 (카카오 전송 실패)`);
+        resetBtn();
       },
-      fail: () => {
-        showToast(`✅ ${monitoredSources.length}개 기관 수집 완료 (카카오 로그인 필요 🔔)`);
+      fail: (err) => {
+        console.warn('카카오 로그인 실패', err);
+        showToast(`✅ ${cnt}개 기관 수집 완료 (카카오 로그인 실패 — 🔔 재시도)`);
+        resetBtn();
       }
     });
-  } else {
-    // 미설정 상태
-    showToast(`✅ ${monitoredSources.length}개 기관 수집 완료 · 🔔 버튼으로 카카오 알림 연결 가능`);
-  }
 
-  btn.disabled      = false;
-  btn.style.opacity = '1';
-  icon.classList.remove('spinning');
+  } else {
+    // ── 앱 키 미설정 → 패널 자동 열기
+    resetBtn();
+    showToast(`✅ ${cnt}개 기관 수집 완료 · 카카오 알림을 연결하려면 🔔 를 설정하세요`);
+    // 🔔 패널 자동 열기
+    const panel = document.getElementById('kakaoSetupPanel');
+    if (panel) panel.style.display = 'block';
+  }
 }
 
 // ── 공고 카드 렌더링 ──
@@ -1904,22 +1942,12 @@ async function checkDailyAutoUpdate() {
   if (kakaoLoggedIn) {
     const summary = buildAlertSummary(monitoredSources, programData);
     const ok      = await sendKakaoMessage(summary);
-    showToast(ok ? '📅 오늘 공고 업데이트 · 카카오 알림 전송 완료!' : '📅 오늘 공고 업데이트 완료');
-  } else if (kakaoReady) {
-    // 앱 키 있으면 조용히 로그인 시도
-    Kakao.Auth.login({
-      success: async (authObj) => {
-        kakaoLoggedIn = true;
-        lsSet('kakaoToken', authObj.access_token);
-        updateKakaoUI('loggedIn');
-        const summary = buildAlertSummary(monitoredSources, programData);
-        await sendKakaoMessage(summary);
-        showToast('📅 오늘 공고 업데이트 · 카카오 알림 전송 완료!');
-      },
-      fail: () => showToast('📅 오늘 공고 자동 업데이트 완료.')
-    });
+    showToast(ok
+      ? `📅 오늘 ${monitoredSources.length}개 기관 업데이트 · 📱 카카오 알림 전송!`
+      : `📅 오늘 ${monitoredSources.length}개 기관 업데이트 완료`);
   } else {
-    showToast('📅 오늘 공고 자동 업데이트 완료.');
+    // 자동 업데이트 시에는 팝업 강제 열지 않음 (UX 방해)
+    showToast(`📅 오늘 ${monitoredSources.length}개 기관 자동 업데이트 완료`);
   }
 }
 
@@ -1932,13 +1960,25 @@ window.onload = async () => {
   // 카카오 UI 초기 상태 결정
   const savedKey   = lsGet('kakaoAppKey', '');
   const savedToken = lsGet('kakaoToken', null);
+
   if (!savedKey) {
     updateKakaoUI('noKey');
   } else if (savedToken && kakaoReady) {
-    // 이전 토큰이 있으면 세션 복원 시도
+    // 저장된 토큰 복원 후 유효성 즉시 검증
     Kakao.Auth.setAccessToken(savedToken);
-    kakaoLoggedIn = true;
-    updateKakaoUI('loggedIn');
+    Kakao.API.request({
+      url: '/v1/user/me',
+      success: () => {
+        kakaoLoggedIn = true;
+        updateKakaoUI('loggedIn');
+      },
+      fail: () => {
+        // 토큰 만료 → 재로그인 필요
+        lsSet('kakaoToken', null);
+        updateKakaoUI('ready');
+        console.info('[Kakao] 토큰 만료 — 🔔 버튼으로 재로그인 필요');
+      }
+    });
   } else {
     updateKakaoUI('ready');
   }
