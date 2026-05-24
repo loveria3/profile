@@ -233,12 +233,14 @@ function packPages(blocks) {
   function newPage() { pages.push([]); usedH = 0; }
   function add(blk)  { cur().push(blk); usedH += blk.h; }
 
-  function sectionTotal(startIdx) {
+  /* 섹션 제목 + 테이블 헤더 높이만 계산 (데이터 행 제외)
+     → 이 최소 높이가 안 들어갈 때만 새 페이지 시작            */
+  function sectionMinHeight(startIdx) {
     let h = 0;
     for (let j = startIdx; j < blocks.length; j++) {
       const t = blocks[j].type;
+      if (t === 'trow' || t === 'footer') break;
       if (j !== startIdx && t === 'section') break;
-      if (t === 'footer') break;
       h += blocks[j].h;
     }
     return h;
@@ -250,8 +252,8 @@ function packPages(blocks) {
     if (blk.type === 'header') { add(blk); continue; }
 
     if (blk.type === 'section') {
-      const total = sectionTotal(i);
-      if (usedH > 0 && usedH + total > USABLE) newPage();
+      const minH = sectionMinHeight(i);
+      if (usedH > 0 && usedH + minH > USABLE) newPage();
       add(blk);
       continue;
     }
