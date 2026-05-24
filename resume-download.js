@@ -87,16 +87,31 @@ async function generatePDF(data) {
     color:#1b1a18;padding:${PAD}px;`);
   document.body.appendChild(renderer);
 
+  /* 이미지가 모두 로드될 때까지 대기하는 헬퍼 */
+  async function waitForImages(el) {
+    const imgs = Array.from(el.querySelectorAll('img'));
+    await Promise.all(imgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load',  resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+        setTimeout(resolve, 4000); // 최대 4초 대기
+      });
+    }));
+  }
+
   for (let pi = 0; pi < pages.length; pi++) {
     const pg = pages[pi];
     if (!pg.length) continue;
 
     renderer.innerHTML = pg.map(b => b.html).join('');
-    await wait(80);
+    await waitForImages(renderer); // ← 이미지 로드 완료 대기
+    await wait(120);
 
     const canvas = await html2canvas(renderer, {
       scale: 2, useCORS: true, logging: false,
-      backgroundColor: '#ffffff', width: PDF_W
+      backgroundColor: '#ffffff', width: PDF_W,
+      allowTaint: false, imageTimeout: 15000
     });
 
     const hMM = Math.min((canvas.height / 2) * PX2MM, 297);
@@ -171,8 +186,11 @@ function buildBlocks(bi, education, career, certs, training, portrait) {
       </div>
 
       <!-- 하단 구분선 -->
-      <div style="margin-top:18px;height:1px;background:linear-gradient(to right,#2a3b2e,#c9a35b,#f4ede2);
-                  border-radius:1px;"></div>
+      <div style="margin-top:18px;display:flex;gap:0;">
+        <div style="flex:2;height:2px;background:#2a3b2e;border-radius:1px 0 0 1px;"></div>
+        <div style="flex:1;height:2px;background:#c9a35b;"></div>
+        <div style="flex:1;height:2px;background:#e8ede9;border-radius:0 1px 1px 0;"></div>
+      </div>
     `
   });
 
