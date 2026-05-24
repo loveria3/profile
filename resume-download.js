@@ -57,10 +57,9 @@ async function generatePDF(data) {
   const { basicInfo: bi, education, career, certificates } = data;
   const certs    = (certificates || []).filter(c => c.category === '자격증');
   const training = (certificates || []).filter(c => c.category === '연수/교육');
-  const portrait = (document.querySelector('.portrait-frame img') || {}).src || 'assets/portrait.png';
 
   /* ① 블록 생성 */
-  const blocks = buildBlocks(bi, education || [], career || [], certs, training, portrait);
+  const blocks = buildBlocks(bi, education || [], career || [], certs, training);
 
   /* ② 블록 높이 측정 */
   const measurer = mkDiv(`position:fixed;top:0;left:-9999px;width:${INNER}px;background:#fff;
@@ -126,7 +125,7 @@ async function generatePDF(data) {
 /* ══════════════════════════════════════════════════════════
    블록 생성
    ══════════════════════════════════════════════════════════ */
-function buildBlocks(bi, education, career, certs, training, portrait) {
+function buildBlocks(bi, education, career, certs, training) {
   const list = [];
 
   /* ── 이력서 헤더 ─────────────────────────────────────────
@@ -147,41 +146,27 @@ function buildBlocks(bi, education, career, certs, training, portrait) {
         </span>
       </div>
 
-      <!-- 이름 + 사진 -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;">
-
-        <!-- 왼쪽 액센트 바 + 정보 -->
-        <div style="display:flex;gap:14px;flex:1;">
-          <div style="width:3px;background:#2a3b2e;border-radius:2px;min-height:90px;flex-shrink:0;"></div>
-          <div>
-            <div style="font-family:'Noto Serif KR',serif;font-size:26px;font-weight:700;
-                        color:#1b1a18;letter-spacing:.05em;line-height:1.15;margin-bottom:5px;">
-              ${bi.name}
-            </div>
-            <div style="font-size:11px;color:#2a3b2e;font-weight:600;letter-spacing:.1em;
-                        text-transform:uppercase;margin-bottom:14px;">
-              ${bi.title}
-            </div>
-            <div style="font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
-                        line-height:2;letter-spacing:.03em;">
-              <div>EMAIL &nbsp; ${bi.email}</div>
-              <div>JEJU · KR</div>
-            </div>
-            <div style="font-size:9px;color:#999;margin-top:10px;
-                        font-family:'JetBrains Mono',monospace;line-height:1.6;">
-              ${bi.intro}
-            </div>
+      <!-- 이름 + 정보 -->
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:3px;background:#2a3b2e;border-radius:2px;min-height:90px;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div style="font-family:'Noto Serif KR',serif;font-size:26px;font-weight:700;
+                      color:#1b1a18;letter-spacing:.05em;line-height:1.15;margin-bottom:5px;">
+            ${bi.name}
           </div>
-        </div>
-
-        <!-- 증명사진: 하단 1/5 잘라냄 (container 높이 = 원본×0.8) -->
-        <div style="flex-shrink:0;width:72px;height:86px;
-                    overflow:hidden;border-radius:3px;
-                    border:1px solid #d5dcd5;">
-          <img src="${portrait}" crossorigin="anonymous"
-               style="width:100%;height:108px;
-                      object-fit:cover;object-position:center top;"
-               alt="프로필 사진"/>
+          <div style="font-size:11px;color:#2a3b2e;font-weight:600;letter-spacing:.1em;
+                      text-transform:uppercase;margin-bottom:14px;">
+            ${bi.title}
+          </div>
+          <div style="font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
+                      line-height:2;letter-spacing:.03em;">
+            <div>EMAIL &nbsp; ${bi.email}</div>
+            <div>JEJU · KR</div>
+          </div>
+          <div style="font-size:9px;color:#999;margin-top:10px;
+                      font-family:'JetBrains Mono',monospace;line-height:1.6;">
+            ${bi.intro}
+          </div>
         </div>
       </div>
 
