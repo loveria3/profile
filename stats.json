@@ -23,8 +23,8 @@
       "desc": "에듀테크·SW·AI 전문 자격"
     },
     {
-      "num": "15+",
-      "plus": false,
+      "num": "15",
+      "plus": true,
       "unit": "년",
       "label": "IT Background",
       "desc": "제주대 연구센터 행정·강의 경력"
