@@ -8,23 +8,30 @@ ttp
 const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
 /* ── 버튼 초기화 ────────────────────────────────────────── */
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('resumeDlBtn');
-  if (!btn) return;
+  if (!btn) {
+    console.error('[경력서] resumeDlBtn 버튼을 찾지 못했습니다.');
+    return;
+  }
+  console.log('[경력서] 버튼 초기화 완료');
 
   btn.addEventListener('click', async function () {
     setLoading(btn, true);
     try {
+      console.log('[경력서] 데이터 요청 시작...');
       const data = await fetchResumeData();
+      console.log('[경력서] 데이터 수신 완료, PDF 생성 시작');
       await generatePDF(data);
+      console.log('[경력서] PDF 생성 완료');
     } catch (e) {
-      console.error('경력서 생성 오류:', e);
-      alert('경력서를 불러오는 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.');
+      console.error('[경력서] 오류:', e);
+      alert('경력서 생성 오류\n\n' + e.message + '\n\n브라우저 콘솔(F12)에서 자세한 내용을 확인하세요.');
     } finally {
       setLoading(btn, false);
     }
   });
-})();
+});
 
 /* ── 1. 데이터 fetch ─────────────────────────────────────── */
 async function fetchResumeData() {

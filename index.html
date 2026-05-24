@@ -829,13 +829,12 @@
   });
 </script>
 
-<!-- jsPDF (경력서 다운로드용) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="resume-download.js"></script>
-
 <!-- QR Code + html2canvas (명함 다운로드용) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- jsPDF (경력서 다운로드용) — html2canvas 이후에 로드 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="resume-download.js"></script>
 <script>
 (function () {
   // ── QR 코드 생성 ──
