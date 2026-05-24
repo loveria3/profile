@@ -4,7 +4,7 @@
 
    ⚠️ Apps Script 배포 후 아래 URL을 반드시 교체하세요
    ============================================================ */
-ttp
+
 const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
 /* ── 버튼 초기화 ────────────────────────────────────────── */
