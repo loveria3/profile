@@ -74,6 +74,40 @@
         <div class="name-block">
           <span class="name-ko serif">강 지 애</span>
           <span class="name-role">Kang Ji-ae · Digital Instructor</span>
+          <div class="card-dl-wrap">
+            <button class="btn-card-dl" id="cardDlBtn" aria-label="명함 미리보기 및 다운로드">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              명함 다운로드
+            </button>
+            <!-- hover preview -->
+            <div class="card-preview-box" id="cardPreviewBox" role="tooltip">
+              <div class="biz-card" id="bizCard">
+                <div class="biz-top">
+                  <span class="biz-top-left mono">KANG JI-AE — DIGITAL INSTRUCTOR</span>
+                  <span class="biz-top-right mono">PROFILE · 2026</span>
+                </div>
+                <div class="biz-middle">
+                  <div class="biz-left">
+                    <div class="biz-name serif">강지애</div>
+                    <div class="biz-tagline-en serif"><em>Learning, designed.</em></div>
+                    <div class="biz-tagline-ko">학습을 디자인하다</div>
+                    <div class="biz-contacts mono">
+                      <div>TEL&nbsp; 010-5697-0454</div>
+                      <div>MAIL loveria2@nate.com</div>
+                    </div>
+                  </div>
+                  <div class="biz-right">
+                    <div class="biz-qr" id="bizQr"></div>
+                    <div class="biz-scan mono">SCAN ↗ PROFILE</div>
+                  </div>
+                </div>
+                <div class="biz-bottom">
+                  <span class="biz-roles mono">대정중 디지털튜터 · 남원중 방과후학교 강사 · 프리랜서 디지털 강사</span>
+                  <span class="biz-loc mono">JEJU · KR</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="sig">"Learning, designed."</div>
       </div>
@@ -537,6 +571,212 @@
   </div>
 </footer>
 
+<style>
+/* ── 명함 다운로드 버튼 ── */
+.card-dl-wrap {
+  position: relative;
+  display: inline-block;
+  margin-top: 10px;
+}
+.btn-card-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  background: transparent;
+  border: 1px solid rgba(42,59,46,.28);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .18s, border-color .18s, color .18s;
+}
+.btn-card-dl:hover,
+.btn-card-dl:focus {
+  background: rgba(42,59,46,.06);
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+/* ── 명함 미리보기 박스 ── */
+.card-preview-box {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  width: 400px;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity .24s ease, transform .24s ease;
+  z-index: 300;
+}
+.card-dl-wrap:hover .card-preview-box,
+.card-preview-box.pinned {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+/* 말풍선 화살표 */
+.card-preview-box::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 20px;
+  width: 14px;
+  height: 14px;
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+/* ── 명함 카드 디자인 ── */
+.biz-card {
+  width: 400px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 20px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(27,26,24,.10), 0 1px 4px rgba(27,26,24,.06);
+  position: relative;
+  z-index: 2;
+}
+.biz-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(42,59,46,.18);
+  padding-bottom: 10px;
+}
+.biz-top-left {
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--accent);
+  line-height: 1.4;
+}
+.biz-top-right {
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--accent-warm);
+}
+.biz-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.biz-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.biz-name {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: .02em;
+}
+.biz-tagline-en {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 12px;
+  color: #5a4e3a;
+  margin-top: 2px;
+}
+.biz-tagline-ko {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 10px;
+  color: #7a6e5a;
+  letter-spacing: .06em;
+}
+.biz-contacts {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9.5px;
+  color: var(--ink);
+  letter-spacing: .04em;
+  line-height: 1.6;
+}
+.biz-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.biz-qr {
+  width: 72px;
+  height: 72px;
+  background: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.biz-qr canvas,
+.biz-qr img {
+  width: 68px !important;
+  height: 68px !important;
+}
+.biz-scan {
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: #7a6e5a;
+}
+.biz-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid rgba(42,59,46,.18);
+  padding-top: 10px;
+  gap: 8px;
+}
+.biz-roles {
+  font-size: 8.5px;
+  color: #5a4e3a;
+  letter-spacing: .05em;
+  line-height: 1.5;
+}
+.biz-loc {
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── 모바일에서는 미리보기 위치 조정 ── */
+@media (max-width: 640px) {
+  .card-preview-box {
+    left: 0;
+    right: auto;
+    width: calc(100vw - 40px);
+    max-width: 340px;
+  }
+  .biz-card {
+    width: 100%;
+    padding: 16px 16px 12px;
+  }
+  .biz-name { font-size: 26px; }
+}
+</style>
+
 <script>
   // Tabs
   const tabs = document.querySelectorAll('.tab');
@@ -563,6 +803,66 @@
       document.body.style.overflow = '';
     });
   });
+</script>
+
+<!-- QR Code + html2canvas (명함 다운로드용) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function () {
+  // ── QR 코드 생성 ──
+  const qrEl = document.getElementById('bizQr');
+  if (qrEl && typeof QRCode !== 'undefined') {
+    new QRCode(qrEl, {
+      text: location.href.split('#')[0].replace(/\/[^/]*$/, '/') + 'index.html',
+      width: 68,
+      height: 68,
+      colorDark: '#1b1a18',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  // ── 명함 다운로드 ──
+  const dlBtn = document.getElementById('cardDlBtn');
+  const previewBox = document.getElementById('cardPreviewBox');
+  const bizCard = document.getElementById('bizCard');
+
+  if (!dlBtn || !bizCard) return;
+
+  dlBtn.addEventListener('click', function () {
+    dlBtn.disabled = true;
+    dlBtn.textContent = '생성 중…';
+
+    html2canvas(bizCard, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#f4ede2',
+      logging: false,
+      onclone: function(doc) {
+        // 폰트가 로드된 상태에서 캡처
+        doc.getElementById('bizCard').style.borderRadius = '0';
+      }
+    }).then(function (canvas) {
+      const link = document.createElement('a');
+      link.download = '강지애_명함.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }).catch(function(e) {
+      console.warn('명함 다운로드 오류:', e);
+      alert('다운로드 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }).finally(function () {
+      dlBtn.disabled = false;
+      dlBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> 명함 다운로드';
+    });
+  });
+
+  // ── 모바일: 탭으로 미리보기 고정/해제 ──
+  dlBtn.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    previewBox.classList.toggle('pinned');
+  }, { passive: false });
+})();
 </script>
 </body>
 </html>
