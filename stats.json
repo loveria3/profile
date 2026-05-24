@@ -6,7 +6,7 @@
       "plus": true,
       "unit": "시간",
       "label": "Specialized Training",
-      "desc": "디지털 강사 마스터 과정 이수"
+      "desc": "디지털 강사 양성 과정 이수"
     },
     {
       "num": "20",
@@ -27,7 +27,7 @@
       "plus": true,
       "unit": "년",
       "label": "IT Background",
-      "desc": "제주대 연구센터 행정·강의 경력"
+      "desc": "제주대 연구센터 행정· 교육원 강의 경력"
     }
   ]
 }
