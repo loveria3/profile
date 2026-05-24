@@ -68,6 +68,10 @@
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
         </a>
         <a class="btn btn-ghost" href="#competency">강사 역량 살펴보기</a>
+        <button class="btn btn-ghost" id="resumeDlBtn" aria-label="경력서 PDF 다운로드">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          경력서 다운로드
+        </button>
       </div>
 
       <div class="hero-meta">
@@ -572,6 +576,12 @@
 </footer>
 
 <style>
+/* ── 경력서 다운로드 버튼 스피너 ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* ── 명함 다운로드 버튼 ── */
 .card-dl-wrap {
   position: relative;
@@ -804,6 +814,10 @@
     });
   });
 </script>
+
+<!-- jsPDF (경력서 다운로드용) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="resume-download.js"></script>
 
 <!-- QR Code + html2canvas (명함 다운로드용) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

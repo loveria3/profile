@@ -1,0 +1,129 @@
+// ============================================================
+//  강지애 프로필 — 경력서 다운로드용 Google Apps Script
+//  이 파일의 내용을 Google Apps Script 편집기에 붙여넣으세요
+// ============================================================
+//
+//  [ 설정 방법 ]
+//  1. 경력사항이 들어있는 구글시트 열기
+//
+//  2. 상단 메뉴 > 확장 프로그램 > Apps Script 클릭
+//
+//  3. 편집기에서 기존 내용 전체 삭제 후
+//     아래 코드 전체 붙여넣기 > 저장 (Ctrl+S)
+//
+//  4. 상단 메뉴 > 배포 > 새 배포
+//     - 유형 선택: 웹 앱
+//     - 다음 사용자로 실행: 나 (본인 구글 계정)
+//     - 액세스 권한: 모든 사용자 (익명 포함)
+//     > 배포 클릭
+//
+//  5. 권한 승인 팝업 > 고급 > (앱 이름)(으)로 이동 > 허용
+//
+//  6. 배포 완료 후 웹 앱 URL 복사
+//     (https://script.google.com/macros/s/.../exec 형식)
+//
+//  7. index.html 의 RESUME_API_URL 변수에 붙여넣기
+//
+// ============================================================
+
+// ── 기본 인적사항 (직접 수정하세요) ─────────────────────────
+var BASIC_INFO = {
+  name:  "강지애",
+  title: "디지털 강사 / AI 교육 전문가",
+  phone: "010-5697-0454",
+  email: "loveria5655@gmail.com",
+  intro: "AI·디지털 교육 전문 강사 | 정보처리기사 | 사회복지사 1급"
+};
+
+// ── 시트 이름 (구글시트의 탭 이름과 일치해야 합니다) ─────────
+var SHEET_EDU   = "학력사항";
+var SHEET_CAREER = "경력사항";
+var SHEET_CERT  = "자격증현황";
+
+// ============================================================
+//  doGet — 웹앱 진입점 (GET 요청 처리)
+// ============================================================
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var result = {
+      basicInfo:    BASIC_INFO,
+      education:    readEducation(ss),
+      career:       readCareer(ss),
+      certificates: readCertificates(ss)
+    };
+    return jsonOutput(result);
+  } catch (err) {
+    return jsonOutput({ error: err.toString() });
+  }
+}
+
+// ── 학력사항 읽기 ─────────────────────────────────────────
+// 컬럼 순서: 재학기간 | 학교명 | 전공 | 학위/수학구분 | 비고
+function readEducation(ss) {
+  var sheet = ss.getSheetByName(SHEET_EDU);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {   // i=0은 헤더 행
+    var r = rows[i];
+    if (!r[0] && !r[1]) continue;           // 빈 행 건너뜀
+    result.push({
+      period: String(r[0] || "").trim(),
+      school: String(r[1] || "").trim(),
+      major:  String(r[2] || "").trim(),
+      degree: String(r[3] || "").trim(),
+      note:   String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+// ── 경력사항 읽기 ─────────────────────────────────────────
+// 컬럼 순서: 근무기간 | 기관/직장명 | 직위/역할 | 주요업무 | 퇴직/종료사유
+function readCareer(ss) {
+  var sheet = ss.getSheetByName(SHEET_CAREER);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[1]) continue;
+    result.push({
+      period:   String(r[0] || "").trim(),
+      org:      String(r[1] || "").trim(),
+      position: String(r[2] || "").trim(),
+      work:     String(r[3] || "").trim(),
+      note:     String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+// ── 자격증현황 읽기 ───────────────────────────────────────
+// 컬럼 순서: 구분 | 자격명/연수명 | 취득일/참여일 | 발급기관 | 비고
+function readCertificates(ss) {
+  var sheet = ss.getSheetByName(SHEET_CERT);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[1]) continue;
+    result.push({
+      category: String(r[0] || "").trim(),   // "자격증" or "연수/교육"
+      name:     String(r[1] || "").trim(),
+      date:     String(r[2] || "").trim(),
+      issuer:   String(r[3] || "").trim(),
+      note:     String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+// ── JSON 출력 헬퍼 ────────────────────────────────────────
+function jsonOutput(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
