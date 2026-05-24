@@ -894,141 +894,6 @@ footer {
 @keyframes spin { from { display:inline-block; transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spinning { display: inline-block; animation: spin 0.8s linear; }
 
-/* ── 카카오 종 버튼 ── */
-.btn-kakao-bell {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, border-color 0.15s;
-  flex-shrink: 0;
-  position: relative;
-}
-.btn-kakao-bell:hover { background: #FEE500; border-color: #ddc900; }
-.btn-kakao-bell.active { background: #FEE500; border-color: #ddc900; }
-
-/* ── 카카오 설정 팝오버 ── */
-.kakao-setup-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 300px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 16px 40px -12px rgba(27,26,24,0.18);
-  padding: 20px;
-  z-index: 50;
-}
-/* search-card / search-actions 기준으로 팝오버 위치 */
-.search-card { position: relative; }
-.kakao-panel-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line-soft);
-}
-.kakao-panel-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--muted);
-  padding: 2px;
-  transition: color 0.15s;
-}
-.kakao-panel-close:hover { color: #c0392b; }
-.kakao-panel-desc {
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-.kakao-panel-link {
-  display: block;
-  font-size: 11px;
-  color: var(--accent-warm);
-  text-decoration: none;
-  margin-top: 8px;
-  text-align: center;
-}
-.kakao-panel-link:hover { text-decoration: underline; }
-.kakao-input {
-  width: 100%;
-  padding: 9px 12px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font-size: 12px;
-  font-family: 'Pretendard', sans-serif;
-  color: var(--ink);
-  outline: none;
-  margin-bottom: 8px;
-  box-sizing: border-box;
-}
-.kakao-input:focus { border-color: var(--accent); }
-.btn-kakao {
-  width: 100%;
-  padding: 10px;
-  background: #3C1E1E;
-  color: #FEE500;
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Pretendard', sans-serif;
-  transition: background 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  box-sizing: border-box;
-}
-.btn-kakao:hover { background: #2a1010; }
-.btn-kakao:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-kakao-logout {
-  padding: 9px 12px;
-  background: rgba(60,30,30,0.08);
-  color: var(--ink-soft);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Pretendard', sans-serif;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.btn-kakao-logout:hover { background: rgba(192,57,43,0.08); color: #c0392b; border-color: #f5c6bd; }
-.kakao-connected-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #1a5c30;
-  background: rgba(30,127,60,0.10);
-  border-radius: 999px;
-  padding: 5px 12px;
-  margin-bottom: 6px;
-}
-.kakao-last-update {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-}
 </style>
 </head>
 <body>
@@ -1175,35 +1040,9 @@ footer {
               <input type="text" id="searchInput" oninput="handleSearch(this.value)"
                      placeholder="교육명 검색..." class="search-input">
             </div>
-            <button id="notifBellBtn" onclick="toggleNotifPanel()" class="btn-kakao-bell"
-                    aria-label="알림 설정" title="알림 설정">
-              <span id="notifBellIcon">🔔</span>
-            </button>
             <button id="liveRefreshBtn" onclick="triggerLiveUpdate()" class="btn-refresh">
               <span id="refreshIcon">↺</span> 실시간 수집 업데이트
             </button>
-          </div>
-          <!-- 알림 설정 팝오버 -->
-          <div id="notifSetupPanel" class="kakao-setup-panel" style="display:none;">
-            <div class="kakao-panel-head">
-              <span>🔔 알림 설정</span>
-              <button onclick="toggleNotifPanel()" class="kakao-panel-close">✕</button>
-            </div>
-            <!-- 권한 미허용 -->
-            <div id="notifPermSection">
-              <p class="kakao-panel-desc">한 번만 허용하면 업데이트 버튼을 누를 때마다 자동으로 공고 요약 알림이 옵니다.</p>
-              <button onclick="requestNotifPermission()" class="btn-kakao">🔔 알림 허용하기</button>
-            </div>
-            <!-- 권한 허용 후 -->
-            <div id="notifGrantedSection" style="display:none;">
-              <div class="kakao-connected-badge">✅ 알림 활성화됨</div>
-              <div id="lastUpdateInfo" class="kakao-last-update">마지막 업데이트: —</div>
-              <button onclick="sendTestNotification()" class="btn-kakao" style="margin-top:10px; font-size:12px; padding:9px;">테스트 알림 전송</button>
-            </div>
-            <!-- 권한 거부 -->
-            <div id="notifDeniedSection" style="display:none;">
-              <p class="kakao-panel-desc" style="color:#c0392b;">브라우저에서 알림이 차단됐습니다.<br>주소창 옆 🔒 아이콘 → 알림 → 허용으로 변경해주세요.</p>
-            </div>
           </div>
         </div>
         <div class="filter-row" id="filterContainer"></div>
@@ -1362,120 +1201,6 @@ function lsSet(key, value) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  🔔  브라우저 알림 (Web Notification API)
-// ══════════════════════════════════════════════════════════
-let notifGranted = false;
-
-function initNotifications() {
-  if (!('Notification' in window)) return;
-  notifGranted = Notification.permission === 'granted';
-  updateNotifUI();
-}
-
-async function requestNotifPermission() {
-  if (!('Notification' in window)) {
-    showToast('이 브라우저는 알림을 지원하지 않습니다.', 'error');
-    return;
-  }
-  const perm = await Notification.requestPermission();
-  notifGranted = perm === 'granted';
-  updateNotifUI();
-  if (notifGranted) {
-    showToast('알림이 활성화됐습니다! 이제 업데이트 시 자동으로 알림이 옵니다.');
-    document.getElementById('notifSetupPanel').style.display = 'none';
-  } else {
-    showToast('알림 권한이 거부됐습니다.', 'error');
-  }
-}
-
-function updateNotifUI() {
-  const permSec    = document.getElementById('notifPermSection');
-  const grantedSec = document.getElementById('notifGrantedSection');
-  const deniedSec  = document.getElementById('notifDeniedSection');
-  const bellBtn    = document.getElementById('notifBellBtn');
-
-  permSec.style.display    = 'none';
-  grantedSec.style.display = 'none';
-  deniedSec.style.display  = 'none';
-
-  if (!('Notification' in window) || Notification.permission === 'denied') {
-    deniedSec.style.display = 'block';
-    if (bellBtn) bellBtn.classList.remove('active');
-  } else if (notifGranted) {
-    grantedSec.style.display = 'block';
-    if (bellBtn) { bellBtn.classList.add('active'); bellBtn.title = '알림 활성 (클릭: 설정)'; }
-    updateLastUpdateInfo();
-  } else {
-    permSec.style.display = 'block';
-    if (bellBtn) bellBtn.classList.remove('active');
-  }
-}
-
-function toggleNotifPanel() {
-  const panel = document.getElementById('notifSetupPanel');
-  const isOpen = panel.style.display === 'block';
-  panel.style.display = isOpen ? 'none' : 'block';
-}
-
-// 패널 외부 클릭 시 닫기
-document.addEventListener('click', (e) => {
-  const panel = document.getElementById('notifSetupPanel');
-  const bell  = document.getElementById('notifBellBtn');
-  if (panel && panel.style.display === 'block'
-      && !panel.contains(e.target)
-      && e.target !== bell && !bell.contains(e.target)) {
-    panel.style.display = 'none';
-  }
-});
-
-function updateLastUpdateInfo() {
-  const last = lsGet('lastAutoUpdate', null);
-  const el   = document.getElementById('lastUpdateInfo');
-  if (el) el.textContent = last ? `마지막 업데이트: ${last}` : '마지막 업데이트: —';
-}
-
-// 브라우저 알림 전송
-function sendBrowserNotification(title, body) {
-  if (!notifGranted) return false;
-  try {
-    const n = new Notification(title, {
-      body,
-      icon: 'assets/portrait.png',
-      badge: 'assets/portrait.png',
-      tag: 'edu-monitor-update',   // 같은 tag면 이전 알림 대체
-      requireInteraction: false
-    });
-    n.onclick = () => { window.focus(); n.close(); };
-    return true;
-  } catch(e) {
-    console.warn('알림 전송 실패', e);
-    return false;
-  }
-}
-
-function buildAlertSummary(sources, programs) {
-  const today  = new Date().toLocaleDateString('ko-KR');
-  const urgent = programs.filter(p => p.상태 === '마감임박');
-
-  // 브라우저 알림용 본문 (짧게)
-  let body = `📡 ${sources.length}개 기관 수집 완료\n`;
-  body    += `📌 전체 공고 ${programs.length}건`;
-  if (urgent.length > 0) {
-    body += ` · 🔥 마감임박 ${urgent.length}건\n`;
-    urgent.slice(0, 2).forEach(p => {
-      body += `⚠ ${p.제목} (${p.일시})\n`;
-    });
-  }
-  return { title: `📋 교육 모니터링 [${today}]`, body };
-}
-
-function sendTestNotification() {
-  const { title, body } = buildAlertSummary(monitoredSources, programData);
-  const ok = sendBrowserNotification(title, body);
-  showToast(ok ? '🔔 테스트 알림을 전송했습니다!' : '알림 권한을 확인하세요.', ok ? 'success' : 'error');
-}
-
-// ══════════════════════════════════════════════════════════
 //  🗄️  Google Sheets 연동
 // ══════════════════════════════════════════════════════════
 const isConfigured = () => APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
@@ -1631,43 +1356,12 @@ async function triggerLiveUpdate() {
   renderPrograms();
   updateChart();
 
-  // 3) 마지막 업데이트 시각 저장
-  const now = new Date().toLocaleString('ko-KR');
-  lsSet('lastAutoUpdate', now);
-  updateLastUpdateInfo();
-
   const cnt = monitoredSources.length;
 
-  // 4) 카카오톡 알림 요청 플래그 → Apps Script "알림요청" 시트에 저장
-  //    30분 주기 스케줄 태스크가 이 플래그를 보고 카카오톡 전송
-  requestKakaoNotification();
-
-  // 5) 브라우저 알림 전송 (즉시 피드백)
   resetBtn();
-  if (notifGranted) {
-    const { title, body } = buildAlertSummary(monitoredSources, programData);
-    sendBrowserNotification(title, body);
-    showToast(`✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 요청됨`);
-  } else {
-    showToast(`✅ ${cnt}개 기관 수집 완료 · 📱 카카오톡 알림이 곧 전송됩니다`);
-  }
+  showToast(`✅ ${cnt}개 기관 데이터 업데이트 완료`);
 }
 
-// 카카오톡 알림 요청 플래그 저장 (30분 주기 태스크가 감지해서 전송)
-function requestKakaoNotification() {
-  if (!isConfigured()) return;
-  const timestamp = new Date().toISOString();
-  try {
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify({
-        sheet: '알림요청',
-        data: [['요청시각', '상태'], [timestamp, 'pending']]
-      })
-    });
-  } catch(e) { /* no-cors라 오류 무시 */ }
-}
 
 // ── 공고 카드 렌더링 ──
 function renderPrograms() {
@@ -1866,27 +1560,14 @@ async function checkDailyAutoUpdate() {
   renderPrograms();
   updateChart();
 
-  const now = new Date().toLocaleString('ko-KR');
-  lsSet('lastAutoUpdate', now);
-  updateLastUpdateInfo();
-
   const cnt2 = monitoredSources.length;
-  if (notifGranted) {
-    const { title, body } = buildAlertSummary(monitoredSources, programData);
-    sendBrowserNotification(title, body);
-    showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 · 🔔 알림 전송!`);
-  } else {
-    showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 완료`);
-  }
+  showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 완료`);
 }
 
 // ── 초기화 ──
 window.onload = async () => {
 
-  // 1) 브라우저 알림 초기화 (권한 상태 확인)
-  initNotifications();
-
-  // 2) 기관 리스트 & 공고 초기 렌더 (localStorage 값 우선)
+  // 1) 기관 리스트 & 공고 초기 렌더 (localStorage 값 우선)
   renderMonitoredSources();
   renderPrograms();
   renderFilters();
