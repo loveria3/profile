@@ -1,235 +1,364 @@
 /* ============================================================
-   resume-download.js
-   강지애 프로필 — 경력서 PDF 다운로드
-
-   ⚠️ Apps Script 배포 후 아래 URL을 반드시 교체하세요
+   resume-download.js — 강지애 프로필 경력서 PDF
    ============================================================ */
 
 const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
-/* ── 버튼 초기화 ────────────────────────────────────────── */
+/* ── 디자인 토큰 (웹사이트와 동일한 팔레트, 인쇄 친화적) ──
+   --ink    : #1b1a18   주 텍스트
+   --accent : #2a3b2e   딥 그린 (선·텍스트 전용, 배경 없음)
+   --gold   : #c9a35b   골드 포인트
+   --copper : #b3753a   웜 카퍼 서브
+   배경은 항상 흰색(#fff) 또는 매우 연한 그린(#f4f7f4)       */
+
+/* ── A4 상수 @96dpi ─────────────────────────────────────── */
+const PDF_W  = 794;
+const PDF_H  = 1123;
+const PAD    = 44;
+const INNER  = PDF_W - PAD * 2;   // 706 px
+const USABLE = PDF_H - PAD * 2;   // 1035 px
+const PX2MM  = 210 / PDF_W;
+
+/* ── 초기화 ─────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('resumeDlBtn');
-  if (!btn) {
-    console.error('[경력서] resumeDlBtn 버튼을 찾지 못했습니다.');
-    return;
-  }
-  console.log('[경력서] 버튼 초기화 완료');
+  if (!btn) { console.error('[경력서] 버튼 없음'); return; }
+  console.log('[경력서] 초기화 완료');
 
   btn.addEventListener('click', async function () {
     setLoading(btn, true);
     try {
-      console.log('[경력서] 데이터 요청 시작...');
-      const data = await fetchResumeData();
-      console.log('[경력서] 데이터 수신 완료, PDF 생성 시작');
+      console.log('[경력서] 데이터 요청...');
+      const data = await fetchData();
+      console.log('[경력서] PDF 생성 시작');
       await generatePDF(data);
-      console.log('[경력서] PDF 생성 완료');
+      console.log('[경력서] 완료');
     } catch (e) {
       console.error('[경력서] 오류:', e);
-      alert('경력서 생성 오류\n\n' + e.message + '\n\n브라우저 콘솔(F12)에서 자세한 내용을 확인하세요.');
+      alert('경력서 생성 오류\n\n' + e.message + '\n\n콘솔(F12)에서 확인하세요.');
     } finally {
       setLoading(btn, false);
     }
   });
 });
 
-/* ── 1. 데이터 fetch ─────────────────────────────────────── */
-async function fetchResumeData() {
+async function fetchData() {
   const res = await fetch(RESUME_API_URL);
-  if (!res.ok) throw new Error('API 응답 오류: ' + res.status);
+  if (!res.ok) throw new Error('API 오류: ' + res.status);
   const json = await res.json();
   if (json.error) throw new Error(json.error);
   return json;
 }
 
-/* ── 2. PDF 생성 (html2canvas → jsPDF) ──────────────────── */
+/* ══════════════════════════════════════════════════════════
+   PDF 생성 메인
+   ══════════════════════════════════════════════════════════ */
 async function generatePDF(data) {
-  // 숨겨진 렌더링 컨테이너 생성
-  const container = buildResumeHTML(data);
-  document.body.appendChild(container);
+  const { basicInfo: bi, education, career, certificates } = data;
+  const certs    = (certificates || []).filter(c => c.category === '자격증');
+  const training = (certificates || []).filter(c => c.category === '연수/교육');
+  const portrait = (document.querySelector('.portrait-frame img') || {}).src || 'assets/portrait.png';
 
-  // 폰트 로드 대기
+  /* ① 블록 생성 */
+  const blocks = buildBlocks(bi, education || [], career || [], certs, training, portrait);
+
+  /* ② 블록 높이 측정 */
+  const measurer = mkDiv(`position:fixed;top:0;left:-9999px;width:${INNER}px;background:#fff;
+    box-sizing:border-box;font-family:'Pretendard','Noto Sans KR',sans-serif;color:#1b1a18;`);
+  document.body.appendChild(measurer);
   await document.fonts.ready;
+  await wait(300);
 
+  for (const blk of blocks) {
+    measurer.innerHTML = blk.html;
+    blk.h = measurer.offsetHeight;
+  }
+  document.body.removeChild(measurer);
+
+  /* ③ 페이지 팩킹 */
+  const pages = packPages(blocks);
+
+  /* ④ 페이지 렌더링 → PDF */
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const A4_W = 794;   // px (96dpi 기준 A4 너비)
-  const A4_H = 1123;  // px (96dpi 기준 A4 높이)
-  const MM_W = 210;   // mm
-  const MM_H = 297;   // mm
+  const renderer = mkDiv(`position:fixed;top:0;left:-9999px;width:${PDF_W}px;background:#fff;
+    box-sizing:border-box;font-family:'Pretendard','Noto Sans KR',sans-serif;
+    color:#1b1a18;padding:${PAD}px;`);
+  document.body.appendChild(renderer);
 
-  // 전체 컨텐츠를 페이지 단위로 분할하여 캡처
-  const totalH = container.scrollHeight;
-  let yOffset = 0;
-  let pageIndex = 0;
+  for (let pi = 0; pi < pages.length; pi++) {
+    const pg = pages[pi];
+    if (!pg.length) continue;
 
-  while (yOffset < totalH) {
-    const canvas = await html2canvas(container, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      y: yOffset,
-      height: Math.min(A4_H, totalH - yOffset),
-      width: A4_W,
-      windowWidth: A4_W,
-      backgroundColor: '#fbf6ec'
+    renderer.innerHTML = pg.map(b => b.html).join('');
+    await wait(80);
+
+    const canvas = await html2canvas(renderer, {
+      scale: 2, useCORS: true, logging: false,
+      backgroundColor: '#ffffff', width: PDF_W
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-    const capturedH = Math.min(A4_H, totalH - yOffset);
-    const mmH = (capturedH / A4_H) * MM_H;
-
-    if (pageIndex > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, 0, MM_W, mmH);
-
-    yOffset += A4_H;
-    pageIndex++;
+    const hMM = Math.min((canvas.height / 2) * PX2MM, 297);
+    if (pi > 0) pdf.addPage();
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.96), 'JPEG', 0, 0, 210, hMM);
   }
 
-  document.body.removeChild(container);
-  pdf.save('강지애_경력서_' + today() + '.pdf');
+  document.body.removeChild(renderer);
+  pdf.save(`강지애_경력서_${today()}.pdf`);
 }
 
-/* ── 3. 경력서 HTML 빌드 ─────────────────────────────────── */
-function buildResumeHTML(data) {
-  const { basicInfo: b, education, career, certificates } = data;
+/* ══════════════════════════════════════════════════════════
+   블록 생성
+   ══════════════════════════════════════════════════════════ */
+function buildBlocks(bi, education, career, certs, training, portrait) {
+  const list = [];
 
-  // 자격증 / 연수 분리
-  const certs    = (certificates || []).filter(c => c.category === '자격증');
-  const training = (certificates || []).filter(c => c.category === '연수/교육');
+  /* ── 이력서 헤더 ─────────────────────────────────────────
+     배경 없음 / 딥 그린 왼쪽 액센트 바 / 골드 구분선       */
+  list.push({
+    type: 'header',
+    html: `
+      <!-- 상단 레이블 바 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;
+                  padding-bottom:8px;margin-bottom:16px;
+                  border-bottom:1px solid #c9a35b;">
+        <span style="font-size:8.5px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
+                     letter-spacing:.2em;text-transform:uppercase;">
+          CURRICULUM VITAE
+        </span>
+        <span style="font-size:8.5px;color:#aaa;font-family:'JetBrains Mono',monospace;">
+          ${today()}
+        </span>
+      </div>
 
-  // 페이지에 로드된 프로필 사진 URL 가져오기
-  const portraitEl = document.querySelector('.portrait-frame img');
-  const portraitSrc = portraitEl ? portraitEl.src : 'assets/portrait.png';
+      <!-- 이름 + 사진 -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;">
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = [
-    'position:fixed', 'top:0', 'left:-9999px',
-    'width:794px', 'background:#fbf6ec',
-    'font-family:"Pretendard","Noto Sans KR",sans-serif',
-    'color:#1b1a18', 'box-sizing:border-box',
-    'padding:48px 52px'
-  ].join(';');
-
-  wrap.innerHTML = `
-    <!-- ── 헤더 ── -->
-    <div style="background:#2a3b2e;color:#fff;border-radius:8px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
-      <div style="flex:1;">
-        <div style="font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;letter-spacing:.04em;margin-bottom:6px;">${b.name}</div>
-        <div style="font-size:13px;opacity:.85;letter-spacing:.05em;margin-bottom:10px;">${b.title}</div>
-        <div style="font-size:11px;opacity:.70;font-family:'JetBrains Mono',monospace;line-height:1.9;">
-          <div>EMAIL&nbsp;&nbsp;${b.email}</div>
-          <div>JEJU · KR</div>
+        <!-- 왼쪽 액센트 바 + 정보 -->
+        <div style="display:flex;gap:14px;flex:1;">
+          <div style="width:3px;background:#2a3b2e;border-radius:2px;min-height:90px;flex-shrink:0;"></div>
+          <div>
+            <div style="font-family:'Noto Serif KR',serif;font-size:26px;font-weight:700;
+                        color:#1b1a18;letter-spacing:.05em;line-height:1.15;margin-bottom:5px;">
+              ${bi.name}
+            </div>
+            <div style="font-size:11px;color:#2a3b2e;font-weight:600;letter-spacing:.1em;
+                        text-transform:uppercase;margin-bottom:14px;">
+              ${bi.title}
+            </div>
+            <div style="font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
+                        line-height:2;letter-spacing:.03em;">
+              <div>EMAIL &nbsp; ${bi.email}</div>
+              <div>JEJU · KR</div>
+            </div>
+            <div style="font-size:9px;color:#999;margin-top:10px;
+                        font-family:'JetBrains Mono',monospace;line-height:1.6;">
+              ${bi.intro}
+            </div>
+          </div>
         </div>
-        <div style="font-size:10px;opacity:.55;margin-top:12px;font-family:'JetBrains Mono',monospace;line-height:1.6;">${b.intro}</div>
+
+        <!-- 증명사진: 하단 1/5 잘라냄 (container 높이 = 원본×0.8) -->
+        <div style="flex-shrink:0;width:72px;height:86px;
+                    overflow:hidden;border-radius:3px;
+                    border:1px solid #d5dcd5;">
+          <img src="${portrait}" crossorigin="anonymous"
+               style="width:100%;height:108px;
+                      object-fit:cover;object-position:center top;"
+               alt="프로필 사진"/>
+        </div>
       </div>
-      <!-- 증명사진 (3×4 비율, 약 80×107px) -->
-      <div style="flex-shrink:0;width:80px;height:107px;border-radius:4px;overflow:hidden;border:2px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.15);">
-        <img src="${portraitSrc}" crossorigin="anonymous"
-             style="width:100%;height:100%;object-fit:cover;object-position:center top;"
-             alt="프로필 사진" />
-      </div>
-    </div>
 
-    <!-- ── 학력사항 ── -->
-    ${sectionHTML('학력사항', 'Education')}
-    ${tableHTML(
-      ['재학기간', '학교명', '전공', '학위'],
-      (education || []).map(e => [e.period, e.school, e.major, e.degree]),
-      [28, 26, 26, 20]
-    )}
+      <!-- 하단 구분선 -->
+      <div style="margin-top:18px;height:1px;background:linear-gradient(to right,#2a3b2e,#c9a35b,#f4ede2);
+                  border-radius:1px;"></div>
+    `
+  });
 
-    <!-- ── 경력사항 ── -->
-    ${sectionHTML('경력사항', 'Career')}
-    ${tableHTML(
-      ['근무기간', '기관/직장명', '직위·역할', '주요업무', '비고'],
-      (career || []).map(c => [c.period, c.org, c.position, c.work, c.note]),
-      [22, 22, 14, 30, 12]
-    )}
+  /* ── 섹션 추가 헬퍼 ──────────────────────────────────── */
+  function addSection(ko, en, headers, widths, rows, getRow) {
+    list.push({ type: 'section', ko, en, html: htmlSection(ko, en) });
+    list.push({ type: 'thead',   ko, en, headers, widths, html: htmlThead(headers, widths) });
+    rows.forEach((row, i) => {
+      list.push({ type: 'trow', ko, html: htmlTrow(getRow(row), widths, i % 2 === 0) });
+    });
+  }
 
-    <!-- ── 자격증 ── -->
-    ${sectionHTML('자격증', 'Certificates')}
-    ${tableHTML(
-      ['취득일', '자격명', '발급기관'],
-      certs.map(c => [c.date, c.name, c.issuer]),
-      [18, 46, 36]
-    )}
+  addSection('학력사항', 'Education',
+    ['재학기간', '학교명', '전공', '학위'], [26, 26, 26, 22],
+    education, e => [e.period, e.school, e.major, e.degree]);
 
-    <!-- ── 연수·교육 ── -->
-    ${sectionHTML('연수 및 교육', 'Training')}
-    ${tableHTML(
-      ['일자', '연수명', '기관', '결과'],
-      training.map(c => [c.date, c.name, c.issuer, c.note]),
-      [18, 42, 28, 12]
-    )}
+  addSection('경력사항', 'Career',
+    ['근무기간', '기관/직장명', '직위·역할', '주요업무', '비고'], [20, 22, 13, 33, 12],
+    career, c => [c.period, c.org, c.position, c.work, c.note]);
 
-    <!-- ── 푸터 ── -->
-    <div style="margin-top:32px;padding-top:14px;border-top:1px solid #d0c4b0;display:flex;justify-content:space-between;font-size:10px;color:#7a6e5a;font-family:'JetBrains Mono',monospace;">
-      <span>작성일: ${today()}</span>
-      <span>강지애 · Kang Ji-ae</span>
-    </div>
-  `;
+  addSection('자격증', 'Certificates',
+    ['취득일', '자격명', '발급기관'], [18, 46, 36],
+    certs, c => [c.date, c.name, c.issuer]);
 
-  return wrap;
+  addSection('연수 및 교육', 'Training',
+    ['일자', '연수명', '기관', '결과'], [16, 44, 28, 12],
+    training, c => [c.date, c.name, c.issuer, c.note]);
+
+  /* ── 푸터 ──────────────────────────────────────────────── */
+  list.push({
+    type: 'footer',
+    html: `
+      <div style="margin-top:28px;padding-top:10px;
+                  border-top:1px solid #c9a35b;
+                  display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:8.5px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
+                     letter-spacing:.15em;">KANG JI-AE · DIGITAL INSTRUCTOR · JEJU</span>
+        <span style="font-size:8.5px;color:#bbb;font-family:'JetBrains Mono',monospace;">
+          작성일 ${today()}
+        </span>
+      </div>`
+  });
+
+  return list;
 }
 
-/* ── 섹션 헤더 ──────────────────────────────────────────── */
-function sectionHTML(ko, en) {
+/* ══════════════════════════════════════════════════════════
+   페이지 팩킹
+   ══════════════════════════════════════════════════════════ */
+function packPages(blocks) {
+  const pages = [[]];
+  let usedH = 0;
+
+  const cur = () => pages[pages.length - 1];
+  function newPage() { pages.push([]); usedH = 0; }
+  function add(blk)  { cur().push(blk); usedH += blk.h; }
+
+  function sectionTotal(startIdx) {
+    let h = 0;
+    for (let j = startIdx; j < blocks.length; j++) {
+      const t = blocks[j].type;
+      if (j !== startIdx && t === 'section') break;
+      if (t === 'footer') break;
+      h += blocks[j].h;
+    }
+    return h;
+  }
+
+  for (let i = 0; i < blocks.length; i++) {
+    const blk = blocks[i];
+
+    if (blk.type === 'header') { add(blk); continue; }
+
+    if (blk.type === 'section') {
+      const total = sectionTotal(i);
+      if (usedH > 0 && usedH + total > USABLE) newPage();
+      add(blk);
+      continue;
+    }
+
+    if (blk.type === 'thead') {
+      if (usedH + blk.h > USABLE) newPage();
+      add(blk);
+      continue;
+    }
+
+    if (blk.type === 'trow') {
+      if (usedH + blk.h > USABLE) {
+        newPage();
+        const secBlk = [...blocks].slice(0, i).reverse().find(b => b.type === 'section' && b.ko === blk.ko);
+        const thBlk  = [...blocks].slice(0, i).reverse().find(b => b.type === 'thead'   && b.ko === blk.ko);
+        if (secBlk) add(secBlk);
+        if (thBlk)  add(thBlk);
+      }
+      add(blk);
+      continue;
+    }
+
+    if (blk.type === 'footer') {
+      if (usedH + blk.h > USABLE) newPage();
+      add(blk);
+      continue;
+    }
+  }
+
+  return pages;
+}
+
+/* ══════════════════════════════════════════════════════════
+   HTML 조각 — 인쇄 친화적 + 웹사이트 연결 디자인
+   ══════════════════════════════════════════════════════════ */
+
+/* 섹션 제목 */
+function htmlSection(ko, en) {
   return `
-    <div style="display:flex;align-items:baseline;gap:10px;margin:24px 0 10px;padding-bottom:6px;border-bottom:2px solid #2a3b2e;">
-      <span style="font-family:'Noto Serif KR',serif;font-size:16px;font-weight:700;color:#2a3b2e;">${ko}</span>
-      <span style="font-size:10px;color:#b3753a;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;">${en}</span>
+    <div style="display:flex;align-items:center;gap:10px;
+                padding-top:20px;padding-bottom:7px;
+                border-bottom:1.5px solid #2a3b2e;">
+      <div style="width:4px;height:15px;background:#c9a35b;border-radius:2px;flex-shrink:0;"></div>
+      <span style="font-family:'Noto Serif KR',serif;font-size:13.5px;
+                   font-weight:700;color:#2a3b2e;letter-spacing:.02em;">${ko}</span>
+      <span style="font-size:9px;color:#b3753a;
+                   font-family:'JetBrains Mono',monospace;letter-spacing:.14em;">${en}</span>
     </div>`;
 }
 
-/* ── 테이블 ──────────────────────────────────────────────── */
-function tableHTML(headers, rows, widths) {
+/* 테이블 헤더 — 연한 그린 배경, 진한 그린 텍스트 (인쇄 OK) */
+function htmlThead(headers, widths) {
   const total = widths.reduce((a, b) => a + b, 0);
-  const cols = widths.map(w => `<col style="width:${(w/total*100).toFixed(1)}%">`).join('');
-
-  const head = headers.map((h, i) =>
-    `<th style="background:#2a3b2e;color:#fff;font-size:10px;font-weight:600;
-               padding:7px 9px;text-align:left;border:1px solid #1b2e20;">${h}</th>`
+  const cols  = widths.map(w => `<col style="width:${(w / total * 100).toFixed(1)}%">`).join('');
+  const cells = headers.map(h =>
+    `<th style="background:#eef2ee;color:#2a3b2e;font-size:9.5px;font-weight:700;
+                padding:7px 9px;text-align:left;
+                border:1px solid #ccd5cc;letter-spacing:.04em;">${h}</th>`
   ).join('');
-
-  const body = (rows || []).map((row, ri) => {
-    const bg = ri % 2 === 0 ? '#fbf6ec' : '#f4ede2';
-    const cells = headers.map((_, ci) =>
-      `<td style="font-size:10px;padding:6px 9px;border:1px solid #d0c4b0;
-                  background:${bg};vertical-align:top;line-height:1.55;">
-         ${escHtml(String(row[ci] ?? ''))}
-       </td>`
-    ).join('');
-    return `<tr>${cells}</tr>`;
-  }).join('');
-
   return `
-    <table style="width:100%;border-collapse:collapse;margin-bottom:4px;">
+    <table style="width:100%;border-collapse:collapse;margin-top:2px;">
       <colgroup>${cols}</colgroup>
-      <thead><tr>${head}</tr></thead>
-      <tbody>${body}</tbody>
+      <thead><tr>${cells}</tr></thead>
     </table>`;
 }
 
-/* ── 유틸 ────────────────────────────────────────────────── */
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* 테이블 행 — 흰/연회색 교대, 연한 경계선 */
+function htmlTrow(cells, widths, even) {
+  const total = widths.reduce((a, b) => a + b, 0);
+  const bg    = even ? '#ffffff' : '#f7faf7';
+  const cols  = widths.map(w => `<col style="width:${(w / total * 100).toFixed(1)}%">`).join('');
+  const tds   = cells.map(c =>
+    `<td style="font-size:9.5px;padding:5px 9px;
+                border:1px solid #d5dcd5;border-top:none;
+                background:${bg};vertical-align:top;
+                line-height:1.55;color:#2a2a2a;">${esc(String(c ?? ''))}</td>`
+  ).join('');
+  return `
+    <table style="width:100%;border-collapse:collapse;margin-top:-1px;">
+      <colgroup>${cols}</colgroup>
+      <tbody><tr>${tds}</tr></tbody>
+    </table>`;
 }
 
+/* ══════════════════════════════════════════════════════════
+   유틸
+   ══════════════════════════════════════════════════════════ */
+function mkDiv(css) {
+  const el = document.createElement('div');
+  el.style.cssText = css;
+  return el;
+}
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 function today() {
   const d = new Date();
   return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 }
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function setLoading(btn, isLoading) {
   if (isLoading) {
     btn.disabled = true;
     btn.dataset.origText = btn.innerHTML;
     btn.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           style="animation:spin 1s linear infinite" aria-hidden="true">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" style="animation:spin 1s linear infinite" aria-hidden="true">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83
+                 M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
       </svg> 생성 중…`;
   } else {
     btn.disabled = false;
