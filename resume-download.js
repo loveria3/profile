@@ -4,8 +4,8 @@
 
    ⚠️ Apps Script 배포 후 아래 URL을 반드시 교체하세요
    ============================================================ */
-
-const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbw-5MqFl6f8LnyU7BBOkmGo3N5hVRLKhIDbcLqJubAB8yxhA4U2HZymVyikEu3TIIaG8A/exec';
+ttp
+const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
 /* ── 버튼 초기화 ────────────────────────────────────────── */
 (function () {
@@ -92,6 +92,10 @@ function buildResumeHTML(data) {
   const certs    = (certificates || []).filter(c => c.category === '자격증');
   const training = (certificates || []).filter(c => c.category === '연수/교육');
 
+  // 페이지에 로드된 프로필 사진 URL 가져오기
+  const portraitEl = document.querySelector('.portrait-frame img');
+  const portraitSrc = portraitEl ? portraitEl.src : 'assets/portrait.png';
+
   const wrap = document.createElement('div');
   wrap.style.cssText = [
     'position:fixed', 'top:0', 'left:-9999px',
@@ -103,16 +107,21 @@ function buildResumeHTML(data) {
 
   wrap.innerHTML = `
     <!-- ── 헤더 ── -->
-    <div style="background:#2a3b2e;color:#fff;border-radius:8px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end;">
-      <div>
+    <div style="background:#2a3b2e;color:#fff;border-radius:8px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+      <div style="flex:1;">
         <div style="font-family:'Noto Serif KR',serif;font-size:32px;font-weight:700;letter-spacing:.04em;margin-bottom:6px;">${b.name}</div>
-        <div style="font-size:13px;opacity:.85;letter-spacing:.05em;">${b.title}</div>
-        <div style="font-size:11px;opacity:.65;margin-top:12px;font-family:'JetBrains Mono',monospace;">${b.intro}</div>
+        <div style="font-size:13px;opacity:.85;letter-spacing:.05em;margin-bottom:10px;">${b.title}</div>
+        <div style="font-size:11px;opacity:.70;font-family:'JetBrains Mono',monospace;line-height:1.9;">
+          <div>EMAIL&nbsp;&nbsp;${b.email}</div>
+          <div>JEJU · KR</div>
+        </div>
+        <div style="font-size:10px;opacity:.55;margin-top:12px;font-family:'JetBrains Mono',monospace;line-height:1.6;">${b.intro}</div>
       </div>
-      <div style="text-align:right;font-size:11px;opacity:.75;font-family:'JetBrains Mono',monospace;line-height:1.8;">
-        <div>${b.phone}</div>
-        <div>${b.email}</div>
-        <div>JEJU · KR</div>
+      <!-- 증명사진 (3×4 비율, 약 80×107px) -->
+      <div style="flex-shrink:0;width:80px;height:107px;border-radius:4px;overflow:hidden;border:2px solid rgba(255,255,255,0.25);background:rgba(0,0,0,0.15);">
+        <img src="${portraitSrc}" crossorigin="anonymous"
+             style="width:100%;height:100%;object-fit:cover;object-position:center top;"
+             alt="프로필 사진" />
       </div>
     </div>
 

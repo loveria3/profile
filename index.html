@@ -68,17 +68,14 @@
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
         </a>
         <a class="btn btn-ghost" href="#competency">강사 역량 살펴보기</a>
-        <button class="btn btn-ghost" id="resumeDlBtn" aria-label="경력서 PDF 다운로드">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          경력서 다운로드
-        </button>
       </div>
 
       <div class="hero-meta">
         <div class="name-block">
           <span class="name-ko serif">강 지 애</span>
           <span class="name-role">Kang Ji-ae · Digital Instructor</span>
-          <div class="card-dl-wrap">
+          <div class="name-dl-row">
+            <div class="card-dl-wrap">
             <button class="btn-card-dl" id="cardDlBtn" aria-label="명함 미리보기 및 다운로드">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               명함 다운로드
@@ -111,7 +108,12 @@
                 </div>
               </div>
             </div>
-          </div>
+            </div><!-- /.card-dl-wrap -->
+            <button class="btn-card-dl" id="resumeDlBtn" aria-label="경력서 PDF 다운로드">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+              경력서 다운로드
+            </button>
+          </div><!-- /.name-dl-row -->
         </div>
         <div class="sig">"Learning, designed."</div>
       </div>
@@ -580,6 +582,18 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/* ── 명함 + 경력서 버튼 가로 배치 ── */
+.name-dl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.name-dl-row .card-dl-wrap {
+  margin-top: 0;
 }
 
 /* ── 명함 다운로드 버튼 ── */

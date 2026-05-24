@@ -30,7 +30,6 @@
 var BASIC_INFO = {
   name:  "강지애",
   title: "디지털 강사 / AI 교육 전문가",
-  phone: "010-5697-0454",
   email: "loveria5655@gmail.com",
   intro: "AI·디지털 교육 전문 강사 | 정보처리기사 | 사회복지사 1급"
 };
