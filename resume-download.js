@@ -137,11 +137,11 @@ function buildBlocks(bi, education, career, certs, training) {
       <div style="display:flex;justify-content:space-between;align-items:center;
                   padding-bottom:8px;margin-bottom:16px;
                   border-bottom:1px solid #c9a35b;">
-        <span style="font-size:8.5px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
+        <span style="font-size:10px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
                      letter-spacing:.2em;text-transform:uppercase;">
           CURRICULUM VITAE
         </span>
-        <span style="font-size:8.5px;color:#aaa;font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:10px;color:#aaa;font-family:'JetBrains Mono',monospace;">
           ${today()}
         </span>
       </div>
@@ -150,20 +150,20 @@ function buildBlocks(bi, education, career, certs, training) {
       <div style="display:flex;gap:14px;align-items:flex-start;">
         <div style="width:3px;background:#2a3b2e;border-radius:2px;min-height:90px;flex-shrink:0;"></div>
         <div style="flex:1;">
-          <div style="font-family:'Noto Serif KR',serif;font-size:26px;font-weight:700;
+          <div style="font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;
                       color:#1b1a18;letter-spacing:.05em;line-height:1.15;margin-bottom:5px;">
             ${bi.name}
           </div>
-          <div style="font-size:11px;color:#2a3b2e;font-weight:600;letter-spacing:.1em;
+          <div style="font-size:12.5px;color:#2a3b2e;font-weight:600;letter-spacing:.1em;
                       text-transform:uppercase;margin-bottom:14px;">
             ${bi.title}
           </div>
-          <div style="font-size:9.5px;color:#555;font-family:'JetBrains Mono',monospace;
+          <div style="font-size:11px;color:#555;font-family:'JetBrains Mono',monospace;
                       line-height:2;letter-spacing:.03em;">
             <div>EMAIL &nbsp; ${bi.email}</div>
             <div>JEJU · KR</div>
           </div>
-          <div style="font-size:9px;color:#999;margin-top:10px;
+          <div style="font-size:10.5px;color:#999;margin-top:10px;
                       font-family:'JetBrains Mono',monospace;line-height:1.6;">
             ${bi.intro}
           </div>
@@ -211,9 +211,9 @@ function buildBlocks(bi, education, career, certs, training) {
       <div style="margin-top:28px;padding-top:10px;
                   border-top:1px solid #c9a35b;
                   display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:8.5px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
+        <span style="font-size:10px;color:#c9a35b;font-family:'JetBrains Mono',monospace;
                      letter-spacing:.15em;">KANG JI-AE · DIGITAL INSTRUCTOR · JEJU</span>
-        <span style="font-size:8.5px;color:#bbb;font-family:'JetBrains Mono',monospace;">
+        <span style="font-size:10px;color:#bbb;font-family:'JetBrains Mono',monospace;">
           작성일 ${today()}
         </span>
       </div>`
@@ -297,9 +297,9 @@ function htmlSection(ko, en) {
                 padding-top:20px;padding-bottom:7px;
                 border-bottom:1.5px solid #2a3b2e;">
       <div style="width:4px;height:15px;background:#c9a35b;border-radius:2px;flex-shrink:0;"></div>
-      <span style="font-family:'Noto Serif KR',serif;font-size:13.5px;
+      <span style="font-family:'Noto Serif KR',serif;font-size:15px;
                    font-weight:700;color:#2a3b2e;letter-spacing:.02em;">${ko}</span>
-      <span style="font-size:9px;color:#b3753a;
+      <span style="font-size:10.5px;color:#b3753a;
                    font-family:'JetBrains Mono',monospace;letter-spacing:.14em;">${en}</span>
     </div>`;
 }
@@ -309,8 +309,8 @@ function htmlThead(headers, widths) {
   const total = widths.reduce((a, b) => a + b, 0);
   const cols  = widths.map(w => `<col style="width:${(w / total * 100).toFixed(1)}%">`).join('');
   const cells = headers.map(h =>
-    `<th style="background:#eef2ee;color:#2a3b2e;font-size:9.5px;font-weight:700;
-                padding:7px 9px;text-align:left;
+    `<th style="background:#eef2ee;color:#2a3b2e;font-size:11px;font-weight:700;
+                padding:8px 10px;text-align:left;
                 border:1px solid #ccd5cc;letter-spacing:.04em;">${h}</th>`
   ).join('');
   return `
@@ -326,7 +326,7 @@ function htmlTrow(cells, widths, even) {
   const bg    = even ? '#ffffff' : '#f7faf7';
   const cols  = widths.map(w => `<col style="width:${(w / total * 100).toFixed(1)}%">`).join('');
   const tds   = cells.map(c =>
-    `<td style="font-size:9.5px;padding:5px 9px;
+    `<td style="font-size:11px;padding:6px 10px;
                 border:1px solid #d5dcd5;border-top:none;
                 background:${bg};vertical-align:top;
                 line-height:1.55;color:#2a2a2a;">${esc(String(c ?? ''))}</td>`
