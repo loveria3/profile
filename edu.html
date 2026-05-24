@@ -10,9 +10,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="style.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
-        integrity="sha384-TiCUE00h649CAMonG018J1cbYKJ7LuAQB1OZtmVQRRdvMhWwnALPEqmPBiZ3PXJQ"
-        crossorigin="anonymous"></script>
 <style>
 /* ── edu.html 전용 보완 스타일 ── */
 .edu-main {
@@ -1178,40 +1175,34 @@ footer {
               <input type="text" id="searchInput" oninput="handleSearch(this.value)"
                      placeholder="교육명 검색..." class="search-input">
             </div>
-            <button id="kakaoBellBtn" onclick="toggleKakaoSetupPanel()" class="btn-kakao-bell"
-                    aria-label="카카오 알림 설정" title="카카오 알림 설정">
-              <span id="kakaoBellIcon">🔔</span>
+            <button id="notifBellBtn" onclick="toggleNotifPanel()" class="btn-kakao-bell"
+                    aria-label="알림 설정" title="알림 설정">
+              <span id="notifBellIcon">🔔</span>
             </button>
             <button id="liveRefreshBtn" onclick="triggerLiveUpdate()" class="btn-refresh">
               <span id="refreshIcon">↺</span> 실시간 수집 업데이트
             </button>
           </div>
-          <!-- 카카오 설정 팝오버 -->
-          <div id="kakaoSetupPanel" class="kakao-setup-panel" style="display:none;">
+          <!-- 알림 설정 팝오버 -->
+          <div id="notifSetupPanel" class="kakao-setup-panel" style="display:none;">
             <div class="kakao-panel-head">
-              <span>💬 카카오 알림 설정</span>
-              <button onclick="toggleKakaoSetupPanel()" class="kakao-panel-close">✕</button>
+              <span>🔔 알림 설정</span>
+              <button onclick="toggleNotifPanel()" class="kakao-panel-close">✕</button>
             </div>
-            <div id="kakaoKeySection">
-              <p class="kakao-panel-desc">JavaScript 앱 키를 입력하면 업데이트 시 자동으로 나에게 요약을 보내드립니다.</p>
-              <input type="text" id="kakaoAppKeyInput" class="kakao-input"
-                     placeholder="카카오 JavaScript 앱 키">
-              <button onclick="saveKakaoKey()" class="btn-kakao">저장 →</button>
-              <a href="https://developers.kakao.com/console/app" target="_blank" class="kakao-panel-link">
-                앱 키 발급 방법 ↗
-              </a>
+            <!-- 권한 미허용 -->
+            <div id="notifPermSection">
+              <p class="kakao-panel-desc">한 번만 허용하면 업데이트 버튼을 누를 때마다 자동으로 공고 요약 알림이 옵니다.</p>
+              <button onclick="requestNotifPermission()" class="btn-kakao">🔔 알림 허용하기</button>
             </div>
-            <div id="kakaoLoginSection" style="display:none;">
-              <p class="kakao-panel-desc">카카오 로그인 후 자동 알림이 활성화됩니다.</p>
-              <button onclick="kakaoLogin()" class="btn-kakao">🔑 카카오 로그인</button>
-            </div>
-            <div id="kakaoLoggedInSection" style="display:none;">
-              <div class="kakao-connected-badge">✅ 카카오 알림 활성</div>
+            <!-- 권한 허용 후 -->
+            <div id="notifGrantedSection" style="display:none;">
+              <div class="kakao-connected-badge">✅ 알림 활성화됨</div>
               <div id="lastUpdateInfo" class="kakao-last-update">마지막 업데이트: —</div>
-              <div style="display:flex; gap:8px; margin-top:10px;">
-                <button onclick="sendTestKakaoAlert()" class="btn-kakao" style="flex:1; font-size:12px; padding:9px;">테스트 전송</button>
-                <button onclick="kakaoLogout()" class="btn-kakao-logout" style="font-size:12px; padding:9px 12px;">로그아웃</button>
-              </div>
+              <button onclick="sendTestNotification()" class="btn-kakao" style="margin-top:10px; font-size:12px; padding:9px;">테스트 알림 전송</button>
+            </div>
+            <!-- 권한 거부 -->
+            <div id="notifDeniedSection" style="display:none;">
+              <p class="kakao-panel-desc" style="color:#c0392b;">브라우저에서 알림이 차단됐습니다.<br>주소창 옆 🔒 아이콘 → 알림 → 허용으로 변경해주세요.</p>
             </div>
           </div>
         </div>
@@ -1371,95 +1362,68 @@ function lsSet(key, value) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  💬  카카오 연동
+//  🔔  브라우저 알림 (Web Notification API)
 // ══════════════════════════════════════════════════════════
-let kakaoReady    = false;
-let kakaoLoggedIn = false;
+let notifGranted = false;
 
-function initKakaoSDK() {
-  const key = lsGet('kakaoAppKey', '');
-  if (!key) return;
-  try {
-    if (!Kakao.isInitialized()) Kakao.init(key);
-    kakaoReady = true;
-    updateKakaoUI('ready');
-  } catch(e) { console.warn('Kakao SDK init fail', e); }
+function initNotifications() {
+  if (!('Notification' in window)) return;
+  notifGranted = Notification.permission === 'granted';
+  updateNotifUI();
 }
 
-function saveKakaoKey() {
-  const key = document.getElementById('kakaoAppKeyInput').value.trim();
-  if (!key) { showToast('앱 키를 입력해주세요.', 'error'); return; }
-  lsSet('kakaoAppKey', key);
-  try {
-    if (!Kakao.isInitialized()) Kakao.init(key);
-    kakaoReady = true;
-    showToast('앱 키가 저장되었습니다.');
-    updateKakaoUI('ready');
-  } catch(e) {
-    showToast('앱 키가 올바르지 않습니다.', 'error');
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('이 브라우저는 알림을 지원하지 않습니다.', 'error');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  notifGranted = perm === 'granted';
+  updateNotifUI();
+  if (notifGranted) {
+    showToast('알림이 활성화됐습니다! 이제 업데이트 시 자동으로 알림이 옵니다.');
+    document.getElementById('notifSetupPanel').style.display = 'none';
+  } else {
+    showToast('알림 권한이 거부됐습니다.', 'error');
   }
 }
 
-function kakaoLogin() {
-  if (!kakaoReady) { showToast('앱 키를 먼저 설정해주세요.', 'error'); return; }
-  Kakao.Auth.login({
-    success(authObj) {
-      kakaoLoggedIn = true;
-      lsSet('kakaoToken', authObj.access_token);
-      showToast('카카오 로그인 성공!');
-      updateKakaoUI('loggedIn');
-    },
-    fail(err) {
-      showToast('로그인 실패: ' + (err.error_description || err.error), 'error');
-    }
-  });
-}
+function updateNotifUI() {
+  const permSec    = document.getElementById('notifPermSection');
+  const grantedSec = document.getElementById('notifGrantedSection');
+  const deniedSec  = document.getElementById('notifDeniedSection');
+  const bellBtn    = document.getElementById('notifBellBtn');
 
-function kakaoLogout() {
-  Kakao.Auth.logout(() => {
-    kakaoLoggedIn = false;
-    lsSet('kakaoToken', null);
-    showToast('카카오 로그아웃 되었습니다.');
-    updateKakaoUI('ready');
-  });
-}
+  permSec.style.display    = 'none';
+  grantedSec.style.display = 'none';
+  deniedSec.style.display  = 'none';
 
-function updateKakaoUI(state) {
-  const keySec    = document.getElementById('kakaoKeySection');
-  const loginSec  = document.getElementById('kakaoLoginSection');
-  const loggedSec = document.getElementById('kakaoLoggedInSection');
-  const bellBtn   = document.getElementById('kakaoBellBtn');
-
-  keySec.style.display    = 'none';
-  loginSec.style.display  = 'none';
-  loggedSec.style.display = 'none';
-
-  if (state === 'noKey') {
-    keySec.style.display = 'block';
+  if (!('Notification' in window) || Notification.permission === 'denied') {
+    deniedSec.style.display = 'block';
     if (bellBtn) bellBtn.classList.remove('active');
-  } else if (state === 'ready') {
-    loginSec.style.display = 'block';
-    const savedKey = lsGet('kakaoAppKey', '');
-    if (savedKey) document.getElementById('kakaoAppKeyInput').value = savedKey;
-    if (bellBtn) bellBtn.classList.remove('active');
-  } else if (state === 'loggedIn') {
-    loggedSec.style.display = 'block';
-    if (bellBtn) { bellBtn.classList.add('active'); bellBtn.title = '카카오 알림 활성 (클릭: 설정)'; }
+  } else if (notifGranted) {
+    grantedSec.style.display = 'block';
+    if (bellBtn) { bellBtn.classList.add('active'); bellBtn.title = '알림 활성 (클릭: 설정)'; }
     updateLastUpdateInfo();
+  } else {
+    permSec.style.display = 'block';
+    if (bellBtn) bellBtn.classList.remove('active');
   }
 }
 
-function toggleKakaoSetupPanel() {
-  const panel = document.getElementById('kakaoSetupPanel');
+function toggleNotifPanel() {
+  const panel = document.getElementById('notifSetupPanel');
   const isOpen = panel.style.display === 'block';
   panel.style.display = isOpen ? 'none' : 'block';
 }
 
 // 패널 외부 클릭 시 닫기
 document.addEventListener('click', (e) => {
-  const panel  = document.getElementById('kakaoSetupPanel');
-  const bell   = document.getElementById('kakaoBellBtn');
-  if (panel && panel.style.display === 'block' && !panel.contains(e.target) && e.target !== bell && !bell.contains(e.target)) {
+  const panel = document.getElementById('notifSetupPanel');
+  const bell  = document.getElementById('notifBellBtn');
+  if (panel && panel.style.display === 'block'
+      && !panel.contains(e.target)
+      && e.target !== bell && !bell.contains(e.target)) {
     panel.style.display = 'none';
   }
 });
@@ -1470,67 +1434,45 @@ function updateLastUpdateInfo() {
   if (el) el.textContent = last ? `마지막 업데이트: ${last}` : '마지막 업데이트: —';
 }
 
-// 카카오 나에게 보내기
-async function sendKakaoMessage(text) {
-  return new Promise((resolve) => {
-    if (!kakaoLoggedIn) { resolve(false); return; }
-    Kakao.API.request({
-      url : '/v2/api/talk/memo/default/send',
-      data: {
-        template_object: {
-          object_type: 'text',
-          text: text,
-          link: {
-            web_url:        window.location.href,
-            mobile_web_url: window.location.href
-          }
-        }
-      },
-      success() { resolve(true); },
-      fail(e) {
-        console.warn('카카오 메시지 전송 실패', e);
-        // 인증 오류(401/403)면 토큰 만료로 간주 → 재로그인 필요 상태로
-        if (e && (e.status === 401 || e.status === -401)) {
-          kakaoLoggedIn = false;
-          lsSet('kakaoToken', null);
-          updateKakaoUI('ready');
-          showToast('카카오 토큰이 만료됐습니다. 🔔 버튼으로 재로그인해 주세요.', 'error');
-        }
-        resolve(false);
-      }
+// 브라우저 알림 전송
+function sendBrowserNotification(title, body) {
+  if (!notifGranted) return false;
+  try {
+    const n = new Notification(title, {
+      body,
+      icon: 'assets/portrait.png',
+      badge: 'assets/portrait.png',
+      tag: 'edu-monitor-update',   // 같은 tag면 이전 알림 대체
+      requireInteraction: false
     });
-  });
+    n.onclick = () => { window.focus(); n.close(); };
+    return true;
+  } catch(e) {
+    console.warn('알림 전송 실패', e);
+    return false;
+  }
 }
 
 function buildAlertSummary(sources, programs) {
-  const today    = new Date().toLocaleDateString('ko-KR');
-  const urgent   = programs.filter(p => p.상태 === '마감임박');
-  const srcNames = sources.map(s => s.name).join(', ');
+  const today  = new Date().toLocaleDateString('ko-KR');
+  const urgent = programs.filter(p => p.상태 === '마감임박');
 
-  let msg = `📋 제주 디지털·AI 교육 모니터링 [${today}]\n`;
-  msg    += `━━━━━━━━━━━━━━━━━\n`;
-  msg    += `📡 수집 기관 (${sources.length}개): ${srcNames}\n\n`;
-  msg    += `📌 전체 공고: ${programs.length}건\n`;
-  msg    += `🔥 마감 임박: ${urgent.length}건\n`;
+  // 브라우저 알림용 본문 (짧게)
+  let body = `📡 ${sources.length}개 기관 수집 완료\n`;
+  body    += `📌 전체 공고 ${programs.length}건`;
   if (urgent.length > 0) {
-    msg += `\n⚠️ 마감 임박 공고\n`;
-    urgent.forEach(p => {
-      msg += `• ${p.제목}\n  ${p.일시} | ${p.장소}\n`;
+    body += ` · 🔥 마감임박 ${urgent.length}건\n`;
+    urgent.slice(0, 2).forEach(p => {
+      body += `⚠ ${p.제목} (${p.일시})\n`;
     });
   }
-  msg += `\n💡 신규 공고\n`;
-  programs.slice(0, 5).forEach(p => {
-    msg += `• [${p.필터}] ${p.제목}\n  ${p.일시}\n`;
-  });
-  if (programs.length > 5) msg += `  外 ${programs.length - 5}건 추가 공고\n`;
-  msg += `\n🔗 ${window.location.href}`;
-  return msg;
+  return { title: `📋 교육 모니터링 [${today}]`, body };
 }
 
-async function sendTestKakaoAlert() {
-  const msg = buildAlertSummary(monitoredSources, programData);
-  const ok  = await sendKakaoMessage(msg);
-  showToast(ok ? '📱 카카오톡 알림을 전송했습니다!' : '전송 실패 — 로그인 상태를 확인하세요.', ok ? 'success' : 'error');
+function sendTestNotification() {
+  const { title, body } = buildAlertSummary(monitoredSources, programData);
+  const ok = sendBrowserNotification(title, body);
+  showToast(ok ? '🔔 테스트 알림을 전송했습니다!' : '알림 권한을 확인하세요.', ok ? 'success' : 'error');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1696,44 +1638,16 @@ async function triggerLiveUpdate() {
 
   const cnt = monitoredSources.length;
 
-  // 4) 카카오 알림 전송 분기
-  if (kakaoLoggedIn) {
-    // ── 로그인 완료 → 즉시 발송
-    resetBtn();
-    const summary = buildAlertSummary(monitoredSources, programData);
-    const ok      = await sendKakaoMessage(summary);
-    showToast(ok
-      ? `✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 전송!`
-      : `✅ ${cnt}개 기관 수집 완료 (카카오 전송 실패 — 콘솔 확인)`);
-
-  } else if (kakaoReady) {
-    // ── 앱 키 있으나 로그인 안 됨 → 팝업 로그인 후 발송
-    showToast('카카오 로그인 팝업을 확인해주세요...');
-    Kakao.Auth.login({
-      success: async (authObj) => {
-        kakaoLoggedIn = true;
-        lsSet('kakaoToken', authObj.access_token);
-        updateKakaoUI('loggedIn');
-        const summary = buildAlertSummary(monitoredSources, programData);
-        const ok      = await sendKakaoMessage(summary);
-        showToast(ok
-          ? `✅ ${cnt}개 기관 수집 완료 · 📱 카카오 알림 전송!`
-          : `✅ ${cnt}개 기관 수집 완료 (카카오 전송 실패)`);
-        resetBtn();
-      },
-      fail: (err) => {
-        console.warn('카카오 로그인 실패', err);
-        showToast(`✅ ${cnt}개 기관 수집 완료 (카카오 로그인 실패 — 🔔 재시도)`);
-        resetBtn();
-      }
-    });
-
+  // 4) 브라우저 알림 전송
+  resetBtn();
+  if (notifGranted) {
+    const { title, body } = buildAlertSummary(monitoredSources, programData);
+    sendBrowserNotification(title, body);
+    showToast(`✅ ${cnt}개 기관 수집 완료 · 🔔 알림 전송!`);
   } else {
-    // ── 앱 키 미설정 → 패널 자동 열기
-    resetBtn();
-    showToast(`✅ ${cnt}개 기관 수집 완료 · 카카오 알림을 연결하려면 🔔 를 설정하세요`);
-    // 🔔 패널 자동 열기
-    const panel = document.getElementById('kakaoSetupPanel');
+    showToast(`✅ ${cnt}개 기관 수집 완료 · 🔔 버튼으로 알림을 켜보세요`);
+    // 알림 미설정이면 패널 자동 오픈
+    const panel = document.getElementById('notifSetupPanel');
     if (panel) panel.style.display = 'block';
   }
 }
@@ -1939,49 +1853,21 @@ async function checkDailyAutoUpdate() {
   lsSet('lastAutoUpdate', now);
   updateLastUpdateInfo();
 
-  if (kakaoLoggedIn) {
-    const summary = buildAlertSummary(monitoredSources, programData);
-    const ok      = await sendKakaoMessage(summary);
-    showToast(ok
-      ? `📅 오늘 ${monitoredSources.length}개 기관 업데이트 · 📱 카카오 알림 전송!`
-      : `📅 오늘 ${monitoredSources.length}개 기관 업데이트 완료`);
+  const cnt2 = monitoredSources.length;
+  if (notifGranted) {
+    const { title, body } = buildAlertSummary(monitoredSources, programData);
+    sendBrowserNotification(title, body);
+    showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 · 🔔 알림 전송!`);
   } else {
-    // 자동 업데이트 시에는 팝업 강제 열지 않음 (UX 방해)
-    showToast(`📅 오늘 ${monitoredSources.length}개 기관 자동 업데이트 완료`);
+    showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 완료`);
   }
 }
 
 // ── 초기화 ──
 window.onload = async () => {
 
-  // 1) 카카오 SDK 초기화
-  initKakaoSDK();
-
-  // 카카오 UI 초기 상태 결정
-  const savedKey   = lsGet('kakaoAppKey', '');
-  const savedToken = lsGet('kakaoToken', null);
-
-  if (!savedKey) {
-    updateKakaoUI('noKey');
-  } else if (savedToken && kakaoReady) {
-    // 저장된 토큰 복원 후 유효성 즉시 검증
-    Kakao.Auth.setAccessToken(savedToken);
-    Kakao.API.request({
-      url: '/v1/user/me',
-      success: () => {
-        kakaoLoggedIn = true;
-        updateKakaoUI('loggedIn');
-      },
-      fail: () => {
-        // 토큰 만료 → 재로그인 필요
-        lsSet('kakaoToken', null);
-        updateKakaoUI('ready');
-        console.info('[Kakao] 토큰 만료 — 🔔 버튼으로 재로그인 필요');
-      }
-    });
-  } else {
-    updateKakaoUI('ready');
-  }
+  // 1) 브라우저 알림 초기화 (권한 상태 확인)
+  initNotifications();
 
   // 2) 기관 리스트 & 공고 초기 렌더 (localStorage 값 우선)
   renderMonitoredSources();
