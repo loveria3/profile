@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="style.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+        integrity="sha384-TiCUE00h649CAMonG018J1cbYKJ7LuAQB1OZtmVQRRdvMhWwnALPEqmPBiZ3PXJQ"
+        crossorigin="anonymous"></script>
 <style>
 /* ── edu.html 전용 보완 스타일 ── */
 .edu-main {
@@ -348,7 +351,7 @@
   color: var(--muted);
   margin-top: 4px;
 }
-.search-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.search-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; position: relative; }
 .search-input-wrap {
   position: relative;
 }
@@ -893,6 +896,142 @@ footer {
 
 @keyframes spin { from { display:inline-block; transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spinning { display: inline-block; animation: spin 0.8s linear; }
+
+/* ── 카카오 종 버튼 ── */
+.btn-kakao-bell {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  position: relative;
+}
+.btn-kakao-bell:hover { background: #FEE500; border-color: #ddc900; }
+.btn-kakao-bell.active { background: #FEE500; border-color: #ddc900; }
+
+/* ── 카카오 설정 팝오버 ── */
+.kakao-setup-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 300px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px -12px rgba(27,26,24,0.18);
+  padding: 20px;
+  z-index: 50;
+}
+/* search-card / search-actions 기준으로 팝오버 위치 */
+.search-card { position: relative; }
+.kakao-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.kakao-panel-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 2px;
+  transition: color 0.15s;
+}
+.kakao-panel-close:hover { color: #c0392b; }
+.kakao-panel-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.kakao-panel-link {
+  display: block;
+  font-size: 11px;
+  color: var(--accent-warm);
+  text-decoration: none;
+  margin-top: 8px;
+  text-align: center;
+}
+.kakao-panel-link:hover { text-decoration: underline; }
+.kakao-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: 'Pretendard', sans-serif;
+  color: var(--ink);
+  outline: none;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+.kakao-input:focus { border-color: var(--accent); }
+.btn-kakao {
+  width: 100%;
+  padding: 10px;
+  background: #3C1E1E;
+  color: #FEE500;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Pretendard', sans-serif;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+}
+.btn-kakao:hover { background: #2a1010; }
+.btn-kakao:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-kakao-logout {
+  padding: 9px 12px;
+  background: rgba(60,30,30,0.08);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Pretendard', sans-serif;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-kakao-logout:hover { background: rgba(192,57,43,0.08); color: #c0392b; border-color: #f5c6bd; }
+.kakao-connected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a5c30;
+  background: rgba(30,127,60,0.10);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 6px;
+}
+.kakao-last-update {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
 </style>
 </head>
 <body>
@@ -1039,9 +1178,41 @@ footer {
               <input type="text" id="searchInput" oninput="handleSearch(this.value)"
                      placeholder="교육명 검색..." class="search-input">
             </div>
+            <button id="kakaoBellBtn" onclick="toggleKakaoSetupPanel()" class="btn-kakao-bell"
+                    aria-label="카카오 알림 설정" title="카카오 알림 설정">
+              <span id="kakaoBellIcon">🔔</span>
+            </button>
             <button id="liveRefreshBtn" onclick="triggerLiveUpdate()" class="btn-refresh">
               <span id="refreshIcon">↺</span> 실시간 수집 업데이트
             </button>
+          </div>
+          <!-- 카카오 설정 팝오버 -->
+          <div id="kakaoSetupPanel" class="kakao-setup-panel" style="display:none;">
+            <div class="kakao-panel-head">
+              <span>💬 카카오 알림 설정</span>
+              <button onclick="toggleKakaoSetupPanel()" class="kakao-panel-close">✕</button>
+            </div>
+            <div id="kakaoKeySection">
+              <p class="kakao-panel-desc">JavaScript 앱 키를 입력하면 업데이트 시 자동으로 나에게 요약을 보내드립니다.</p>
+              <input type="text" id="kakaoAppKeyInput" class="kakao-input"
+                     placeholder="카카오 JavaScript 앱 키">
+              <button onclick="saveKakaoKey()" class="btn-kakao">저장 →</button>
+              <a href="https://developers.kakao.com/console/app" target="_blank" class="kakao-panel-link">
+                앱 키 발급 방법 ↗
+              </a>
+            </div>
+            <div id="kakaoLoginSection" style="display:none;">
+              <p class="kakao-panel-desc">카카오 로그인 후 자동 알림이 활성화됩니다.</p>
+              <button onclick="kakaoLogin()" class="btn-kakao">🔑 카카오 로그인</button>
+            </div>
+            <div id="kakaoLoggedInSection" style="display:none;">
+              <div class="kakao-connected-badge">✅ 카카오 알림 활성</div>
+              <div id="lastUpdateInfo" class="kakao-last-update">마지막 업데이트: —</div>
+              <div style="display:flex; gap:8px; margin-top:10px;">
+                <button onclick="sendTestKakaoAlert()" class="btn-kakao" style="flex:1; font-size:12px; padding:9px;">테스트 전송</button>
+                <button onclick="kakaoLogout()" class="btn-kakao-logout" style="font-size:12px; padding:9px 12px;">로그아웃</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="filter-row" id="filterContainer"></div>
@@ -1184,27 +1355,195 @@ footer {
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  ⚙️  Google Sheets 연동 설정
-//  Apps Script 배포 후 아래 URL을 입력하세요
-//  (입력 전에는 샘플 데이터로 동작합니다)
+//  ⚙️  설정
 // ══════════════════════════════════════════════════════════
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
 
-// ── Google Sheets 연동 함수 ──
+// ══════════════════════════════════════════════════════════
+//  📦  localStorage 유틸
+// ══════════════════════════════════════════════════════════
+function lsGet(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e) { return fallback; }
+}
+function lsSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+//  💬  카카오 연동
+// ══════════════════════════════════════════════════════════
+let kakaoReady    = false;
+let kakaoLoggedIn = false;
+
+function initKakaoSDK() {
+  const key = lsGet('kakaoAppKey', '');
+  if (!key) return;
+  try {
+    if (!Kakao.isInitialized()) Kakao.init(key);
+    kakaoReady = true;
+    updateKakaoUI('ready');
+  } catch(e) { console.warn('Kakao SDK init fail', e); }
+}
+
+function saveKakaoKey() {
+  const key = document.getElementById('kakaoAppKeyInput').value.trim();
+  if (!key) { showToast('앱 키를 입력해주세요.', 'error'); return; }
+  lsSet('kakaoAppKey', key);
+  try {
+    if (!Kakao.isInitialized()) Kakao.init(key);
+    kakaoReady = true;
+    showToast('앱 키가 저장되었습니다.');
+    updateKakaoUI('ready');
+  } catch(e) {
+    showToast('앱 키가 올바르지 않습니다.', 'error');
+  }
+}
+
+function kakaoLogin() {
+  if (!kakaoReady) { showToast('앱 키를 먼저 설정해주세요.', 'error'); return; }
+  Kakao.Auth.login({
+    success(authObj) {
+      kakaoLoggedIn = true;
+      lsSet('kakaoToken', authObj.access_token);
+      showToast('카카오 로그인 성공!');
+      updateKakaoUI('loggedIn');
+    },
+    fail(err) {
+      showToast('로그인 실패: ' + (err.error_description || err.error), 'error');
+    }
+  });
+}
+
+function kakaoLogout() {
+  Kakao.Auth.logout(() => {
+    kakaoLoggedIn = false;
+    lsSet('kakaoToken', null);
+    showToast('카카오 로그아웃 되었습니다.');
+    updateKakaoUI('ready');
+  });
+}
+
+function updateKakaoUI(state) {
+  const keySec    = document.getElementById('kakaoKeySection');
+  const loginSec  = document.getElementById('kakaoLoginSection');
+  const loggedSec = document.getElementById('kakaoLoggedInSection');
+  const bellBtn   = document.getElementById('kakaoBellBtn');
+
+  keySec.style.display    = 'none';
+  loginSec.style.display  = 'none';
+  loggedSec.style.display = 'none';
+
+  if (state === 'noKey') {
+    keySec.style.display = 'block';
+    if (bellBtn) bellBtn.classList.remove('active');
+  } else if (state === 'ready') {
+    loginSec.style.display = 'block';
+    const savedKey = lsGet('kakaoAppKey', '');
+    if (savedKey) document.getElementById('kakaoAppKeyInput').value = savedKey;
+    if (bellBtn) bellBtn.classList.remove('active');
+  } else if (state === 'loggedIn') {
+    loggedSec.style.display = 'block';
+    if (bellBtn) { bellBtn.classList.add('active'); bellBtn.title = '카카오 알림 활성 (클릭: 설정)'; }
+    updateLastUpdateInfo();
+  }
+}
+
+function toggleKakaoSetupPanel() {
+  const panel = document.getElementById('kakaoSetupPanel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+}
+
+// 패널 외부 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  const panel  = document.getElementById('kakaoSetupPanel');
+  const bell   = document.getElementById('kakaoBellBtn');
+  if (panel && panel.style.display === 'block' && !panel.contains(e.target) && e.target !== bell && !bell.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
+
+function updateLastUpdateInfo() {
+  const last = lsGet('lastAutoUpdate', null);
+  const el   = document.getElementById('lastUpdateInfo');
+  if (el) el.textContent = last ? `마지막 업데이트: ${last}` : '마지막 업데이트: —';
+}
+
+// 카카오 나에게 보내기
+async function sendKakaoMessage(text) {
+  return new Promise((resolve) => {
+    if (!kakaoLoggedIn) { resolve(false); return; }
+    Kakao.API.request({
+      url : '/v2/api/talk/memo/default/send',
+      data: {
+        template_object: {
+          object_type: 'text',
+          text: text,
+          link: {
+            web_url:        window.location.href,
+            mobile_web_url: window.location.href
+          }
+        }
+      },
+      success() { resolve(true); },
+      fail(e)   { console.warn('카카오 메시지 전송 실패', e); resolve(false); }
+    });
+  });
+}
+
+function buildAlertSummary(sources, programs) {
+  const today    = new Date().toLocaleDateString('ko-KR');
+  const urgent   = programs.filter(p => p.상태 === '마감임박');
+  const srcNames = sources.map(s => s.name).join(', ');
+
+  let msg = `📋 제주 디지털·AI 교육 모니터링 [${today}]\n`;
+  msg    += `━━━━━━━━━━━━━━━━━\n`;
+  msg    += `📡 수집 기관 (${sources.length}개): ${srcNames}\n\n`;
+  msg    += `📌 전체 공고: ${programs.length}건\n`;
+  msg    += `🔥 마감 임박: ${urgent.length}건\n`;
+  if (urgent.length > 0) {
+    msg += `\n⚠️ 마감 임박 공고\n`;
+    urgent.forEach(p => {
+      msg += `• ${p.제목}\n  ${p.일시} | ${p.장소}\n`;
+    });
+  }
+  msg += `\n💡 신규 공고\n`;
+  programs.slice(0, 5).forEach(p => {
+    msg += `• [${p.필터}] ${p.제목}\n  ${p.일시}\n`;
+  });
+  if (programs.length > 5) msg += `  外 ${programs.length - 5}건 추가 공고\n`;
+  msg += `\n🔗 ${window.location.href}`;
+  return msg;
+}
+
+async function sendTestKakaoAlert() {
+  const msg = buildAlertSummary(monitoredSources, programData);
+  const ok  = await sendKakaoMessage(msg);
+  showToast(ok ? '📱 카카오톡 알림을 전송했습니다!' : '전송 실패 — 로그인 상태를 확인하세요.', ok ? 'success' : 'error');
+}
+
+// ══════════════════════════════════════════════════════════
+//  🗄️  Google Sheets 연동
+// ══════════════════════════════════════════════════════════
 const isConfigured = () => APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
 
 async function loadFromSheets() {
   if (!isConfigured()) return;
   try {
-    // 수집기관 로드
     const srcRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=수집기관`);
     const srcData = await srcRes.json();
     if (srcData.success && srcData.data && srcData.data.length > 1) {
-      monitoredSources = srcData.data.slice(1)
+      const sheetSrc = srcData.data.slice(1)
         .filter(r => r[0])
         .map(r => ({ id: r[0], name: r[1], url: r[2], icon: r[3], type: r[4] }));
+      // 시트 데이터 + localStorage 사용자 추가 기관 병합
+      const userAdded = lsGet('userAddedSources', []);
+      const sheetIds  = new Set(sheetSrc.map(s => String(s.id)));
+      const extras    = userAdded.filter(s => !sheetIds.has(String(s.id)));
+      monitoredSources = [...sheetSrc, ...extras];
+      lsSet('monitoredSources', monitoredSources);
     }
-    // 공고목록 로드
     const prgRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=공고목록`);
     const prgData = await prgRes.json();
     if (prgData.success && prgData.data && prgData.data.length > 1) {
@@ -1214,40 +1553,44 @@ async function loadFromSheets() {
           id: r[0], 제목: r[1], 대상: r[2], 필터: r[3],
           일시: r[4], 장소: r[5], 주요내용: r[6], 신청링크: r[7], 상태: r[8]
         }));
+      lsSet('programData', programData);
     }
     showToast('구글 시트에서 최신 데이터를 불러왔습니다.');
   } catch (e) {
-    console.warn('Google Sheets 연결 실패, 샘플 데이터로 동작합니다.', e);
+    console.warn('Google Sheets 연결 실패, 로컬 데이터로 동작합니다.', e);
   }
 }
 
 async function saveToSheets(sheetName, headers, rows) {
   if (!isConfigured()) return;
   try {
-    // no-cors: 응답은 못 읽지만 저장은 정상 처리됨
     await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       body: JSON.stringify({ sheet: sheetName, data: [headers, ...rows] })
     });
-  } catch (e) {
-    console.warn('저장 실패:', e);
-  }
+  } catch (e) { console.warn('저장 실패:', e); }
 }
 
 function saveSources() {
+  lsSet('monitoredSources', monitoredSources);
+  // 사용자가 직접 추가한 기관만 별도 보관 (시트와 구분)
+  const userAdded = monitoredSources.filter(s => s.userAdded);
+  lsSet('userAddedSources', userAdded);
   saveToSheets('수집기관', ['id', 'name', 'url', 'icon', 'type'],
     monitoredSources.map(s => [s.id, s.name, s.url, s.icon, s.type]));
 }
 
 function savePrograms() {
+  lsSet('programData', programData);
   saveToSheets('공고목록',
     ['id', '제목', '대상', '필터', '일시', '장소', '주요내용', '신청링크', '상태'],
     programData.map(p => [p.id, p.제목, p.대상, p.필터, p.일시, p.장소, p.주요내용, p.신청링크, p.상태]));
 }
 
-// ── 상태 ──
-let monitoredSources = [
+// ══════════════════════════════════════════════════════════
+//  📊  기본 데이터 (localStorage 없을 때 초기값)
+// ══════════════════════════════════════════════════════════
+const DEFAULT_SOURCES = [
   { id: 1, name: "제주도청 공지",   url: "https://www.jeju.go.kr",    icon: "🏢", type: "행정" },
   { id: 2, name: "제주다모아교육",  url: "https://damoa.jje.go.kr",   icon: "🎓", type: "통합" },
   { id: 3, name: "여성인력센터",    url: "https://www.jejuwoman.kr",  icon: "👩", type: "여성" },
@@ -1257,12 +1600,15 @@ let monitoredSources = [
   { id: 7, name: "제주도 교육청",   url: "https://www.jje.go.kr",     icon: "🏫", type: "교육청"},
   { id: 8, name: "제주테크노파크",  url: "https://www.jejutp.or.kr",  icon: "💻", type: "ICT"  }
 ];
-
-let programData = [
-  { id: 1, 제목: "[제주콘텐츠진흥원] AI 활용 1인 콘텐츠 제작", 대상: "일반도민", 필터: "일반", 일시: "~ 05.28", 장소: "제주콘텐츠진흥원", 주요내용: "ChatGPT 기반 기획 및 미드저니 이미지 생성 실습.", 신청링크: "#", 상태: "마감임박" },
-  { id: 2, 제목: "[모두의연구소] 아이펠 AI 리서처 캠프",       대상: "취업희망자", 필터: "개발자", 일시: "~ 06.26", 장소: "온라인/제주시",       주요내용: "딥러닝 프로젝트 기반 리서처 양성 과정.", 신청링크: "#", 상태: "진행중" },
-  { id: 3, 제목: "[여성센터] AI 마케팅 실무 전문가",          대상: "경력여성",  필터: "여성",  일시: "~ 06.05", 장소: "제주여성인력개발센터", 주요내용: "생성형 AI를 활용한 블로그 마케팅 고도화.", 신청링크: "#", 상태: "진행중" }
+const DEFAULT_PROGRAMS = [
+  { id: 1, 제목: "[제주콘텐츠진흥원] AI 활용 1인 콘텐츠 제작", 대상: "일반도민",  필터: "일반",  일시: "~ 05.28", 장소: "제주콘텐츠진흥원",    주요내용: "ChatGPT 기반 기획 및 미드저니 이미지 생성 실습.", 신청링크: "#", 상태: "마감임박" },
+  { id: 2, 제목: "[모두의연구소] 아이펠 AI 리서처 캠프",        대상: "취업희망자", 필터: "개발자", 일시: "~ 06.26", 장소: "온라인/제주시",       주요내용: "딥러닝 프로젝트 기반 리서처 양성 과정.", 신청링크: "#", 상태: "진행중" },
+  { id: 3, 제목: "[여성센터] AI 마케팅 실무 전문가",           대상: "경력여성",   필터: "여성",  일시: "~ 06.05", 장소: "제주여성인력개발센터", 주요내용: "생성형 AI를 활용한 블로그 마케팅 고도화.", 신청링크: "#", 상태: "진행중" }
 ];
+
+// localStorage에서 불러오기 (없으면 기본값)
+let monitoredSources = lsGet('monitoredSources', DEFAULT_SOURCES);
+let programData      = lsGet('programData',      DEFAULT_PROGRAMS);
 
 const tutorGuides = [
   { tag: "입문", title: "시니어 연계",  content: "디지털 배움터 1:1 도우미 과정으로 먼저 연계하세요." },
@@ -1301,21 +1647,57 @@ function renderMonitoredSources() {
 }
 
 // ── 실시간 업데이트 ──
-function triggerLiveUpdate() {
+async function triggerLiveUpdate() {
   const btn  = document.getElementById('liveRefreshBtn');
   const icon = document.getElementById('refreshIcon');
-  btn.disabled = true;
-  icon.classList.add('spinning');
+  btn.disabled      = true;
   btn.style.opacity = '0.75';
+  icon.classList.add('spinning');
 
-  setTimeout(() => {
-    renderPrograms();
-    updateChart();
-    showToast("8개 기관의 실시간 공고 수집이 완료되었습니다.");
-    btn.disabled = false;
-    icon.classList.remove('spinning');
-    btn.style.opacity = '1';
-  }, 1200);
+  // 1) 구글 시트에서 최신 데이터 재로드
+  await loadFromSheets();
+
+  // 2) 화면 갱신
+  renderMonitoredSources();
+  renderPrograms();
+  updateChart();
+
+  // 3) 마지막 업데이트 시각 저장
+  const now = new Date().toLocaleString('ko-KR');
+  lsSet('lastAutoUpdate', now);
+  updateLastUpdateInfo();
+
+  // 4) 카카오 알림 전송
+  if (kakaoLoggedIn) {
+    const summary = buildAlertSummary(monitoredSources, programData);
+    const ok      = await sendKakaoMessage(summary);
+    showToast(ok
+      ? `✅ ${monitoredSources.length}개 기관 수집 완료 · 카카오 알림 전송!`
+      : `✅ ${monitoredSources.length}개 기관 수집 완료 (카카오 전송 실패)`);
+  } else if (kakaoReady) {
+    // 앱 키는 있으나 로그인 안 된 경우 → 자동 로그인 시도 후 전송
+    showToast('카카오 로그인 중...');
+    Kakao.Auth.login({
+      success: async (authObj) => {
+        kakaoLoggedIn = true;
+        lsSet('kakaoToken', authObj.access_token);
+        updateKakaoUI('loggedIn');
+        const summary = buildAlertSummary(monitoredSources, programData);
+        const ok      = await sendKakaoMessage(summary);
+        showToast(ok ? '✅ 수집 완료 · 카카오 알림 전송!' : '✅ 수집 완료 (알림 전송 실패)');
+      },
+      fail: () => {
+        showToast(`✅ ${monitoredSources.length}개 기관 수집 완료 (카카오 로그인 필요 🔔)`);
+      }
+    });
+  } else {
+    // 미설정 상태
+    showToast(`✅ ${monitoredSources.length}개 기관 수집 완료 · 🔔 버튼으로 카카오 알림 연결 가능`);
+  }
+
+  btn.disabled      = false;
+  btn.style.opacity = '1';
+  icon.classList.remove('spinning');
 }
 
 // ── 공고 카드 렌더링 ──
@@ -1379,20 +1761,26 @@ function toggleAddSourceForm(show) {
   el.classList.toggle('open', show);
 }
 function handleAddSourceSubmit() {
-  const name = document.getElementById('sourceName').value;
-  const url  = document.getElementById('sourceUrl').value;
+  const name = document.getElementById('sourceName').value.trim();
+  const url  = document.getElementById('sourceUrl').value.trim();
   if (!name || !url) return showToast("정보를 모두 입력해주세요.", "error");
-  monitoredSources.push({
+  const newSource = {
     id: Date.now(),
     name,
     url,
-    icon: document.getElementById('sourceIcon').value || '📍',
-    type: document.getElementById('sourceType').value || '기타'
-  });
+    icon:      document.getElementById('sourceIcon').value || '📍',
+    type:      document.getElementById('sourceType').value || '기타',
+    userAdded: true   // 사용자가 직접 추가한 기관 표시
+  };
+  monitoredSources.push(newSource);
   renderMonitoredSources();
   saveSources();
+  // 입력 필드 초기화
+  ['sourceIcon','sourceType','sourceName','sourceUrl'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
   toggleAddSourceForm(false);
-  showToast("새 수집 기관이 등록되었습니다.");
+  showToast("새 수집 기관이 등록되었습니다. 다음 업데이트 시 함께 검색합니다.");
 }
 
 function toggleAddModal(show) {
@@ -1492,14 +1880,76 @@ function updateChart() {
   targetChart.update();
 }
 
+// ══════════════════════════════════════════════════════════
+//  🌅  매일 자동 업데이트 체크
+// ══════════════════════════════════════════════════════════
+async function checkDailyAutoUpdate() {
+  const todayStr  = new Date().toLocaleDateString('ko-KR');
+  const lastDate  = lsGet('lastAutoUpdateDate', '');
+  if (lastDate === todayStr) return;   // 오늘 이미 실행됨
+
+  // 오늘 처음 로드 → 자동 업데이트 실행
+  console.log('[AutoUpdate] 오늘 첫 로드 - 자동 업데이트 실행');
+  lsSet('lastAutoUpdateDate', todayStr);
+
+  await loadFromSheets();
+  renderMonitoredSources();
+  renderPrograms();
+  updateChart();
+
+  const now = new Date().toLocaleString('ko-KR');
+  lsSet('lastAutoUpdate', now);
+  updateLastUpdateInfo();
+
+  if (kakaoLoggedIn) {
+    const summary = buildAlertSummary(monitoredSources, programData);
+    const ok      = await sendKakaoMessage(summary);
+    showToast(ok ? '📅 오늘 공고 업데이트 · 카카오 알림 전송 완료!' : '📅 오늘 공고 업데이트 완료');
+  } else if (kakaoReady) {
+    // 앱 키 있으면 조용히 로그인 시도
+    Kakao.Auth.login({
+      success: async (authObj) => {
+        kakaoLoggedIn = true;
+        lsSet('kakaoToken', authObj.access_token);
+        updateKakaoUI('loggedIn');
+        const summary = buildAlertSummary(monitoredSources, programData);
+        await sendKakaoMessage(summary);
+        showToast('📅 오늘 공고 업데이트 · 카카오 알림 전송 완료!');
+      },
+      fail: () => showToast('📅 오늘 공고 자동 업데이트 완료.')
+    });
+  } else {
+    showToast('📅 오늘 공고 자동 업데이트 완료.');
+  }
+}
+
 // ── 초기화 ──
 window.onload = async () => {
-  await loadFromSheets();
+
+  // 1) 카카오 SDK 초기화
+  initKakaoSDK();
+
+  // 카카오 UI 초기 상태 결정
+  const savedKey   = lsGet('kakaoAppKey', '');
+  const savedToken = lsGet('kakaoToken', null);
+  if (!savedKey) {
+    updateKakaoUI('noKey');
+  } else if (savedToken && kakaoReady) {
+    // 이전 토큰이 있으면 세션 복원 시도
+    Kakao.Auth.setAccessToken(savedToken);
+    kakaoLoggedIn = true;
+    updateKakaoUI('loggedIn');
+  } else {
+    updateKakaoUI('ready');
+  }
+
+  // 2) 기관 리스트 & 공고 초기 렌더 (localStorage 값 우선)
   renderMonitoredSources();
   renderPrograms();
   renderFilters();
   initChart();
 
+  // 3) 튜터 가이드
   const guideGrid = document.getElementById('tutorGuideGrid');
   tutorGuides.forEach(g => {
     guideGrid.innerHTML += `
@@ -1510,7 +1960,13 @@ window.onload = async () => {
       </div>
     `;
   });
+
+  // 4) 매일 자동 업데이트 체크 (오늘 첫 로드 시에만 실행)
+  await checkDailyAutoUpdate();
 };
+
+// ── 패널 외부 클릭 닫기 (DOMContentLoaded 이후 등록) ──
+// (이미 위에서 document.addEventListener로 등록됨)
 
 // ── 햄버거 메뉴 ──
 const navToggle = document.getElementById('navToggle');
