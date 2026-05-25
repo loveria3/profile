@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍜 초성 먹방 퀴즈</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7C3AED;
+      --pink: #EC4899;
+      --orange: #F97316;
+      --yellow: #FBBF24;
+      --green: #10B981;
+      --bg: #F0F4FF;
+      --card: #FFFFFF;
+      --text: #1E1B4B;
+      --muted: #6B7280;
+      --border: #E5E7EB;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+    }
+    .top-bar h1 { font-size: 1.35rem; font-weight: 900; }
+    .top-bar span { font-size: 0.82rem; opacity: 0.88; }
+
+    /* ── SCREENS ── */
+    .screen { display: none; animation: fadeUp 0.4s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      margin-bottom: 18px;
+    }
+
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 1rem; font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer; border: none;
+      transition: all 0.22s;
+    }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      color: white;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      width: 100%; font-size: 1.08rem; padding: 16px;
+    }
+    .btn-primary:hover { box-shadow: 0 10px 30px rgba(124,58,237,0.5); transform: translateY(-2px); }
+
+    .btn-outline {
+      background: white; color: var(--purple);
+      border: 2px solid #E9D5FF; flex: 1;
+    }
+    .btn-outline:hover { background: #F5F3FF; }
+
+    .btn-green {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: white; box-shadow: 0 6px 20px rgba(16,185,129,0.3);
+      width: 100%; font-size: 1.08rem; padding: 16px;
+    }
+    .btn-green:hover { box-shadow: 0 10px 30px rgba(16,185,129,0.4); transform: translateY(-2px); }
+
+    .btn-orange {
+      background: linear-gradient(135deg, #F97316, #EF4444);
+      color: white; box-shadow: 0 6px 20px rgba(249,115,22,0.3);
+      width: 100%; font-size: 1.15rem; padding: 17px;
+    }
+    .btn-orange:hover { box-shadow: 0 10px 30px rgba(249,115,22,0.4); transform: translateY(-2px); }
+
+    /* 카운트다운 시작 버튼 */
+    .btn-countdown {
+      background: linear-gradient(135deg, #FBBF24, #F97316);
+      color: white; box-shadow: 0 8px 24px rgba(251,191,36,0.45);
+      width: 100%; font-size: 1.25rem; padding: 20px;
+      border-radius: 20px;
+      animation: pulseShadow 1.5s ease-in-out infinite;
+    }
+    .btn-countdown:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(251,191,36,0.6); }
+    @keyframes pulseShadow {
+      0%,100% { box-shadow: 0 8px 24px rgba(251,191,36,0.45); }
+      50%      { box-shadow: 0 8px 36px rgba(249,115,22,0.65); }
+    }
+
+    .btn-row { display: flex; gap: 10px; }
+
+    /* ── PREVIEW LIST ── */
+    .preview-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .preview-header h3 { font-size: 0.98rem; font-weight: 700; }
+    .badge {
+      background: #EDE9FE; color: var(--purple);
+      border-radius: 20px; padding: 3px 12px;
+      font-size: 0.78rem; font-weight: 700;
+    }
+
+    .preview-list { list-style: none; }
+
+    .preview-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px; margin-bottom: 8px;
+      border: 1px solid var(--border);
+      background: #FAFAFA;
+      cursor: pointer; user-select: none;
+      transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .preview-item:hover { border-color: #C4B5FD; background: #F5F3FF; }
+
+    /* 마스킹 오버레이 */
+    .preview-item .mask-overlay {
+      position: absolute; inset: 0;
+      background: #374151;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px;
+      color: #9CA3AF;
+      font-size: 0.88rem; font-weight: 700;
+      transition: all 0.35s ease;
+      z-index: 2;
+    }
+    .preview-item .mask-overlay .lock-num {
+      background: rgba(255,255,255,0.12);
+      color: white; border-radius: 50%;
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 900;
+    }
+    .preview-item.revealed .mask-overlay {
+      opacity: 0; pointer-events: none;
+    }
+
+    /* 아이템 내용 */
+    .item-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .item-consonants {
+      font-size: 1.15rem; font-weight: 900;
+      color: var(--purple); flex: 1; letter-spacing: 0.18rem;
+    }
+    .item-answer { font-size: 0.9rem; color: var(--muted); }
+
+    .cat-badge {
+      font-size: 0.7rem; padding: 2px 9px;
+      border-radius: 10px; font-weight: 700; white-space: nowrap;
+    }
+    .cat-라면 { background: #FEF3C7; color: #D97706; }
+    .cat-음식 { background: #D1FAE5; color: #059669; }
+
+    /* ── PROGRESS ── */
+    .prog-wrap {
+      background: #E9D5FF; border-radius: 10px;
+      height: 10px; margin-bottom: 18px; overflow: hidden;
+    }
+    .prog-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #7C3AED, #EC4899);
+      border-radius: 10px; transition: width 0.5s ease;
+    }
+
+    /* ── QUIZ HEADER ── */
+    .quiz-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .q-num { font-size: 0.9rem; font-weight: 700; color: var(--purple); }
+
+    /* ── CONSONANT DISPLAY ── */
+    .consonant-stage {
+      text-align: center; padding: 28px 0 18px;
+    }
+    .hint-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+    .consonants-big {
+      font-size: 5rem; font-weight: 900;
+      background: linear-gradient(135deg, #7C3AED, #EC4899, #F97316);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.55rem; display: block;
+      animation: bounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes bounceIn {
+      from { opacity: 0; transform: scale(0.5); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── COUNTDOWN START BUTTON AREA ── */
+    #start-cd-area { padding: 10px 0 6px; }
+
+    /* ── COUNTDOWN RING ── */
+    .ring-wrap {
+      display: flex; flex-direction: column;
+      align-items: center; padding: 16px 0 8px;
+    }
+    .ring-box { position: relative; width: 110px; height: 110px; }
+    .ring-box svg { transform: rotate(-90deg); }
+    .ring-bg    { fill: none; stroke: #E9D5FF; stroke-width: 10; }
+    .ring-fill  {
+      fill: none; stroke-width: 10; stroke-linecap: round;
+      stroke: url(#rg); stroke-dasharray: 283; stroke-dashoffset: 0;
+    }
+    .ring-num {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 2.4rem; font-weight: 900; color: var(--purple);
+    }
+    .ring-label { margin-top: 8px; font-size: 0.85rem; color: var(--muted); font-weight: 700; }
+
+    /* ── ANSWER REVEAL ── */
+    .answer-reveal {
+      animation: revealPop 0.55s cubic-bezier(0.34,1.56,0.64,1);
+      padding: 8px 0 18px;
+    }
+    @keyframes revealPop {
+      from { opacity: 0; transform: scale(0.65) rotate(-4deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    .reveal-small-con {
+      text-align: center;
+      font-size: 1.15rem; font-weight: 900;
+      color: #C4B5FD; letter-spacing: 0.28rem; margin-bottom: 12px;
+    }
+
+    .reveal-box {
+      display: flex; align-items: center; gap: 22px;
+      background: linear-gradient(135deg, #F5F3FF, #FDF2F8);
+      border: 2px solid #E9D5FF;
+      border-radius: 20px; padding: 22px;
+    }
+    .reveal-text { flex: 1; }
+    .reveal-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--purple);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+    }
+    .reveal-answer {
+      font-size: 2.8rem; font-weight: 900;
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1.1;
+    }
+    .reveal-cat { margin-top: 8px; }
+
+    /* 이미지 영역 */
+    .reveal-img-box {
+      width: 170px; height: 155px; flex-shrink: 0;
+      border-radius: 16px; overflow: hidden;
+      border: 3px solid white;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.18);
+      background: #F3F4F6;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .reveal-img-box img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .emoji-fb {
+      font-size: 4rem; display: none;
+      position: absolute;
+    }
+
+    .next-wrap { margin-top: 18px; }
+
+    /* ── ALERT ── */
+    .alert {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+      border: 1px solid #FCD34D;
+      border-radius: 12px; padding: 11px 15px;
+      font-size: 0.83rem; color: #92400E;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1E1B4B; color: white;
+      padding: 11px 22px; border-radius: 50px;
+      font-size: 0.9rem; font-weight: 700;
+      transition: transform 0.3s; z-index: 9999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── END ── */
+    .end-wrap { text-align: center; padding: 38px 24px; }
+    .end-trophy {
+      font-size: 5rem; display: block; margin-bottom: 14px;
+      animation: trophySpin 0.9s ease;
+    }
+    @keyframes trophySpin {
+      from { transform: rotate(-20deg) scale(0.4); opacity: 0; }
+      to   { transform: rotate(0) scale(1); opacity: 1; }
+    }
+    .end-title {
+      font-size: 2.1rem; font-weight: 900;
+      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 12px;
+    }
+    .end-sub { font-size: 0.98rem; color: var(--muted); line-height: 1.75; margin-bottom: 28px; }
+
+    /* ── CONFETTI ── */
+    .conf {
+      position: fixed; top: -20px; pointer-events: none;
+      z-index: 9999; animation: confFall linear forwards;
+    }
+    @keyframes confFall {
+      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .step-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .consonants-big { font-size: 3.5rem; }
+      .reveal-answer { font-size: 2.1rem; }
+      .reveal-img-box { width: 120px; height: 110px; }
+      .reveal-box { gap: 14px; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <h1>🍜 초성 먹방 퀴즈</h1>
+  <span>아이스브레이킹 에디션 | 20개 중 🎲 <strong>10문제</strong></span>
+</div>
+
+<!-- ═══════════════════════════
+     SCREEN 1: SETUP
+═══════════════════════════ -->
+<div id="setup-screen" class="screen active">
+  <div class="container">
+
+    <!-- 미리보기 영역 — 페이지 로드 시 자동 표시 -->
+    <div id="preview-area" style="margin-top:4px;">
+<div class="card">
+        <div class="preview-header">
+          <h3>📋 랜덤 선택된 10문제</h3>
+          <span class="badge">10문제</span>
+        </div>
+        <ul class="preview-list" id="preview-list"></ul>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-outline" onclick="copyList()">📋 목록 복사</button>
+          <button class="btn btn-outline" onclick="reshuffleRandom()">🔄 다시 뽑기</button>
+        </div>
+      </div>
+      <button class="btn btn-orange" onclick="startGame()">🚀 게임 시작!</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     SCREEN 2: QUIZ
+═══════════════════════════ -->
+<div id="quiz-screen" class="screen">
+  <div class="container">
+    <div class="card">
+
+      <div class="quiz-header">
+        <span class="q-num" id="q-num">🤔 문제 1 / 10</span>
+        <span class="cat-badge" id="q-cat"></span>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar" id="prog-bar" style="width:0%"></div>
+      </div>
+
+      <!-- 문제 상태 -->
+      <div id="q-state">
+        <div class="consonant-stage">
+          <p class="hint-label">🔤 초성을 보고 음식 이름을 맞혀보세요!</p>
+          <span class="consonants-big" id="q-con"></span>
+        </div>
+
+        <!-- ① 카운트다운 시작 버튼 (기본 표시) -->
+        <div id="start-cd-area">
+          <button class="btn btn-countdown" id="start-cd-btn" onclick="onClickStartCountdown()">
+            ⏰ 카운트다운 시작!
+          </button>
+        </div>
+
+        <!-- ② 카운트다운 링 (버튼 클릭 후 표시) -->
+        <div class="ring-wrap" id="ring-wrap" style="display:none;">
+          <div class="ring-box">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <defs>
+                <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%"   stop-color="#7C3AED"/>
+                  <stop offset="100%" stop-color="#EC4899"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg"   cx="55" cy="55" r="45"/>
+              <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="45"/>
+            </svg>
+            <div class="ring-num" id="ring-num">3</div>
+          </div>
+          <p class="ring-label">⏰ 3초 후 정답 공개!</p>
+        </div>
+      </div>
+
+      <!-- 정답 상태 -->
+      <div id="a-state" style="display:none;">
+        <div class="answer-reveal">
+          <div class="reveal-small-con" id="a-con"></div>
+          <div class="reveal-box">
+            <div class="reveal-text">
+              <div class="reveal-label">🎉 정답 공개!</div>
+              <div class="reveal-answer" id="a-answer"></div>
+              <div class="reveal-cat">
+                <span class="cat-badge" id="a-cat"></span>
+              </div>
+            </div>
+            <div class="reveal-img-box">
+              <img id="a-img" src="" alt=""
+                onerror="this.style.display='none';document.getElementById('a-emoji').style.display='flex';" />
+              <div class="emoji-fb" id="a-emoji"
+                style="display:none; font-size:4rem; width:100%; height:100%; align-items:center; justify-content:center;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="next-wrap">
+          <button class="btn btn-green" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     SCREEN 3: END
+═══════════════════════════ -->
+<div id="end-screen" class="screen">
+  <div class="container">
+    <div class="card end-wrap">
+      <span class="end-trophy">🏆</span>
+      <div class="end-title">10문제 완료!</div>
+      <p class="end-sub">
+        오늘 아이스브레이킹 성공! 🎉<br>
+        웃음 가득한 수업이 되길 바라요 😄<br>
+        🎊 수고하셨어요! 🎊
+      </p>
+      <button class="btn btn-primary" onclick="backToSetup()">🔄 처음으로</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">📋 복사 완료!</div>
+
+<script>
+/* ──────────────────────────────────────────────────
+   데이터 — imgs: 여러 URL을 순서대로 시도, 모두 실패 시 이모지
+────────────────────────────────────────────────── */
+const ALL = [
+  // ── 라면 10 ──
+  {
+    con: 'ㅅㄹㅁ', ans: '신라면', cat: '라면', emoji: '🍜',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-ramen-nongshim-shin-noodle-soup-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-ramen-noodle-nongshim-shin-ramyeon-685x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅈㄹㅁ', ans: '진라면', cat: '라면', emoji: '🍜',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/NK7_3737-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/NK7_3739-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅇㅅㅌㅁ', ans: '안성탕면', cat: '라면', emoji: '🍜',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-ramen-nongshim-ansungtangmyun-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-ramyeon-noodle-nongshim-ansungtangmyun-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㄴㄱㄹ', ans: '너구리', cat: '라면', emoji: '🦝',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/nongshim-neoguri-korean-ramen-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/nongshim-neoguri-ramen-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅂㄷㅁ', ans: '불닭면', cat: '라면', emoji: '🔥',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/samyang-buldak-noodles-683x1024.jpg',
+      'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅅㅇㄹㅁ', ans: '삼양라면', cat: '라면', emoji: '🍜',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-ramen-samyang-ramen-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/korean-noodle-samyang-ramyeon-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅂㅎㄷㅂㅂㅁ', ans: '배홍동비빔면', cat: '라면', emoji: '🌶️',
+    imgs: [
+      'https://www.theramenrater.com/wp-content/uploads/2024/02/2024_2_20_4923_001.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/paldo-bibimmen-korean-spicy-ramen-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅈㅉㅃ', ans: '진짬뽕', cat: '라면', emoji: '🦐',
+    imgs: [
+      'https://www.theramenrater.com/wp-content/uploads/2017/02/2017_2_3_2391_001.jpg',
+      'https://images.unsplash.com/photo-1681136851377-420455dd3f98?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅍㄷㅂㅂㅁ', ans: '팔도비빔면', cat: '라면', emoji: '🌶️',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/paldo-bibimmen-korean-spicy-ramen-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2024/02/paldo-bibimmen-ramen-683x1024.jpg'
+    ]
+  },
+  {
+    con: 'ㅉㅍㄱㅌ', ans: '짜파게티', cat: '라면', emoji: '🍝',
+    imgs: [
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/chapagetti-korean-noodle-683x1024.jpg',
+      'https://www.busanpedia.com/wp-content/uploads/2022/04/jjapagetti-korean-noodle-683x1024.jpg'
+    ]
+  },
+  // ── 음식 10 ──
+  {
+    con: 'ㄱㅂ', ans: '김밥', cat: '음식', emoji: '🍱',
+    imgs: [
+      'https://images.unsplash.com/photo-1608731002187-d3448d224d18?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1532347231146-80afc9e3df2b?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㄸㅂㅇ', ans: '떡볶이', cat: '음식', emoji: '🌶️',
+    imgs: [
+      'https://www.koreanbapsang.com/wp-content/uploads/2018/09/DSC4637-4.jpg',
+      'https://www.koreanbapsang.com/wp-content/uploads/2018/09/DSC4362-3.jpg'
+    ]
+  },
+  {
+    con: 'ㅉㅈㅁ', ans: '짜장면', cat: '음식', emoji: '🍝',
+    imgs: [
+      'https://images.unsplash.com/photo-1697261998662-07476824031b?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅍㅈ', ans: '피자', cat: '음식', emoji: '🍕',
+    imgs: [
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅊㅋ', ans: '치킨', cat: '음식', emoji: '🍗',
+    imgs: [
+      'https://images.unsplash.com/photo-1562967914-fd7cae0aed03?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1598514983318-2d70bcfd7e21?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅎㅂㄱ', ans: '햄버거', cat: '음식', emoji: '🍔',
+    imgs: [
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1550547660-d9054b0d4c40?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅋㄹ', ans: '카레', cat: '음식', emoji: '🍛',
+    imgs: [
+      'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅅㄷㄱㅂ', ans: '순대국밥', cat: '음식', emoji: '🥣',
+    imgs: [
+      'https://images.unsplash.com/photo-1709433420624-832e2264c346?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1583032015879-e5022cb87c3b?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㄷㅈㄱㅂ', ans: '돼지국밥', cat: '음식', emoji: '🍖',
+    imgs: [
+      'https://images.unsplash.com/photo-1670819917394-03031b377bea?w=400&h=300&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1709433420624-832e2264c346?w=400&h=300&fit=crop&q=80'
+    ]
+  },
+  {
+    con: 'ㅇㅁㄹㅇㅅ', ans: '오므라이스', cat: '음식', emoji: '🍳',
+    imgs: [
+      'https://www.koreanbapsang.com/wp-content/uploads/2016/07/DSC_0161-3.jpg',
+      'https://www.koreanbapsang.com/wp-content/uploads/2016/07/DSC_0135.jpg'
+    ]
+  },
+];
+
+/* ── 상태 ── */
+let sel = [], cur = 0, cdTimer = null, audioCtx = null;
+
+/* ── 오디오 ── */
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(f = 700, d = 0.13, t = 'sine', v = 0.25) {
+  try {
+    const c = getCtx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = f; o.type = t;
+    g.gain.setValueAtTime(v, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d);
+    o.start(); o.stop(c.currentTime + d);
+  } catch(e){}
+}
+function playReveal() {
+  [523,659,784,1047].forEach((f,i) => setTimeout(() => beep(f,0.25,'triangle',0.18), i*85));
+}
+function playDone() {
+  [523,587,659,698,784,880,988,1047].forEach((f,i) => setTimeout(() => beep(f,0.3,'sine',0.2), i*70));
+}
+
+/* ── 유틸 ── */
+function shuffle(a) {
+  a = [...a];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function showScr(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ══════════════════════════════
+   SETUP
+══════════════════════════════ */
+/* 목록 빌드 공통 함수 */
+function buildList() {
+  const ul = document.getElementById('preview-list');
+  ul.innerHTML = '';
+  sel.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.className = 'preview-item';
+    li.id = `pi-${i}`;
+    li.onclick = () => revealItem(i);
+    li.innerHTML = `
+      <div class="mask-overlay">
+        <span class="lock-num">${i+1}</span>
+        <span>🔒 클릭해서 확인</span>
+        <span class="cat-badge cat-${item.cat}">${item.cat}</span>
+      </div>
+      <div class="item-num">${i+1}</div>
+      <div class="item-consonants">${item.con}</div>
+      <span class="cat-badge cat-${item.cat}">${item.cat}</span>
+      <span class="item-answer">→ ${item.ans}</span>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+/* 최초 로드 시 자동 생성 (소리 없이) */
+function generateRandom() {
+  sel = shuffle(ALL).slice(0, 10);
+  buildList();
+}
+
+/* 다시 뽑기 — 소리와 함께 목록 교체 */
+function reshuffleRandom() {
+  beep(600, 0.1);
+  sel = shuffle(ALL).slice(0, 10);
+  buildList();
+  toast('🎲 새로운 10문제가 뽑혔어요!');
+}
+
+
+function revealItem(i) {
+  const li = document.getElementById(`pi-${i}`);
+  if (!li) return;
+  li.classList.toggle('revealed');
+  beep(li.classList.contains('revealed') ? 800 : 500, 0.1);
+}
+
+function copyList() {
+  if (!sel.length) { toast('먼저 랜덤 생성을 해주세요!'); return; }
+  const text = sel.map((item, i) =>
+    `${i+1}. ${item.con} → ${item.ans} (${item.cat})`
+  ).join('\n');
+
+  // 로컬 파일(file://)에서도 동작하는 textarea 복사 방식
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    const ok = document.execCommand('copy');
+    toast(ok ? '📋 복사 완료!' : '복사 실패 😢');
+    if (ok) beep(880, 0.15);
+  } catch(e) {
+    toast('복사 실패 😢');
+  }
+  document.body.removeChild(ta);
+}
+
+/* ══════════════════════════════
+   GAME
+══════════════════════════════ */
+function startGame() {
+  if (!sel.length) { generateRandom(); return; }
+  cur = 0;
+  showScr('quiz-screen');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+
+  const item = sel[cur];
+
+  // 헤더
+  document.getElementById('q-num').textContent = `🤔 문제 ${cur+1} / 10`;
+  const catEl = document.getElementById('q-cat');
+  catEl.textContent = item.cat;
+  catEl.className = `cat-badge cat-${item.cat}`;
+
+  // 프로그레스
+  document.getElementById('prog-bar').style.width = `${(cur/10)*100}%`;
+
+  // 초성 (재애니메이션)
+  const conEl = document.getElementById('q-con');
+  conEl.textContent = item.con;
+  conEl.style.animation = 'none';
+  requestAnimationFrame(() => { conEl.style.animation = ''; });
+
+  // 문제 상태 표시, 정답 숨기기
+  document.getElementById('q-state').style.display = 'block';
+  document.getElementById('a-state').style.display = 'none';
+
+  // 카운트다운 시작 버튼 표시, 링 숨기기
+  document.getElementById('start-cd-btn').style.display = 'flex';
+  document.getElementById('ring-wrap').style.display = 'none';
+  document.getElementById('ring-num').textContent = '3';
+  // 링 초기화
+  const ring = document.getElementById('ring-fill');
+  ring.style.transition = 'none';
+  ring.style.strokeDashoffset = '0';
+}
+
+/* 카운트다운 시작 버튼 클릭 */
+function onClickStartCountdown() {
+  beep(700, 0.12);
+  document.getElementById('start-cd-btn').style.display = 'none';
+  document.getElementById('ring-wrap').style.display = 'flex';
+  runCountdown();
+}
+
+function runCountdown() {
+  const circumference = 283; // 2π×45
+  const ring  = document.getElementById('ring-fill');
+  const numEl = document.getElementById('ring-num');
+  let count = 3;
+
+  ring.style.transition = 'none';
+  ring.style.strokeDashoffset = '0';
+  numEl.textContent = count;
+  beep(600, 0.13);
+
+  cdTimer = setInterval(() => {
+    count--;
+    const ratio = (3 - count) / 3;
+    ring.style.transition = 'stroke-dashoffset 0.9s linear';
+    ring.style.strokeDashoffset = `${circumference * ratio}`;
+
+    if (count > 0) {
+      numEl.textContent = count;
+      beep(600, 0.13);
+    } else {
+      numEl.textContent = '🎉';
+      clearInterval(cdTimer); cdTimer = null;
+      setTimeout(showAnswer, 180);
+    }
+  }, 1000);
+}
+
+function showAnswer() {
+  const item = sel[cur];
+  playReveal();
+
+  document.getElementById('a-con').textContent = item.con;
+  document.getElementById('a-answer').textContent = item.ans;
+  const catEl = document.getElementById('a-cat');
+  catEl.textContent = item.cat;
+  catEl.className = `cat-badge cat-${item.cat}`;
+
+  // 이미지 설정 — 여러 URL 순서대로 시도
+  const img   = document.getElementById('a-img');
+  const emoji = document.getElementById('a-emoji');
+  emoji.textContent = item.emoji;
+  tryLoadImage(img, emoji, item.imgs, item.emoji, 0);
+
+  // 다음 버튼 텍스트
+  const btn = document.getElementById('next-btn');
+  btn.textContent = cur === 9 ? '🏆 결과 보기' : `다음 문제 (${cur+2}/10) →`;
+
+  document.getElementById('q-state').style.display = 'none';
+  document.getElementById('a-state').style.display = 'block';
+}
+
+function nextQuestion() {
+  beep(700, 0.1);
+  cur++;
+  if (cur >= 10) showEnd();
+  else loadQuestion();
+}
+
+/* ══════════════════════════════
+   END
+══════════════════════════════ */
+function showEnd() {
+  document.getElementById('prog-bar').style.width = '100%';
+  showScr('end-screen');
+  playDone();
+  confetti();
+}
+
+function backToSetup() {
+  beep(600, 0.1);
+  showScr('setup-screen');
+}
+
+/* ── 이미지 다중 URL 시도 ── */
+function tryLoadImage(imgEl, emojiEl, urls, emoji, idx) {
+  if (idx >= urls.length) {
+    // 모든 URL 실패 → 이모지 표시
+    imgEl.style.display = 'none';
+    emojiEl.textContent = emoji;
+    emojiEl.style.display = 'flex';
+    return;
+  }
+  imgEl.onerror = null;
+  imgEl.style.display = 'block';
+  emojiEl.style.display = 'none';
+  imgEl.src = urls[idx];
+  imgEl.alt = '';
+  imgEl.onerror = () => tryLoadImage(imgEl, emojiEl, urls, emoji, idx + 1);
+}
+
+/* ── 폭죽 ── */
+function confetti() {
+  const colors = ['#7C3AED','#EC4899','#F97316','#FBBF24','#10B981','#3B82F6','#EF4444'];
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'conf';
+      const s = Math.random()*10+5;
+      p.style.cssText = `
+        left:${Math.random()*100}vw;
+        width:${s}px; height:${s}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${Math.random()>.5?'50%':'3px'};
+        animation-duration:${Math.random()*2+2}s;
+      `;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 4200);
+    }, i * 22);
+  }
+}
+
+/* ── 페이지 로드 시 자동으로 10문제 생성 ── */
+document.addEventListener('DOMContentLoaded', generateRandom);
+</script>
+</body>
+</html>
