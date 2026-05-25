@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎓 고교학점제 진로설계 실습</title>
+<style>
+/* ── CSS Variables ──────────────────────── */
+:root{
+  --p:#6366f1;--pd:#4f46e5;--vio:#8b5cf6;
+  --em:#10b981;--am:#f59e0b;--ro:#f43f5e;
+  --s9:#0f172a;--s7:#334155;--s5:#64748b;--s4:#94a3b8;
+  --s3:#cbd5e1;--s2:#e2e8f0;--s1:#f1f5f9;
+  --r1:8px;--r2:14px;--r3:20px;
+  --sh1:0 1px 6px rgba(0,0,0,.06);
+  --sh2:0 4px 18px rgba(0,0,0,.09);
+  --sh3:0 8px 32px rgba(0,0,0,.14)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:linear-gradient(145deg,#ede9fe 0%,#e0f2fe 45%,#f0fdf4 100%);
+  background-attachment:fixed;
+  min-height:100vh;color:var(--s9)
+}
+#app{max-width:960px;margin:0 auto;padding:14px}
+
+/* ── Header ─────────────────────────────── */
+.hdr{
+  background:linear-gradient(135deg,#3730a3 0%,#4f46e5 45%,#7c3aed 100%);
+  color:#fff;border-radius:var(--r3);padding:18px 22px;margin-bottom:12px;
+  text-align:center;
+  box-shadow:0 8px 30px rgba(79,70,229,.45),inset 0 1px 0 rgba(255,255,255,.18);
+  position:relative;overflow:hidden
+}
+.hdr::before{
+  content:'';position:absolute;top:-40%;right:-8%;
+  width:55%;height:180%;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.13) 0%,transparent 65%);
+  pointer-events:none
+}
+.hdr-sub{font-size:.7rem;opacity:.72;margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;position:relative}
+.hdr h1{font-size:1.22rem;font-weight:900;margin-bottom:3px;text-shadow:0 1px 4px rgba(0,0,0,.25);position:relative}
+.hdr p{font-size:.8rem;opacity:.87;position:relative}
+.prog-wrap{background:rgba(255,255,255,.22);border-radius:10px;height:5px;margin-top:10px;overflow:hidden;position:relative}
+.prog-fill{background:linear-gradient(90deg,rgba(255,255,255,.6),#fff);border-radius:10px;height:100%;transition:width .5s ease}
+
+/* ── Steps dots ─────────────────────────── */
+.steps{display:flex;justify-content:center;align-items:center;gap:5px;margin-bottom:12px}
+.sdot{width:7px;height:7px;border-radius:50%;background:#c7d2fe;transition:all .35s cubic-bezier(.4,0,.2,1)}
+.sdot.active{background:var(--p);width:22px;border-radius:4px}
+
+/* ── Cards ───────────────────────────────── */
+.card{
+  background:rgba(255,255,255,.93);backdrop-filter:blur(8px);
+  border-radius:var(--r2);padding:18px;margin-bottom:10px;
+  box-shadow:var(--sh2);border:1px solid rgba(255,255,255,.85)
+}
+.card h2{font-size:1rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:7px;color:var(--s9)}
+
+/* ── Buttons ──────────────────────────────── */
+.btn{
+  padding:9px 18px;border:none;border-radius:var(--r1);cursor:pointer;
+  font-size:.88rem;font-weight:700;
+  transition:all .18s cubic-bezier(.4,0,.2,1);
+  font-family:inherit;display:inline-flex;align-items:center;
+  justify-content:center;gap:6px;letter-spacing:-.01em
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--pd),var(--vio));color:#fff;
+  box-shadow:0 3px 12px rgba(79,70,229,.42)
+}
+.btn-primary:hover{filter:brightness(1.09);box-shadow:0 5px 18px rgba(79,70,229,.55)}
+.btn-secondary{background:var(--s1);color:var(--s7)}
+.btn-secondary:hover{background:var(--s2)}
+.btn-outline{background:#fff;border:2px solid var(--p);color:var(--p)}
+.btn-outline:hover{background:#eef2ff}
+.btn-block{width:100%;display:block;padding:13px;font-size:.97rem;text-align:center}
+.btn-sm{padding:6px 12px;font-size:.78rem;border-radius:7px}
+
+/* ── Utilities ───────────────────────────── */
+.divider{height:1px;background:var(--s2);margin:10px 0}
+.nav-row{display:flex;gap:8px;margin-top:10px}
+.hi-box{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:var(--r1);padding:12px 15px;margin-bottom:10px}
+.info-box{background:#eff6ff;border:1px solid #93c5fd;border-radius:var(--r1);padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#1e40af;line-height:1.6}
+.warn-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:var(--r1);padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#9a3412;line-height:1.6}
+.success-box{background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r1);padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#166534;line-height:1.6}
+
+/* ── School select ───────────────────────── */
+.school-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:10px}
+.school-card{
+  border:2px solid var(--s2);border-radius:var(--r2);padding:16px 12px;
+  cursor:pointer;text-align:center;
+  transition:all .22s cubic-bezier(.4,0,.2,1);background:#fff;position:relative;overflow:hidden
+}
+.school-card:hover{border-color:var(--p);transform:translateY(-2px);box-shadow:var(--sh2)}
+.school-card.sel{border-color:var(--pd);box-shadow:0 0 0 3px rgba(99,102,241,.2),var(--sh1)}
+.school-card .s-name{font-size:.88rem;font-weight:800;color:var(--s9);margin-top:8px;margin-bottom:2px}
+.school-card .s-loc{font-size:.68rem;color:var(--s4)}
+.school-badge{
+  position:absolute;top:8px;right:8px;font-size:.6rem;font-weight:700;
+  background:linear-gradient(135deg,var(--pd),var(--vio));color:#fff;
+  padding:2px 6px;border-radius:5px;letter-spacing:.03em
+}
+.add-school-btn{
+  border:2px dashed var(--s3);border-radius:var(--r2);padding:16px 12px;
+  cursor:pointer;text-align:center;background:#fafafa;color:var(--s5);transition:all .22s
+}
+.add-school-btn:hover{border-color:var(--p);color:var(--p);background:#eef2ff}
+.pdf-school-btn{
+  border:2px dashed #a5b4fc;border-radius:var(--r2);padding:14px 12px;
+  cursor:pointer;text-align:center;
+  background:linear-gradient(135deg,#eef2ff,#f5f3ff);color:var(--pd);
+  transition:all .22s;grid-column:1/-1
+}
+.pdf-school-btn:hover{border-color:var(--pd);background:linear-gradient(135deg,#e0e7ff,#ede9fe);box-shadow:var(--sh1)}
+
+/* ── Career mode tabs ───────────────────── */
+.mode-tabs{display:flex;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.06);padding:4px;border-radius:14px}
+.mtab{
+  flex:1;padding:10px 5px;text-align:center;border-radius:10px;cursor:pointer;
+  font-size:.76rem;color:var(--s5);transition:all .22s cubic-bezier(.4,0,.2,1);
+  font-weight:600;line-height:1.35;
+}
+.mtab.active{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+  box-shadow:0 4px 14px rgba(79,70,229,.35);font-weight:800;
+  transform:translateY(-1px);
+}
+.mtab:not(.active):hover{background:rgba(255,255,255,.6);color:var(--pd)}
+.cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:10px}
+.cat-card{
+  border:2px solid var(--s2);border-radius:14px;padding:14px 10px;
+  cursor:pointer;text-align:center;transition:all .22s cubic-bezier(.4,0,.2,1);
+  background:#fff;position:relative;overflow:hidden;
+}
+.cat-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .22s;
+  background:linear-gradient(135deg,#eef2ff,#f5f3ff)}
+.cat-card:hover::before,.cat-card.sel::before{opacity:1}
+.cat-card:hover,.cat-card.sel{border-color:var(--p);transform:translateY(-2px);box-shadow:0 6px 18px rgba(99,102,241,.18)}
+.cat-card>*{position:relative;z-index:1}
+.cat-emoji{font-size:1.8rem;display:block;margin-bottom:5px}
+.cat-name{font-size:.82rem;font-weight:800;color:var(--s9)}
+.cat-desc{font-size:.67rem;color:var(--s4);margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:5px 13px;border-radius:20px;border:2px solid #c7d2fe;background:#eef2ff;color:var(--p);cursor:pointer;font-size:.8rem;transition:all .2s;font-weight:600}
+.chip:hover,.chip.sel{background:var(--pd);color:#fff;border-color:var(--pd);transform:translateY(-1px);box-shadow:0 3px 8px rgba(79,70,229,.3)}
+.s-box input{width:100%;padding:11px 14px;border:2px solid var(--s2);border-radius:10px;font-size:.92rem;outline:none;transition:all .2s;font-family:inherit;background:#fafafa}
+.s-box input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.s-results{border:1px solid var(--s2);border-radius:10px;overflow:hidden;margin-top:6px;background:#fff}
+.s-item{padding:10px 14px;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--s1);display:flex;justify-content:space-between;align-items:center;transition:all .15s}
+.s-item:hover{background:#eef2ff;color:var(--p);padding-left:18px}
+.guided-opt{
+  text-align:left;padding:15px 18px 15px 16px;font-size:.88rem;margin-bottom:8px;
+  width:100%;display:flex;align-items:center;justify-content:flex-start;gap:10px;
+  border-radius:14px;border:2px solid var(--s2);background:#fff;
+  transition:all .22s cubic-bezier(.4,0,.2,1);color:var(--s7);font-weight:600;
+  box-shadow:0 1px 5px rgba(0,0,0,.04);
+}
+.guided-opt:hover{
+  border-color:var(--p);
+  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  transform:translateX(6px);
+  box-shadow:0 6px 20px rgba(99,102,241,.2);
+  color:var(--pd);
+}
+.guided-opt:active{transform:translateX(6px) scale(.98)}
+.guided-opt .opt-arrow{margin-left:auto;opacity:0;font-size:1rem;transition:opacity .18s,transform .18s;transform:translateX(-4px)}
+.guided-opt:hover .opt-arrow{opacity:1;transform:translateX(0)}
+
+/* ── Semester tabs ─────────────────────── */
+.sem-tabs{display:flex;gap:3px;margin-bottom:10px;background:var(--s1);padding:3px;border-radius:10px;flex-wrap:wrap}
+.stab{flex:1;min-width:80px;padding:8px 4px;text-align:center;border-radius:7px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--s5);transition:all .2s;line-height:1.3}
+.stab.active{background:#fff;color:var(--pd);box-shadow:0 1px 5px rgba(0,0,0,.08);font-weight:800}
+.stab-sub{font-size:.6rem;opacity:.75;margin-top:1px}
+
+/* ── Credit bar ─────────────────────────── */
+.cr-bar{
+  position:sticky;top:6px;z-index:100;
+  background:rgba(255,255,255,.93);backdrop-filter:blur(12px);
+  border-radius:14px;padding:10px 15px;
+  box-shadow:0 4px 22px rgba(0,0,0,.12),0 0 0 1px rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;border:1px solid rgba(99,102,241,.12)
+}
+.cr-num{font-size:1.25rem;font-weight:900;background:linear-gradient(135deg,var(--pd),var(--vio));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cr-lbl{font-size:.65rem;color:var(--s4);margin-top:1px;font-weight:600}
+.cr-status{font-size:.75rem;font-weight:700;padding:5px 10px;border-radius:8px}
+.st-under{background:#fef3c7;color:#92400e}
+.st-ok{background:#d1fae5;color:#065f46}
+.st-over{background:#dbeafe;color:#1e40af}
+
+/* ── Subject cards ──────────────────────── */
+.sec-hdr{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:10px;padding:10px 13px;margin-bottom:7px;border-left:4px solid var(--p)}
+.sec-hdr h3{font-size:.88rem;color:#4338ca;font-weight:800}
+.sec-hdr p{font-size:.72rem;color:#6d28d9;margin-top:1px}
+.req-banner{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.76rem;color:#991b1b;line-height:1.5}
+.elec-banner{background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.76rem;color:#1e40af;line-height:1.5}
+
+.sub-card{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 13px;background:#fff;border:2px solid var(--s2);border-radius:11px;margin-bottom:6px;transition:all .22s;gap:8px}
+.sub-card.mandatory{background:#fef2f2;border-color:#fca5a5;cursor:default}
+.sub-card.school-set{background:#fff9e6;border-color:#fcd34d;cursor:default}
+.sub-card.selected{border-color:var(--p);background:#eef2ff;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+.sub-card.recommended{border-color:#10b981;border-width:2px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5)}
+.sub-card.recommended.selected{border-color:#059669;border-width:3px;background:#dcfce7}
+.sub-card:not(.mandatory):not(.school-set){cursor:pointer}
+.sub-card:not(.mandatory):not(.school-set):hover{border-color:#a5b4fc;transform:translateY(-1px);box-shadow:var(--sh1)}
+.rec-top-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:5px;margin-bottom:5px}
+.b-rec-star{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+
+/* ── Grade tabs ─────────────────────────── */
+.grade-tabs{display:flex;gap:7px;margin-bottom:12px}
+.gtab{flex:1;padding:11px 5px;text-align:center;border-radius:12px;cursor:pointer;border:2px solid var(--s2);background:rgba(255,255,255,.8);transition:all .22s}
+.gtab.active{border-color:var(--p);background:linear-gradient(135deg,#eef2ff,#f5f3ff);box-shadow:0 4px 14px rgba(99,102,241,.2)}
+.gtab-name{font-size:.9rem;font-weight:800;color:var(--s7)}
+.gtab.active .gtab-name{color:var(--pd)}
+.gtab-cr{font-size:.7rem;font-weight:700;margin-top:4px}
+.sem-section{background:rgba(248,250,252,.9);border-radius:14px;padding:13px;margin-bottom:15px;border:1px solid var(--s2)}
+.sem-section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sem-title{font-size:.95rem;font-weight:900;color:var(--s9)}
+.sem-cr-badge{font-size:.82rem;font-weight:700;padding:4px 11px;border-radius:8px}
+.sub-left{flex:1}
+.sub-name{font-size:.88rem;font-weight:700;color:var(--s9)}
+.sub-info{font-size:.7rem;color:var(--s5);margin-top:2px;line-height:1.4}
+.sub-why{font-size:.72rem;color:var(--pd);margin-top:4px;background:#eef2ff;padding:3px 8px;border-radius:5px;display:inline-block;line-height:1.4}
+.badge{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:5px;display:inline-block;white-space:nowrap;flex-shrink:0}
+.b-req{background:#fca5a5;color:#7f1d1d}
+.b-sch{background:#fde68a;color:#78350f}
+.b-rec{background:#a7f3d0;color:#064e3b}
+.b-elec{background:#c7d2fe;color:#312e81}
+.chk{width:21px;height:21px;border:2px solid var(--s3);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .22s;margin-top:1px}
+.chk.on{background:var(--p);border-color:var(--p);box-shadow:0 2px 6px rgba(99,102,241,.4)}
+
+/* ── Area guide ─────────────────────────── */
+.area-group{margin-bottom:15px}
+.area-hdr{display:flex;justify-content:space-between;align-items:center;background:var(--s1);border-left:4px solid var(--p);border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:5px}
+.area-name{font-size:.87rem;font-weight:800;color:var(--s9)}
+.area-rec{font-size:.7rem;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:5px;margin-left:6px;font-weight:600}
+.area-cnt{font-size:.73rem;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--s2);color:var(--s5)}
+.area-cnt.ok{background:#d1fae5;color:#065f46}
+.area-cnt.over{background:#dbeafe;color:#1e40af}
+.area-hint{font-size:.73rem;color:var(--s5);padding:5px 12px 7px;background:#fafafa;border-radius:0 0 7px 7px;margin-bottom:5px;line-height:1.5;border:1px solid #f0f0f0;border-top:none}
+
+/* ── Credit summary table ────────────────── */
+.cr-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px}
+.cr-table th{background:#f5f3ff;color:#4338ca;font-weight:700;padding:8px 9px;text-align:center;border:1px solid #e5e7eb}
+.cr-table td{padding:7px 9px;border:1px solid #f0f0f0;text-align:center;color:var(--s7)}
+.cr-table tr:nth-child(even) td{background:#fafafa}
+.cr-table .total-row td{background:linear-gradient(135deg,var(--pd),var(--vio));color:#fff;font-weight:800}
+.cr-ok{color:#059669;font-weight:700}
+.cr-under{color:#d97706;font-weight:700}
+
+/* ── Progress overview ──────────────────── */
+.prog-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
+.po-card{background:rgba(255,255,255,.88);border-radius:12px;padding:11px;text-align:center;box-shadow:var(--sh1);border:1px solid var(--s2)}
+.po-label{font-size:.68rem;color:var(--s4);margin-bottom:4px;font-weight:600}
+.po-val{font-size:1.15rem;font-weight:900;background:linear-gradient(135deg,var(--pd),var(--vio));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.po-sub{font-size:.63rem;color:var(--s4);margin-top:2px}
+
+/* ── Add school form ─────────────────────── */
+.form-group{margin-bottom:11px}
+.form-label{font-size:.82rem;font-weight:700;color:var(--s7);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:10px 13px;border:2px solid var(--s2);border-radius:9px;font-size:.88rem;font-family:inherit;outline:none;transition:all .2s;background:#fafafa}
+.form-input:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-hint{font-size:.72rem;color:var(--s4);margin-top:3px}
+
+/* ── PDF Upload ──────────────────────────── */
+.pdf-drop-zone{
+  border:2px dashed #a5b4fc;border-radius:16px;padding:36px 20px;text-align:center;
+  background:linear-gradient(135deg,#eef2ff,#f5f3ff);cursor:pointer;
+  transition:all .25s;margin:12px 0;display:block
+}
+.pdf-drop-zone:hover,.pdf-drop-zone.drag-over{
+  border-color:var(--p);background:linear-gradient(135deg,#e0e7ff,#ede9fe);
+  box-shadow:0 4px 22px rgba(99,102,241,.22)
+}
+.pdf-drop-icon{font-size:2.8rem;margin-bottom:10px;display:block}
+.pdf-parse-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+.pdf-parse-table th{background:#f5f3ff;color:#4338ca;font-weight:700;padding:7px 8px;text-align:center;border:1px solid #e5e7eb}
+.pdf-parse-table td{padding:5px 6px;border:1px solid #f0f0f0;vertical-align:middle}
+.pdf-parse-table input,.pdf-parse-table select{
+  width:100%;border:1px solid var(--s2);border-radius:4px;
+  padding:3px 5px;font-size:.76rem;font-family:inherit;outline:none;background:#fff
+}
+.pdf-parse-table input:focus,.pdf-parse-table select:focus{border-color:var(--p)}
+.pdf-parse-row-del{
+  width:22px;height:22px;border-radius:50%;border:none;
+  background:#fee2e2;color:#ef4444;cursor:pointer;font-size:.8rem;
+  display:flex;align-items:center;justify-content:center;margin:auto;transition:background .15s
+}
+.pdf-parse-row-del:hover{background:#fca5a5}
+
+/* ── Animations ─────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.screen{animation:fadeUp .28s ease}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+
+/* ── Print / PDF ────────────────────────── */
+@media print{
+  body{background:#fff}
+  #app{max-width:100%;padding:0}
+  .no-print{display:none!important}
+  .hdr{border-radius:0;margin-bottom:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,.cr-bar,.tbl-wrap,.cr-table,.cr-table th,.cr-table td{box-shadow:none!important}
+  .screen{animation:none}
+  details{display:block}
+  details>summary{display:none}
+  details[open]>*:not(summary){display:block}
+  .nav-row,.btn,.tbl-filter-bar,.grade-tabs,.mode-tabs,.sem-tabs,.steps,.prog-wrap,.warn-box,.info-box{display:none!important}
+  .tbl-wrap{overflow:visible}
+  .sub-table{font-size:.72rem}
+  @page{margin:12mm;size:A4}
+}
+
+/* ── Misc ───────────────────────────────── */
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.hg-card{text-align:center;padding:14px 8px;border-radius:13px;transition:transform .2s}
+.hg-card:hover{transform:translateY(-2px)}
+.hg-icon{font-size:1.6rem;margin-bottom:7px;display:block}
+.confetti{text-align:center;font-size:2rem;margin:10px 0;letter-spacing:5px}
+.sem-sum{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:11px}
+.ss-card{background:#fff;border-radius:11px;padding:10px 13px;box-shadow:var(--sh1);border:1px solid var(--s2)}
+.ss-sem{font-size:.72rem;font-weight:700;color:var(--s4)}
+.ss-cr{font-size:1.05rem;font-weight:800;margin-top:2px}
+.cr-green{color:#059669}.cr-orange{color:#d97706}.cr-blue{color:#2563eb}
+
+/* ── Subject Table ──────────────────────── */
+.tbl-wrap{overflow-x:auto;border-radius:11px;border:1px solid var(--s2);margin-bottom:9px;box-shadow:var(--sh1)}
+.sub-table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:460px}
+.sub-table th{background:linear-gradient(135deg,#f5f3ff,#ede9fe);color:#4338ca;font-weight:800;padding:9px 8px;text-align:left;border-bottom:2px solid #e0e7ff;white-space:nowrap}
+.sub-table td{padding:8px 8px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.sub-table tr.clickable:hover td{background:#f0f4ff;cursor:pointer}
+.mandatory-row td{background:#fef9f9}
+.school-row td{background:#fffdf0}
+.rec-row td{background:#f0fdf4}
+.rec-sel-row td{background:#dcfce7}
+.sel-row td{background:#eef2ff}
+.tbl-chk{width:21px;height:21px;border:2px solid var(--s3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;transition:all .2s;margin:auto;cursor:pointer;user-select:none}
+.tbl-chk.on{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 2px 6px rgba(99,102,241,.3)}
+.tbl-chk.locked{background:var(--s1);border-color:var(--s2);color:var(--s4);cursor:default}
+.badge-type{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;white-space:nowrap}
+.badge-mandatory{background:#fca5a5;color:#7f1d1d}
+.badge-school{background:#fde68a;color:#78350f}
+.badge-student-sel{background:#c7d2fe;color:#312e81}
+.badge-common-t{background:#e5e7eb;color:#374151}
+.badge-career-t{background:#fed7aa;color:#9a3412}
+.badge-fusion-t{background:#ddd6fe;color:#4c1d95}
+.rec-label{font-size:.67rem;font-weight:700;color:#059669;background:#dcfce7;padding:1px 6px;border-radius:4px;display:inline-block;margin-bottom:3px;white-space:nowrap}
+.tbl-filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.9);border-radius:11px;padding:10px 13px;border:1px solid var(--s2);margin-bottom:10px}
+.tbl-select{padding:6px 9px;border:1.5px solid var(--s2);border-radius:7px;font-size:.8rem;color:var(--s7);font-family:inherit;background:#fff;outline:none;cursor:pointer;transition:border-color .2s}
+.tbl-select:focus{border-color:var(--p)}
+.tbl-search{padding:6px 10px;border:1.5px solid var(--s2);border-radius:7px;font-size:.8rem;font-family:inherit;outline:none;transition:all .2s;min-width:120px;flex:1}
+.tbl-search:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(99,102,241,.1)}
+.tbl-note{font-size:.73rem;color:var(--s5);line-height:1.9;padding:8px 4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ============================================================
+// DATA: CAREER CATEGORIES & JOBS
+// ============================================================
+const CAT=[
+  {id:'stem',    name:'이공계·기술',   emoji:'🔬', desc:'과학·수학·기술이 좋아요'},
+  {id:'medical', name:'의약·보건',     emoji:'🏥', desc:'사람 건강을 돌보고 싶어요'},
+  {id:'hum',     name:'인문·사회',     emoji:'📖', desc:'글 쓰고 사람을 이해해요'},
+  {id:'law',     name:'법·행정·외교',  emoji:'⚖️', desc:'법·제도·사회에 관심 있어요'},
+  {id:'arts',    name:'예술·디자인',   emoji:'🎨', desc:'그림·음악·창작을 즐겨요'},
+  {id:'sports',  name:'체육·스포츠',   emoji:'⚽', desc:'운동과 건강한 몸에 관심 있어요'},
+  {id:'biz',     name:'경영·경제',     emoji:'💼', desc:'비즈니스·돈의 흐름이 궁금해요'},
+  {id:'edu',     name:'교육·복지',     emoji:'👩‍🏫', desc:'가르치고 돕는 일이 보람 있어요'},
+  {id:'it',      name:'IT·디지털·AI',  emoji:'💻', desc:'코딩·앱·AI가 흥미로워요'},
+  {id:'media',   name:'문화·미디어',   emoji:'🎬', desc:'영상·콘텐츠·미디어에 끌려요'},
+];
+
+const JOBS={
+  stem:   ['기계공학자','전자공학자','화학공학자','항공우주공학자','환경공학자','재료공학자','로봇공학자','바이오공학자'],
+  medical:['의사','치과의사','한의사','약사','간호사','물리치료사','작업치료사','수의사','영양사','임상병리사'],
+  hum:    ['작가','기자','번역가','문화재연구원','언어치료사','철학연구원','심리상담사','역사학자','출판편집자'],
+  law:    ['변호사','검사','판사','법무사','공무원','외교관','NGO활동가','정치인','행정전문가'],
+  arts:   ['화가','조각가','그래픽디자이너','패션디자이너','영화감독','사진작가','건축디자이너','UX디자이너','애니메이터'],
+  sports: ['프로선수','스포츠코치','체육교사','스포츠트레이너','운동처방사','스포츠PD','스포츠에이전트'],
+  biz:    ['경영컨설턴트','마케터','창업가','회계사','펀드매니저','무역전문가','HR전문가','경제분석가'],
+  edu:    ['초등교사','중등교사','특수교사','유아교사','교육연구원','사회복지사','청소년상담사','보육교사'],
+  it:     ['소프트웨어개발자','AI엔지니어','데이터사이언티스트','보안전문가','게임개발자','클라우드엔지니어','앱개발자'],
+  media:  ['방송PD','유튜버·크리에이터','웹툰작가','영상편집자','SNS마케터','문화기획자','광고기획자'],
+};
+const ALL_JOBS=[];
+Object.entries(JOBS).forEach(([c,list])=>list.forEach(n=>ALL_JOBS.push({name:n,cat:c})));
+
+// Guided questions
+const GQ=[
+  {q:'어떤 활동이 가장 즐거운가요?',opts:[
+    {t:'🔢 계산하고 분석하기',cats:['stem','it','biz']},
+    {t:'✍️ 글 쓰고 표현하기',cats:['hum','media','arts']},
+    {t:'🤝 사람들과 소통·돕기',cats:['edu','law','medical']},
+    {t:'🎨 만들고 창작하기',cats:['arts','media','it']},
+  ]},
+  {q:'가장 자신 있는 과목은?',opts:[
+    {t:'🔬 과학·수학',cats:['stem','medical','it']},
+    {t:'📚 국어·사회·역사',cats:['hum','law','edu']},
+    {t:'🌍 영어·외국어',cats:['biz','hum','media']},
+    {t:'🎭 예체능',cats:['arts','sports','media']},
+  ]},
+  {q:'미래에 어떤 모습이고 싶나요?',opts:[
+    {t:'🏥 전문 지식으로 사람 돕기',cats:['medical','edu','law']},
+    {t:'🚀 기술로 세상을 바꾸기',cats:['stem','it']},
+    {t:'🎤 표현으로 세상에 영향 주기',cats:['arts','media']},
+    {t:'💡 아이디어로 가치 만들기',cats:['biz','it','media']},
+  ]},
+  {q:'어떤 환경에서 일하고 싶나요?',opts:[
+    {t:'🏢 사무실·연구실',cats:['stem','biz','it','law']},
+    {t:'🏫 학교·복지기관',cats:['edu','medical','sports']},
+    {t:'🌐 해외·다양한 문화',cats:['hum','biz','media']},
+    {t:'🎬 스튜디오·현장',cats:['arts','media','sports']},
+  ]},
+];
+
+// ============================================================
+// DATA: SCHOOLS & CURRICULUM
+// ============================================================
+// subject type: mandatory=공통필수(잠금), school=학교지정(권장), student=학생자율(선택)
+// area: 교과군 이름 (국어, 수학, 영어, 사회, 과학, 체육, 예술, 기술정보, 제2외국어, 교양, 창체)
+// sem: '1-1'~'3-2'
+// tags: 진로 연관 카테고리 (추천 표시용)
+// why: 진로 연계 설명 (student/school 과목에 추가)
+// subtype: 'common'|'general'|'career'|'fusion'
+
+const SCHOOLS_DB = {
+  jejusadaebugo: {
+    name:'제주대학교사범대학부설고등학교',
+    short:'제주사대부고',
+    emoji:'🌊',
+    location:'제주특별자치도',
+    // 학기별 목표 교과 학점
+    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
+    subjects: [
+      // ── 1학년 1학기 (22학점) ────────────────
+      {id:'j01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j08',name:'미술',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      // ── 1학년 2학기 (23학점) ────────────────
+      {id:'j09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j16',name:'음악',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      // ── 2학년 1학기 (32학점) ────────────────
+      {id:'j18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'j19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',  subtype:'general',tags:['it','stem'],why:'디지털 시대 필수! IT 기초 능력을 키워요'},
+      // student subjects 2-1
+      {id:'j20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','media'],why:'논리적 말하기·쓰기 능력은 모든 직업에 필요해요'},
+      {id:'j21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'글쓰기·독해력은 어문·법학 진로의 핵심이에요'},
+      {id:'j22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz','medical'],why:'방정식·함수 심화 — 이공계·의약 진학 기초예요'},
+      {id:'j23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','medical'],why:'이과 진학의 핵심! 미적분 없이 이공계 진학 어려워요'},
+      {id:'j24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it','medical','stem'],why:'데이터 분석·연구·경영에 모두 활용되는 필수 수학이에요'},
+      {id:'j25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it','media'],why:'거의 모든 직업에 필요한 영어 심화 과목이에요'},
+      {id:'j26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','biz'],why:'사회 구조와 문화를 이해하는 인문·사회 기본 과목이에요'},
+      {id:'j27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'기계·전자·항공 공학의 핵심 기초 과목이에요'},
+      {id:'j28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'화학공학·약학·의학 계열 진학의 필수 과목이에요'},
+      {id:'j29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의대·생명공학·수의학 진학의 핵심 과목이에요'},
+      {id:'j30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports','medical'],why:'운동 원리와 건강 관리를 배워요'},
+      {id:'j31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공자의 핵심 실기·이론 과목이에요'},
+      {id:'j32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'시각 예술·디자인 진로의 기본 과목이에요'},
+      {id:'j33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI 시대 필수! 인공지능 원리를 처음 배우는 과목이에요'},
+      {id:'j34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','media'],why:'일본어 능력은 무역·관광·한일 외교에 도움 돼요'},
+      {id:'j35',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어는 글로벌 비즈니스에서 강력한 경쟁력이에요'},
+      // ── 2학년 2학기 (32학점) ────────────────
+      {id:'j36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 작품 분석·창작 — 어문·출판·미디어 진로 기초예요'},
+      {id:'j37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical','it'],why:'이공계 심화 필수! 미적분Ⅰ 이수 후 선택하세요'},
+      {id:'j38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 감각·건축·게임 그래픽에 필요한 수학이에요'},
+      {id:'j39',name:'인공지능 수학',cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'AI·데이터사이언스의 수학적 기초를 배워요'},
+      {id:'j40',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영·경제 계열 진학에 필요한 수학 개념이에요'},
+      {id:'j41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it'],why:'심화 영어 독해·청취 — 해외 진학 목표라면 필수예요'},
+      {id:'j42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','medical'],why:'영어 논술·보고서 작성 능력을 키워요'},
+      {id:'j43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','edu'],why:'사회·윤리 문제를 분석하는 인문학 필수 과목이에요'},
+      {id:'j44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz','law'],why:'시장 원리·경제 현상을 배우는 경영계열 기초예요'},
+      {id:'j45',name:'정치와 법',    cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['law'],why:'민주주의·법 체계 이해 — 법학·행정 진로 필수예요'},
+      {id:'j46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지질·천문·기상 — 환경공학·지질학 진로에 유리해요'},
+      {id:'j47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports','media'],why:'스포츠 산업·미디어 이해 — 스포츠 관련 진로에 추천해요'},
+      {id:'j48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연 예술·방송 연기 기초를 배워요'},
+      {id:'j49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem','biz'],why:'빅데이터 분석 — AI·경영 분석 직업에 핵심 역량이에요'},
+      {id:'j50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'코딩 실습 — 개발자·AI엔지니어의 핵심 기술이에요'},
+      // ── 3학년 1학기 (32학점) ────────────────
+      {id:'j51',name:'주제 탐구 독서',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'심화 독서·탐구 능력을 키워요. 대입 논술에 도움돼요'},
+      {id:'j52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학과 영상 콘텐츠를 연결해 분석·창작해요'},
+      {id:'j53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'직장·조직 내 소통 능력을 실무 중심으로 배워요'},
+      {id:'j54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해 — 영문학·번역 진로에 추천해요'},
+      {id:'j55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','media','sports'],why:'일상·직업 상황의 실용 영어 회화 능력을 키워요'},
+      {id:'j56',name:'법과 사회',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 진로의 입문 과목 — 실생활 법 적용을 배워요'},
+      {id:'j57',name:'동아시아 역사 기행',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'한·중·일 역사 이해 — 인문·관광·외교 진로에 유익해요'},
+      {id:'j58',name:'역학과 에너지',cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'공학의 기초 역학 원리를 심화 학습해요'},
+      {id:'j59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'약학·화학공학·의학 계열에 필요한 심화 화학이에요'},
+      {id:'j60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명공학 진학에 필수적인 생물 심화 과목이에요'},
+      {id:'j61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동과 과학의 융합 — 스포츠트레이너·의학에 도움돼요'},
+      {id:'j62',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교육의 원리·방법 — 교사가 되려면 꼭 들어야 해요'},
+      {id:'j63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'인간 심리 이해 — 상담·복지·의료·경영에 폭넓게 활용돼요'},
+      {id:'j64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초를 실습 중심으로 배워요'},
+      {id:'j65',name:'논리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['law','hum'],why:'논리적 사고력 — 법학·철학·토론 역량의 기초예요'},
+      {id:'j66',name:'보건',         cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['medical','sports'],why:'건강·의료 기초 지식을 배워요'},
+      // ── 3학년 2학기 (33학점) ────────────────
+      // 학교지정 (자동 이수, 9학점)
+      {id:'j73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'career', tags:[],why:'진로와 연계한 자기주도 탐구 프로젝트예요'},
+      {id:'j74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'general',tags:[],why:'학교 특화 자율 과목이에요'},
+      {id:'j75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'general',tags:[],why:'학교 특화 자율 과목이에요'},
+      // 선택군 A — 탐구·교양 (택4, 16학점)
+      {id:'j67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학을 통해 과학적 사고력을 넓혀요'},
+      {id:'j68',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해 — 도시·환경 계획 진로에 유용해요'},
+      {id:'j69',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','biz','edu'],why:'글로벌 지역 이해 — 국제 비즈니스·외교에 필요해요'},
+      {id:'j70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가를 목표로 한다면 핵심 과목이에요'},
+      {id:'j71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해 — 환경공학·NGO 진로에 추천해요'},
+      {id:'j72',name:'스페인어Ⅰ',   cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'스페인어권 비즈니스·중남미 진출에 유리해요'},
+      // 선택군 B — 심화 탐구 (택2, 8학점)
+      {id:'j76',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law','edu'],why:'현대 사회 문제를 융합적 시각으로 분석해요'},
+      {id:'j77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'실험 중심 물리 심화 — 공학계 진학에 추천해요'},
+      {id:'j78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it','biz'],why:'수학적 사고력을 프로젝트로 심화 학습해요'},
+    ]
+  },
+
+  // ============================================================
+  // 제주제일고등학교 (인문사회 중점)
+  // ============================================================
+  jejujeilo: {
+    name:'제주제일고등학교', short:'제주제일고', emoji:'🏛️', location:'제주시',
+    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
+    subjects:[
+      // ── 1학년 1학기 (22학점) ──
+      {id:'z01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z08',name:'음악',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      // ── 1학년 2학기 (23학점) ──
+      {id:'z09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z16',name:'미술',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      // ── 2학년 1학기 (32학점) ──
+      {id:'z18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'z19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it','stem'],why:'디지털 역량 기초 — 모든 진로에 필요해요'},
+      {id:'z20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','media'],why:'논리적 말하기·글쓰기의 기본'},
+      {id:'z21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'독해력과 작문 — 어문·법학 핵심'},
+      {id:'z22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz','medical'],why:'이공계·의약 진학의 수학 기초'},
+      {id:'z23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','medical'],why:'이과 진학 핵심 수학'},
+      {id:'z24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it','medical'],why:'데이터·경영·연구에 필수'},
+      {id:'z25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it'],why:'대부분 진로에서 요구하는 영어 심화'},
+      {id:'z26',name:'동아시아 역사',cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law'],why:'한·중·일 역사 이해 — 외교·인문 기초'},
+      {id:'z27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'공학의 기초 과학'},
+      {id:'z28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'의약·화학공학 필수'},
+      {id:'z29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의대·생명공학 핵심'},
+      {id:'z30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports','medical'],why:'건강·스포츠 진로의 기본'},
+      {id:'z31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공 핵심 실기'},
+      {id:'z32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'시각예술·디자인 기본'},
+      {id:'z33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI 시대 필수 과목'},
+      {id:'z34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'일본어 능력으로 외교·무역 경쟁력'},
+      {id:'z35',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 — 글로벌 비즈니스 핵심'},
+      // ── 2학년 2학기 (32학점) ──
+      {id:'z36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 분석·창작 — 어문 기초'},
+      {id:'z37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical','it'],why:'이공계 심화 필수 수학'},
+      {id:'z38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 감각·건축·그래픽'},
+      {id:'z39',name:'인공지능 수학',cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'AI·데이터 수학 기초'},
+      {id:'z40',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영·경제 계열 필수'},
+      {id:'z41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz'],why:'심화 영어 독해·청취'},
+      {id:'z42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','medical'],why:'영어 논술·보고서 작성'},
+      {id:'z43',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum','law','edu'],why:'사회 구조·문화 이해 기본'},
+      {id:'z44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz','law'],why:'시장 원리·경제 현상 이해'},
+      {id:'z45',name:'세계사',       cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum','law'],why:'세계 역사 이해 — 외교·인문'},
+      {id:'z46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지질·천문·기상 — 환경공학'},
+      {id:'z47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports','media'],why:'스포츠 산업·미디어 이해'},
+      {id:'z48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연예술·방송 연기 기초'},
+      {id:'z49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem','biz'],why:'빅데이터 분석 핵심'},
+      {id:'z50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'개발자·AI엔지니어 기본기'},
+      // ── 3학년 1학기 (32학점) ──
+      {id:'z51',name:'주제 탐구 독서',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'심화 독서·대입 논술에 도움'},
+      {id:'z52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학과 영상 융합 창작'},
+      {id:'z53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통 능력 강화'},
+      {id:'z54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해 심화'},
+      {id:'z55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','media','sports'],why:'직업 현장 영어 회화'},
+      {id:'z56',name:'정치와 법',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 진로 입문 필수'},
+      {id:'z57',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'글로벌 지역 이해'},
+      {id:'z58',name:'역학과 에너지',cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'공학 기초 역학'},
+      {id:'z59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학·약학 심화'},
+      {id:'z60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명공학 필수'},
+      {id:'z61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동+과학 융합'},
+      {id:'z62',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
+      {id:'z63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'심리·상담·복지에 필요'},
+      {id:'z64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 실습 기초'},
+      {id:'z65',name:'중국어 회화Ⅰ', cr:4,area:'제2외국어',sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'중국어 심화 회화'},
+      {id:'z66',name:'일본어 회화Ⅰ', cr:4,area:'제2외국어',sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'일본어 심화 회화'},
+      // ── 3학년 2학기 (33학점) ──
+      {id:'z73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 자기주도 탐구 프로젝트'},
+      {id:'z74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 자율과목'},
+      {id:'z75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 자율과목'},
+      {id:'z67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학 융합 사고'},
+      {id:'z68',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해 — 도시·환경 계획'},
+      {id:'z69',name:'경제지리',     cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'글로벌 경제·지역 이해'},
+      {id:'z70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가 핵심'},
+      {id:'z71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해'},
+      {id:'z72',name:'중국어Ⅱ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 심화'},
+      {id:'z76',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law','edu'],why:'사회 현안 융합 분석'},
+      {id:'z77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'공학계 실험 심화'},
+      {id:'z78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it','biz'],why:'수학 프로젝트 심화'},
+    ]
+  },
+
+  // ============================================================
+  // 대정여자고등학교 (예술·교육 중점)
+  // ============================================================
+  daejeongnyeo: {
+    name:'대정여자고등학교', short:'대정여고', emoji:'🌸', location:'서귀포시 대정읍',
+    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
+    subjects:[
+      // ── 1학년 1학기 (22학점) ──
+      {id:'d01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d08',name:'음악',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      // ── 1학년 2학기 (23학점) ──
+      {id:'d09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d16',name:'미술',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      // ── 2학년 1학기 (32학점) ──
+      {id:'d18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'d19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it'],why:'디지털 기초 역량'},
+      {id:'d20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'논리적 말하기·글쓰기'},
+      {id:'d21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'독해·작문 능력 강화'},
+      {id:'d22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz'],why:'이공계 수학 기초'},
+      {id:'d23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'이과 진학 필수'},
+      {id:'d24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it'],why:'통계·경영·연구 필수'},
+      {id:'d25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','edu'],why:'영어 심화 — 다양한 진로'},
+      {id:'d26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu','law'],why:'사회·문화 이해 인문 기본'},
+      {id:'d27',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의·생명공학 필수'},
+      {id:'d28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'의약·화학공학 기초'},
+      {id:'d29',name:'지구과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem'],why:'환경·지구 관련 진로'},
+      {id:'d30',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공 핵심'},
+      {id:'d31',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'미술·디자인 진로 기본'},
+      {id:'d32',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports'],why:'건강·스포츠 역량'},
+      {id:'d33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI·디지털 기초'},
+      {id:'d34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'외국어 능력 강화'},
+      {id:'d35',name:'영어 발표와 토론',cr:4,area:'영어',sem:'2-1',type:'student',subtype:'general',tags:['hum','media','edu'],why:'영어 토론·발표 실력'},
+      // ── 2학년 2학기 (32학점) ──
+      {id:'d36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 분석·창작 기초'},
+      {id:'d37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical'],why:'이공계 심화'},
+      {id:'d38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 사고·건축·디자인'},
+      {id:'d39',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영계열 수학'},
+      {id:'d41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','biz','medical'],why:'심화 영어'},
+      {id:'d42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'영어 논술·작문'},
+      {id:'d43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·윤리 분석'},
+      {id:'d44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz'],why:'시장 원리 이해'},
+      {id:'d45',name:'정치와 법',    cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['law'],why:'법학·행정 진로 기초'},
+      {id:'d46',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','biz'],why:'데이터 분석 역량'},
+      {id:'d47',name:'음악 감상과 비평',cr:4,area:'예술',sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'음악 문화·비평 역량'},
+      {id:'d48',name:'미술 감상과 비평',cr:4,area:'예술',sem:'2-2',type:'student',subtype:'career',tags:['arts'],why:'미술 감상·이론'},
+      {id:'d49',name:'스포츠 생활',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports'],why:'건강한 스포츠 생활'},
+      {id:'d50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'코딩 기초 실습'},
+      // ── 3학년 1학기 (32학점) ──
+      {id:'d51',name:'주제 탐구 독서',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'대입 논술·탐구 독서'},
+      {id:'d52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학·영상 융합 창작'},
+      {id:'d53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통 역량'},
+      {id:'d54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해'},
+      {id:'d55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','edu'],why:'실용 영어 회화'},
+      {id:'d56',name:'법과 사회',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 입문'},
+      {id:'d57',name:'동아시아 역사 기행',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum'],why:'인문·외교 역사 심화'},
+      {id:'d58',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의약·생명 심화'},
+      {id:'d59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학 심화'},
+      {id:'d60',name:'지구 환경과 기후변화',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'fusion',tags:['stem'],why:'환경·기후 문제 탐구'},
+      {id:'d61',name:'음악 실기와 연구',cr:4,area:'예술',sem:'3-1',type:'student',subtype:'career',tags:['arts'],why:'음악 전공 심화 실기'},
+      {id:'d62',name:'미술 실기와 연구',cr:4,area:'예술',sem:'3-1',type:'student',subtype:'career',tags:['arts'],why:'미술 전공 심화 실기'},
+      {id:'d63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'심리·상담·복지 필수'},
+      {id:'d64',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
+      {id:'d65',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초'},
+      {id:'d66',name:'복지와 돌봄',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','medical'],why:'사회복지·보건 진로 필수'},
+      // ── 3학년 2학기 (33학점) ──
+      {id:'d73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 탐구 프로젝트'},
+      {id:'d74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
+      {id:'d75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
+      {id:'d67',name:'음악 문화와 산업',cr:4,area:'예술',sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'음악 산업·문화 기획'},
+      {id:'d68',name:'미술 문화와 산업',cr:4,area:'예술',sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'미술 산업·전시 기획'},
+      {id:'d69',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law'],why:'사회 현안 융합 탐구'},
+      {id:'d70',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해·환경 계획'},
+      {id:'d71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해'},
+      {id:'d72',name:'일본어Ⅱ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'일본어 심화'},
+      {id:'d76',name:'문화와 예술',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'예술 문화 융합 이해'},
+      {id:'d77',name:'심리와 상담',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'career',tags:['edu','medical'],why:'상담·복지 심화'},
+      {id:'d78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','biz'],why:'수학 심화 프로젝트'},
+    ]
+  },
+
+  // ============================================================
+  // 대정고등학교 (자연환경·실용 중점)
+  // ============================================================
+  daejeong: {
+    name:'대정고등학교', short:'대정고', emoji:'🌿', location:'서귀포시 대정읍',
+    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
+    subjects:[
+      // ── 1학년 1학기 (22학점) ──
+      {id:'e01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e08',name:'미술',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
+      // ── 1학년 2학기 (23학점) ──
+      {id:'e09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e16',name:'음악',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
+      // ── 2학년 1학기 (32학점) ──
+      {id:'e18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
+      {id:'e19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it'],why:'디지털 기초 역량'},
+      {id:'e20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'논리적 표현 능력'},
+      {id:'e21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum'],why:'독해·작문 능력'},
+      {id:'e22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'이공계 수학 기초'},
+      {id:'e23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'이과 진학 필수'},
+      {id:'e24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','stem'],why:'데이터·통계 기초'},
+      {id:'e25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','stem'],why:'영어 심화'},
+      {id:'e26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·문화 이해'},
+      {id:'e27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem'],why:'공학 기초 과학'},
+      {id:'e28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'화학·의약 진학 기초'},
+      {id:'e29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'생명공학·의대 필수'},
+      {id:'e30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports'],why:'건강·운동 역량'},
+      {id:'e31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 실기·창작'},
+      {id:'e32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'미술·디자인 기초'},
+      {id:'e33',name:'농업·생명기술',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'career',tags:['stem','medical'],why:'제주 특화! 농업·생명 기술'},
+      {id:'e34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'외국어 역량'},
+      {id:'e35',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI·디지털 기초'},
+      // ── 2학년 2학기 (32학점) ──
+      {id:'e36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts'],why:'문학 분석·창작'},
+      {id:'e37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical'],why:'이공계 심화'},
+      {id:'e38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem'],why:'공간 수학'},
+      {id:'e39',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영계열 수학'},
+      {id:'e41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','biz'],why:'심화 영어'},
+      {id:'e42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum'],why:'영어 작문'},
+      {id:'e43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·윤리 분석'},
+      {id:'e44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz'],why:'경제 현상 이해'},
+      {id:'e45',name:'세계사',       cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum'],why:'세계 역사 이해'},
+      {id:'e46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지구·환경 과학'},
+      {id:'e47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports'],why:'스포츠 문화 이해'},
+      {id:'e48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연·연기 기초'},
+      {id:'e49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'데이터 분석'},
+      {id:'e50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it'],why:'코딩 기초'},
+      // ── 3학년 1학기 (32학점) ──
+      {id:'e51',name:'독서와 언어탐구',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'언어·독서 심화'},
+      {id:'e52',name:'문학과 매체',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'매체·문학 융합'},
+      {id:'e53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통'},
+      {id:'e54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum'],why:'영어 원서 독해'},
+      {id:'e55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','sports'],why:'실용 영어'},
+      {id:'e56',name:'제주 환경과 사회',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum','stem'],why:'제주 특화! 지역 환경·사회'},
+      {id:'e57',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'글로벌 지역 이해'},
+      {id:'e58',name:'생태와 환경',  cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'제주 특화! 생태·환경 탐구'},
+      {id:'e59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학 심화'},
+      {id:'e60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명 필수'},
+      {id:'e61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동+과학 융합'},
+      {id:'e62',name:'농업과 생명',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'제주 특화! 농업·생명 심화'},
+      {id:'e63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum'],why:'심리·상담 기초'},
+      {id:'e64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초'},
+      {id:'e65',name:'해양환경과 탐구',cr:4,area:'과학', sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'제주 특화! 해양 환경 탐구'},
+      {id:'e66',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
+      // ── 3학년 2학기 (33학점) ──
+      {id:'e73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 탐구 프로젝트'},
+      {id:'e74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
+      {id:'e75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
+      {id:'e67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학 융합'},
+      {id:'e68',name:'제주 역사와 문화',cr:4,area:'사회',sem:'3-2',type:'student',subtype:'fusion',tags:['hum'],why:'제주 특화! 지역 역사·문화'},
+      {id:'e69',name:'세계지리 탐구2',cr:4,area:'사회', sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'글로벌 지역 심화'},
+      {id:'e70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가'},
+      {id:'e71',name:'환경과 기후',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후변화·환경 문제'},
+      {id:'e72',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 기초'},
+      {id:'e76',name:'환경공학의 이해',cr:4,area:'과학', sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'환경공학 진로 입문'},
+      {id:'e77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'공학계 실험 심화'},
+      {id:'e78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it'],why:'수학 심화 프로젝트'},
+    ]
+  },
+};
+
+// 창체 학점 (학기당 3학점씩 × 6학기 = 18학점, 자동 포함)
+const CCHA_PER_SEM = 3;
+const SEMS = ['1-1','1-2','2-1','2-2','3-1','3-2'];
+const SEM_LABEL = {'1-1':'1학년 1학기','1-2':'1학년 2학기','2-1':'2학년 1학기','2-2':'2학년 2학기','3-1':'3학년 1학기','3-2':'3학년 2학기'};
+
+// Area guide
+const AREA_GUIDE = {
+  '국어':      {rec:'1~2과목', min:1, max:2, hint:'📝 국어 중 1~2과목만 골라요. 어문·교육 계열이면 2개, 이공계면 1개로 충분해요.'},
+  '수학':      {rec:'1~3과목', min:1, max:3, hint:'➕ 이과·의약·IT면 미적분Ⅱ까지 3과목, 문과·예술이면 확률과통계 1과목으로 OK!'},
+  '영어':      {rec:'1~2과목', min:1, max:2, hint:'🌍 영어Ⅰ은 대부분 선택해요. 해외 진학·외국어 중요 진로면 2과목 선택하세요.'},
+  '사회':      {rec:'1~2과목', min:1, max:2, hint:'🌏 진로와 가장 관련 있는 것 1~2과목 골라요.'},
+  '과학':      {rec:'1~2과목', min:1, max:3, hint:'🔬 이과·의약이면 2~3과목, 인문·예술·체육 진로면 1과목이면 충분해요.'},
+  '체육':      {rec:'1과목',   min:0, max:1, hint:'⚽ 체육 진로가 아니면 1과목만 선택하면 돼요.'},
+  '예술':      {rec:'1과목',   min:0, max:1, hint:'🎨 예술 진로가 아니면 1과목만 선택해요.'},
+  '기술정보':  {rec:'1~2과목', min:1, max:2, hint:'💻 IT·AI 진로면 2~3과목, 다른 진로도 "인공지능 기초" 1과목은 추천해요!'},
+  '제2외국어': {rec:'0~1과목', min:0, max:1, hint:'🗣️ 어학·무역·외교 진로면 1과목 선택해요. 필수는 아니에요.'},
+  '교양':      {rec:'1과목',   min:0, max:1, hint:'📚 진로와 관련된 것 1과목만 골라요.'},
+  '창체':      {rec:'자동포함',min:0, max:0, hint:''},
+};
+
+// ============================================================
+// DATA: 선택군 (택N) — 학기별 학생 자율 선택 그룹
+// ============================================================
+const COURSE_GROUPS = {
+  // ── 2학년 1학기 ─────────────────────────────
+  'g21a':{label:'국어 선택군',  note:'택1', pick:1, ids:['j20','j21']},
+  'g21b':{label:'수학 선택군',  note:'택1', pick:1, ids:['j22','j23','j24']},
+  'g21c':{label:'영어 선택군',  note:'택1', pick:1, ids:['j25']},
+  'g21d':{label:'탐구 선택군',  note:'택2', pick:2, ids:['j26','j27','j28','j29']},
+  'g21e':{label:'예체능·기타 선택군', note:'택2', pick:2, ids:['j30','j31','j32','j33','j34','j35']},
+  // ── 2학년 2학기 ─────────────────────────────
+  'g22a':{label:'국어 선택군',     note:'택1', pick:1, ids:['j36']},
+  'g22b':{label:'수학 선택군',     note:'택1', pick:1, ids:['j37','j38','j39','j40']},
+  'g22c':{label:'영어 선택군',     note:'택1', pick:1, ids:['j41','j42']},
+  'g22d':{label:'사회 선택군',     note:'택2', pick:2, ids:['j43','j44','j45']},
+  'g22e':{label:'과학·정보 선택군',note:'택2', pick:2, ids:['j46','j49','j50']},
+  'g22f':{label:'예체능 선택군',   note:'택1', pick:1, ids:['j47','j48']},
+  // ── 3학년 1학기 ─────────────────────────────
+  'g31a':{label:'국어 선택군',     note:'택1', pick:1, ids:['j51','j52','j53']},
+  'g31b':{label:'영어 선택군',     note:'택1', pick:1, ids:['j54','j55']},
+  'g31c':{label:'사회 선택군',     note:'택1', pick:1, ids:['j56','j57']},
+  'g31d':{label:'과학 선택군',     note:'택2', pick:2, ids:['j58','j59','j60']},
+  'g31e':{label:'체육·교양 선택군',note:'택3', pick:3, ids:['j61','j62','j63','j64','j65','j66']},
+  // ── 3학년 2학기 ─────────────────────────────
+  'g32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['j67','j68','j69','j70','j71','j72']},
+  'g32b':{label:'심화 탐구 선택군 B',note:'택2', pick:2, ids:['j76','j77','j78']},
+  // ── 제주제일고등학교 (z-prefix) ────────────────────
+  'gz21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z20','z21']},
+  'gz21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['z22','z23','z24']},
+  'gz21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['z25']},
+  'gz21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['z26','z27','z28','z29']},
+  'gz21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['z30','z31','z32','z33','z34','z35']},
+  'gz22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z36']},
+  'gz22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['z37','z38','z39','z40']},
+  'gz22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['z41','z42']},
+  'gz22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['z43','z44','z45']},
+  'gz22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['z46','z49','z50']},
+  'gz22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['z47','z48']},
+  'gz31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z51','z52','z53']},
+  'gz31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['z54','z55']},
+  'gz31c':{label:'사회 선택군',       note:'택1', pick:1, ids:['z56','z57']},
+  'gz31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['z58','z59','z60']},
+  'gz31e':{label:'체육·교양 선택군',  note:'택3', pick:3, ids:['z61','z62','z63','z64','z65','z66']},
+  'gz32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['z67','z68','z69','z70','z71','z72']},
+  'gz32b':{label:'심화 탐구 선택군 B',note:'택2', pick:2, ids:['z76','z77','z78']},
+  // ── 대정여자고등학교 (d-prefix) ────────────────────
+  'gd21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d20','d21']},
+  'gd21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['d22','d23','d24']},
+  'gd21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['d25','d35']},
+  'gd21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['d26','d27','d28','d29']},
+  'gd21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['d30','d31','d32','d33','d34']},
+  'gd22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d36']},
+  'gd22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['d37','d38','d39']},
+  'gd22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['d41','d42']},
+  'gd22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['d43','d44','d45']},
+  'gd22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['d46','d49','d50']},
+  'gd22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['d47','d48']},
+  'gd31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d51','d52','d53']},
+  'gd31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['d54','d55']},
+  'gd31c':{label:'사회 선택군',       note:'택1', pick:1, ids:['d56','d57']},
+  'gd31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['d58','d59','d60']},
+  'gd31e':{label:'예술·교양 선택군',  note:'택3', pick:3, ids:['d61','d62','d63','d64','d65','d66']},
+  'gd32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['d67','d68','d69','d70','d71','d72']},
+  'gd32b':{label:'심화 선택군 B',     note:'택2', pick:2, ids:['d76','d77','d78']},
+  // ── 대정고등학교 (e-prefix) ──────────────────────
+  'ge21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e20','e21']},
+  'ge21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['e22','e23','e24']},
+  'ge21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['e25']},
+  'ge21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['e26','e27','e28','e29']},
+  'ge21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['e30','e31','e32','e33','e34','e35']},
+  'ge22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e36']},
+  'ge22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['e37','e38','e39']},
+  'ge22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['e41','e42']},
+  'ge22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['e43','e44','e45']},
+  'ge22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['e46','e49','e50']},
+  'ge22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['e47','e48']},
+  'ge31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e51','e52','e53']},
+  'ge31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['e54','e55']},
+  'ge31c':{label:'사회·환경 선택군',  note:'택1', pick:1, ids:['e56','e57']},
+  'ge31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['e58','e59','e60']},
+  'ge31e':{label:'교양·체육 선택군',  note:'택3', pick:3, ids:['e61','e62','e63','e64','e65','e66']},
+  'ge32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['e67','e68','e69','e70','e71','e72']},
+  'ge32b':{label:'심화 선택군 B',     note:'택2', pick:2, ids:['e76','e77','e78']},
+};
+// 과목ID → 선택군ID 역방향 맵
+const SUB_TO_GRP = {};
+Object.entries(COURSE_GROUPS).forEach(([gid,g])=>g.ids.forEach(id=>{SUB_TO_GRP[id]=gid;}));
+
+// ── 선수과목 안내 맵 (과목명 → 선수과목 배열) ─────────────
+const PREREQ_MAP = {
+  '미적분Ⅱ':['미적분Ⅰ'],
+  '기하':['대수'],
+  '인공지능 수학':['대수 또는 미적분Ⅰ 중 1과목'],
+  '경제 수학':['대수 또는 확률과 통계 중 1과목'],
+  '역학과 에너지':['물리학'],
+  '화학 반응의 세계':['화학'],
+  '세포와 물질대사':['생명과학'],
+  '영어Ⅱ':['영어Ⅰ'],
+  '영어 독해와 작문':['영어Ⅰ'],
+  '영미 문학 읽기':['영어Ⅰ','영어Ⅱ'],
+  '실용 영어':['영어Ⅰ'],
+  '중국어Ⅱ':['중국어Ⅰ'],
+  '일본어 회화Ⅰ':['일본어Ⅰ'],
+  '중국어 회화Ⅰ':['중국어Ⅰ'],
+  '주제 탐구 독서':['독서와 작문'],
+  '문학과 영상':['문학'],
+  '고급 수학Ⅱ':['고급 수학Ⅰ'],
+  '심화 국어':['독서와 작문 또는 문학'],
+  '심화 수학Ⅱ':['심화 수학Ⅰ'],
+};
+
+// 필수 이수학점 기준 (2022 개정 교육과정)
+// 예술·체육은 필수(4·2학점)만 보장, 나머지는 선택군 자유선택 → 학교기준 최솟값으로 조정
+const MIN_AREA   = {'국어':8,'수학':8,'영어':8,'사회':10,'과학':12,'체육':4,'예술':4};
+const MIN_SELECT = 16;  // 기술정보+제2외국어+교양 합산 최소
+const MIN_REQ    = 84;  // 필수 이수학점 합계 최소
+const MAX_KEM    = 81;  // 국어+영어+수학 합 상한
+
+// Career-area hint matrix
+const CAT_WHY = {
+  stem:   {수학:'공학 계산의 기초예요',과학:'이공계 진학에 꼭 필요한 과목이에요',영어:'해외 논문·기술 자료 이해에 필요해요',기술정보:'공학 프로그래밍 역량을 키워요'},
+  medical:{수학:'의학 통계·생물수학의 기초예요',과학:'의약 계열 진학 필수 과목이에요',영어:'의학 논문·해외 연구 자료는 영어로 되어 있어요',교양:'보건 기초 지식을 쌓아요'},
+  hum:    {국어:'문학·작문은 인문계 역량의 핵심이에요',사회:'사회·역사 이해는 인문학 기반이에요',영어:'번역·외교·저술에 영어가 필요해요',제2외국어:'어문 계열은 외국어 능력이 강점이에요'},
+  law:    {국어:'법 문서 이해·작성에 국어 논리력이 필요해요',사회:'정치·법 과목은 법학 입문이에요',영어:'국제법·외국 판례를 영어로 읽어야 해요',교양:'논리학은 법적 추론 능력을 길러요'},
+  arts:   {예술:'전공 실기의 핵심 과목이에요',국어:'작품 기획서·설명문 작성에 필요해요',수학:'건축·디자인에 기하 감각이 필요해요',영어:'해외 작품·트렌드 파악에 도움 돼요'},
+  sports: {체육:'스포츠 전공의 핵심 과목이에요',과학:'스포츠 과학은 운동을 과학적으로 배워요',교양:'트레이너·코치에게 보건 지식은 필수예요',수학:'스포츠 통계 분석에 활용돼요'},
+  biz:    {수학:'경제 수학·통계는 경영 분석에 필요해요',사회:'경제 과목은 시장 원리 핵심이에요',영어:'글로벌 비즈니스에 영어 소통이 필수예요',교양:'창업·경영 과목으로 사업 기초를 배워요'},
+  edu:    {국어:'교사는 정확한 언어 표현이 중요해요',사회:'사회 이해는 교직 이수에 도움이 돼요',교양:'교육학은 교사가 꼭 알아야 할 이론이에요',영어:'영어교사 또는 국제교육에 필수예요'},
+  it:     {기술정보:'AI·프로그래밍의 핵심 전공 과목이에요',수학:'인공지능·알고리즘의 수학 기초예요',과학:'IT와 물리·전자공학은 밀접해요',영어:'개발 문서·기술 트렌드는 영어로 되어 있어요'},
+  media:  {국어:'콘텐츠 기획·스크립트 작성에 핵심이에요',예술:'영상·음악은 콘텐츠 제작의 기본이에요',영어:'글로벌 플랫폼 진출에 영어가 필수예요',기술정보:'디지털 미디어 툴 활용에 도움 돼요'},
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let S = {
+  screen:'home',         // home|school_select|add_school|career_explore|subject_select|summary
+  schoolId:null,
+  customSchools:{},      // user-added schools
+  mode:'guided',         // guided|search|category
+  gStep:0, gScores:{},
+  searchQ:'', searchR:[],
+  selCat:null,
+  career:null,           // {name, cat}
+  grade:2,               // active grade tab (1,2,3) — 학년 단위로 선택
+  showMoreJobs:false,    // guided 결과에서 더 많은 직업 표시
+  sel:{},                // subjectId → true/false
+  newSchool:{name:'',location:'',short:''}, // add school form
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getSchool(){
+  if(!S.schoolId) return null;
+  if(SCHOOLS_DB[S.schoolId]) return SCHOOLS_DB[S.schoolId];
+  return S.customSchools[S.schoolId]||null;
+}
+
+function allSchools(){
+  return [
+    ...Object.entries(SCHOOLS_DB).map(([id,sc])=>({id,...sc})),
+    ...Object.entries(S.customSchools).map(([id,sc])=>({id,...sc})),
+  ];
+}
+
+function semSubjects(sem){
+  const sc=getSchool();
+  if(!sc) return [];
+  return sc.subjects.filter(s=>s.sem===sem);
+}
+
+// 학년 단위 helpers
+function gradeSubjects(grade){
+  const sc=getSchool();
+  if(!sc) return [];
+  return sc.subjects.filter(s=>s.sem.startsWith(grade+'-'));
+}
+
+// 교과 이수 여부: mandatory·school은 자동 이수, student는 S.sel 기준
+function isEarned(s){
+  return s.type==='mandatory'||s.type==='school'||!!S.sel[s.id];
+}
+
+function totalCredits(){
+  const sc=getSchool();
+  if(!sc) return 0;
+  // 교과 이수학점 + 창체 18학점(학기당 3학점×6학기, 자동포함)
+  const subCr=sc.subjects.filter(s=>isEarned(s)).reduce((a,s)=>a+s.cr,0);
+  return subCr + 18;
+}
+
+function semCredits(sem){
+  const sc=getSchool();
+  if(!sc) return 0;
+  const subCr=sc.subjects.filter(s=>s.sem===sem&&isEarned(s)).reduce((a,s)=>a+s.cr,0);
+  return subCr + CCHA_PER_SEM;
+}
+
+function semTarget(sem){
+  const sc=getSchool();
+  if(!sc) return 32;
+  return (sc.semTarget||{})[sem]||32;
+}
+
+// 학년별 총 학점 (교과 + 창체)
+function gradeCredits(grade){
+  const sc=getSchool();
+  if(!sc) return 0;
+  const subCr=sc.subjects.filter(s=>s.sem.startsWith(grade+'-')&&isEarned(s)).reduce((a,s)=>a+s.cr,0);
+  return subCr + CCHA_PER_SEM*2; // 학년당 2학기 × 3학점
+}
+
+// 학년별 목표 학점
+function gradeTarget(grade){
+  const sc=getSchool();
+  if(!sc) return 66;
+  const t=sc.semTarget||{};
+  return (t[grade+'-1']||32)+(t[grade+'-2']||32)+CCHA_PER_SEM*2;
+}
+
+function initSchoolSel(schoolId){
+  const sc=SCHOOLS_DB[schoolId]||S.customSchools[schoolId];
+  if(!sc) return;
+  const newSel={};
+  sc.subjects.forEach(s=>{
+    if(s.type==='mandatory') newSel[s.id]=true;
+    else if(s.type==='school') newSel[s.id]=true; // 학교지정도 기본 선택
+    else newSel[s.id]=false;
+  });
+  S.sel=newSel;
+  S.schoolId=schoolId;
+}
+
+function recSubjects(){
+  const sc=getSchool();
+  if(!sc||!S.career) return sc?sc.subjects.filter(s=>s.type==='student'):[];
+  return sc.subjects.filter(s=>s.type==='student'&&s.tags&&s.tags.includes(S.career.cat));
+}
+
+function getWhy(s){
+  if(s.why) return s.why;
+  if(S.career&&CAT_WHY[S.career.cat]&&CAT_WHY[S.career.cat][s.area])
+    return CAT_WHY[S.career.cat][s.area];
+  return null;
+}
+
+function set(upd,noRender){
+  Object.assign(S,upd);
+  if(!noRender) render();
+}
+
+// ============================================================
+// PDF UPLOAD FEATURE
+// ============================================================
+function rPdfUpload(){
+  return `<div class="screen">
+    ${rHdr('편제표 PDF 업로드','우리 학교 편제표를 올려서 과목 데이터를 만들어요',15)}
+    ${rSteps(0,5)}
+    <div class="card">
+      <h2>📄 편제표 PDF 업로드</h2>
+      <p style="font-size:.82rem;color:var(--s5);margin-bottom:4px;line-height:1.65">
+        학교에서 받은 <strong>편제표 PDF</strong>를 업로드하면 과목 목록을 자동으로 인식해요.<br>
+        인식 결과를 확인하고 수정한 후, 우리 학교로 저장할 수 있어요.
+      </p>
+
+      <div class="info-box">
+        ✅ <strong>잘 되는 경우</strong> — 텍스트가 포함된 표 형식 편제표 PDF (워드·한글로 만든 PDF)<br>
+        ⚠️ <strong>잘 안 되는 경우</strong> — 스캔 이미지 PDF, 표가 없는 PDF<br>
+        💡 PDF 파싱이 어려운 경우 아래 <strong>직접 입력</strong> 기능을 이용하세요.
+      </div>
+
+      <label class="pdf-drop-zone" for="pdf-file-input" id="pdf-drop-zone">
+        <span class="pdf-drop-icon">📂</span>
+        <div style="font-size:.95rem;font-weight:800;color:var(--pd);margin-bottom:5px">PDF 파일을 여기에 끌어다 놓거나 클릭하세요</div>
+        <div style="font-size:.78rem;color:var(--s5)">지원: .pdf 파일 (텍스트 기반 편제표)</div>
+      </label>
+      <input type="file" id="pdf-file-input" accept=".pdf" style="display:none" onchange="handlePdfUpload(this.files[0])">
+
+      <div id="pdf-status" style="margin-top:4px"></div>
+      <div id="pdf-result"></div>
+
+      <div class="nav-row">
+        <button class="btn btn-secondary" style="flex:1" onclick="set({screen:'school_select'})">← 뒤로</button>
+        <button class="btn btn-outline" style="flex:1" onclick="showManualEntry()">✏️ 직접 입력</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function showManualEntry(){
+  const el=document.getElementById('pdf-result');
+  if(!el) return;
+  S._pdfSubjects=[];
+  el.innerHTML=rPdfResultEditor([]);
+}
+
+async function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    if(document.querySelector(`script[src="${src}"]`)){resolve();return;}
+    const s=document.createElement('script');
+    s.src=src;s.onload=resolve;s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function handlePdfUpload(file){
+  if(!file) return;
+  const statusEl=document.getElementById('pdf-status');
+  if(!statusEl) return;
+  statusEl.innerHTML='<div class="info-box" style="display:flex;align-items:center;gap:8px"><span class="spin">⏳</span> PDF를 읽는 중... 잠시만 기다려주세요.</div>';
+  try{
+    // PDF.js 동적 로드
+    if(!window.pdfjsLib){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    const ab=await file.arrayBuffer();
+    const pdf=await window.pdfjsLib.getDocument({data:ab}).promise;
+    let fullText='';
+    const pageTexts=[];
+    for(let i=1;i<=Math.min(pdf.numPages,20);i++){
+      const page=await pdf.getPage(i);
+      const content=await page.getTextContent();
+      // 위치 정보를 활용해 줄 단위로 그룹화
+      const items=content.items.filter(it=>it.str.trim());
+      // Y좌표 기준 정렬 → 같은 줄끼리 묶기
+      const lines={};
+      items.forEach(it=>{
+        const y=Math.round(it.transform[5]/4)*4; // 4px 단위로 반올림
+        if(!lines[y]) lines[y]=[];
+        lines[y].push({x:it.transform[4],str:it.str});
+      });
+      const sortedLines=Object.keys(lines).sort((a,b)=>b-a)
+        .map(y=>lines[y].sort((a,b)=>a.x-b.x).map(it=>it.str).join(' '));
+      pageTexts.push(sortedLines.join('\n'));
+    }
+    fullText=pageTexts.join('\n--- 페이지 구분 ---\n');
+
+    const subjects=parseCurriculumPdf(fullText);
+    if(subjects.length===0){
+      statusEl.innerHTML='<div class="warn-box">⚠️ 과목 정보를 자동으로 인식하지 못했어요.<br>스캔 PDF이거나 표 형식이 아닐 수 있어요.<br>아래 <strong>직접 입력</strong>으로 과목을 추가해 주세요.</div>';
+      const el=document.getElementById('pdf-result');
+      if(el){S._pdfSubjects=[];el.innerHTML=rPdfResultEditor([]);}
+      return;
+    }
+    statusEl.innerHTML=`<div class="success-box">✅ <strong>${subjects.length}개 과목</strong>을 인식했어요! 아래에서 확인·수정할 수 있어요.</div>`;
+    S._pdfSubjects=[...subjects];
+    const el=document.getElementById('pdf-result');
+    if(el) el.innerHTML=rPdfResultEditor(subjects);
+  }catch(e){
+    statusEl.innerHTML=`<div class="warn-box">❌ PDF 읽기 실패: ${e.message||'알 수 없는 오류'}<br>다른 PDF를 시도하거나 <strong>직접 입력</strong>을 이용해 주세요.</div>`;
+    console.error('PDF parse error:',e);
+  }
+}
+
+function parseCurriculumPdf(text){
+  const subjects=[];
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+
+  // 교과(군) 키워드
+  const AREA_KW={
+    '국어':'국어','수학':'수학','영어':'영어','한국사':'사회',
+    '사회':'사회','역사':'사회','도덕':'사회','윤리':'사회',
+    '과학':'과학','물리':'과학','화학':'과학','생명':'과학','지구':'과학',
+    '체육':'체육','예술':'예술','음악':'예술','미술':'예술',
+    '기술':'기술정보','가정':'기술정보','정보':'기술정보',
+    '제2외국어':'제2외국어','일본어':'제2외국어','중국어':'제2외국어',
+    '스페인':'제2외국어','프랑스':'제2외국어','독일':'제2외국어',
+    '교양':'교양','진로':'교양','철학':'교양','논리':'교양',
+    '심리':'교양','보건':'교양','환경':'교양'
+  };
+
+  // 학기 패턴
+  const SEM_RE=/([1-3])\s*학년\s*([1-2])\s*학기|([1-3])\s*[-·]\s*([1-2])/;
+  // 과목명 패턴 (한글 2~15자, 숫자/기호 포함 가능)
+  const SUB_RE=/^([가-힣·\s\dⅠⅡⅢⅣ①②③]+?)\s+(\d+)\s*$/;
+  // 학점/이수단위 뒤에 따라오는 경우
+  const SUB_RE2=/([가-힣·\s\dⅠⅡⅢⅣ①②③]{2,15}?)\s{2,}(\d)\s/;
+
+  let currentSem='1-1';
+  let currentArea='국어';
+  let subId=0;
+
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+
+    // 학기 감지
+    const semM=line.match(SEM_RE);
+    if(semM){
+      const g=semM[1]||semM[3];const s=semM[2]||semM[4];
+      if(g&&s) currentSem=`${g}-${s}`;
+    }
+
+    // 교과군 감지
+    for(const [kw,area] of Object.entries(AREA_KW)){
+      if(line.startsWith(kw)||line===kw){currentArea=area;break;}
+    }
+
+    // 과목명+학점 패턴1: "과목명  숫자" (줄 끝)
+    const m1=line.match(SUB_RE);
+    if(m1){
+      const name=m1[1].trim().replace(/\s+/g,' ');
+      const cr=parseInt(m1[2]);
+      if(name.length>=2&&name.length<=20&&cr>=1&&cr<=8
+         &&/[가-힣]/.test(name)&&!name.match(/^(학년|학기|학교|교과|과목|이수|단위|합계|소계|총계|선택|필수)$/)){
+        subId++;
+        subjects.push({
+          id:`pdf${subId}`,name,cr,area:currentArea,sem:currentSem,
+          type:currentSem.startsWith('1')?'mandatory':'student',
+          subtype:'general',tags:[],why:''
+        });
+      }
+    }
+
+    // 과목명+학점 패턴2: 여러 항목이 한 줄에 있는 경우
+    if(!m1){
+      const parts=line.split(/\s{2,}/);
+      for(let j=0;j<parts.length-1;j++){
+        const name=parts[j].trim();
+        const crStr=parts[j+1]?.trim();
+        if(name&&crStr&&/^\d$/.test(crStr)&&/[가-힣]{2,}/.test(name)){
+          const cr=parseInt(crStr);
+          if(cr>=1&&cr<=8&&name.length>=2&&name.length<=20){
+            subId++;
+            subjects.push({
+              id:`pdf${subId}`,name,cr,area:currentArea,sem:currentSem,
+              type:currentSem.startsWith('1')?'mandatory':'student',
+              subtype:'general',tags:[],why:''
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // 중복 제거
+  const seen=new Set();
+  return subjects.filter(s=>{
+    const key=s.name+s.sem;
+    if(seen.has(key)) return false;
+    seen.add(key);return true;
+  });
+}
+
+function rPdfResultEditor(subjects){
+  const AREAS=['국어','수학','영어','사회','과학','체육','예술','기술정보','제2외국어','교양'];
+  const SEMS=['1-1','1-2','2-1','2-2','3-1','3-2'];
+  const TYPES=['mandatory','school','student'];
+  const TYPE_LABELS={'mandatory':'공통필수','school':'학교지정','student':'학생자율'};
+  const areaOpts=AREAS.map(a=>`<option value="${a}">${a}</option>`).join('');
+  const semOpts=SEMS.map(s=>`<option value="${s}">${s}학기</option>`).join('');
+  const typeOpts=TYPES.map(t=>`<option value="${t}">${TYPE_LABELS[t]}</option>`).join('');
+
+  const rows=(subjects||[]).map((s,i)=>`
+    <tr id="pdf-row-${i}">
+      <td><input class="pdf-subname" data-i="${i}" value="${s.name||''}" placeholder="과목명" style="width:100%;min-width:100px"></td>
+      <td><input type="number" class="pdf-subcr" data-i="${i}" value="${s.cr||4}" min="1" max="8" style="width:44px;text-align:center"></td>
+      <td><select class="pdf-subarea" data-i="${i}">${AREAS.map(a=>`<option value="${a}"${a===s.area?' selected':''}>${a}</option>`).join('')}</select></td>
+      <td><select class="pdf-subsem" data-i="${i}">${SEMS.map(se=>`<option value="${se}"${se===s.sem?' selected':''}>${se}</option>`).join('')}</select></td>
+      <td><select class="pdf-subtype" data-i="${i}">${TYPES.map(t=>`<option value="${t}"${t===s.type?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select></td>
+      <td><button class="pdf-parse-row-del" onclick="pdfDelRow(${i})" title="삭제">✕</button></td>
+    </tr>`).join('');
+
+  return `<div style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:7px">
+      <div style="font-size:.88rem;font-weight:800;color:var(--s9)">📋 인식된 과목 목록 (${subjects.length}개)</div>
+      <button class="btn btn-outline btn-sm" onclick="pdfAddRow()">+ 행 추가</button>
+    </div>
+
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.76rem;color:#92400e">
+      ⚠️ 자동 인식 결과를 반드시 확인하세요. 과목명·학점·학기가 틀릴 수 있어요.
+    </div>
+
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--s2)">
+      <table class="pdf-parse-table" id="pdf-parse-tbl">
+        <thead><tr><th>과목명</th><th>학점</th><th>교과군</th><th>학기</th><th>유형</th><th>삭제</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div class="form-group" style="margin-top:12px">
+      <label class="form-label">학교 이름 *</label>
+      <input class="form-input" id="pdf-school-name" type="text" placeholder="예: ○○고등학교">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">약칭</label>
+        <input class="form-input" id="pdf-school-short" type="text" placeholder="예: ○○고">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">지역</label>
+        <input class="form-input" id="pdf-school-loc" type="text" placeholder="예: 제주시">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="savePdfSchool()">
+      🏫 이 편제표로 학교 추가하기
+    </button>
+  </div>`;
+}
+
+function pdfDelRow(i){
+  if(!S._pdfSubjects) return;
+  S._pdfSubjects.splice(i,1);
+  const el=document.getElementById('pdf-result');
+  if(el) el.innerHTML=rPdfResultEditor(S._pdfSubjects);
+}
+
+function pdfAddRow(){
+  if(!S._pdfSubjects) S._pdfSubjects=[];
+  S._pdfSubjects.push({id:'pdfnew'+Date.now(),name:'',cr:4,area:'국어',sem:'2-1',type:'student',subtype:'general',tags:[],why:''});
+  const el=document.getElementById('pdf-result');
+  if(el) el.innerHTML=rPdfResultEditor(S._pdfSubjects);
+}
+
+function pdfCollectData(){
+  const subjects=[];
+  document.querySelectorAll('#pdf-parse-tbl tbody tr').forEach((tr,i)=>{
+    const name=tr.querySelector('.pdf-subname')?.value?.trim();
+    const cr=parseInt(tr.querySelector('.pdf-subcr')?.value)||4;
+    const area=tr.querySelector('.pdf-subarea')?.value||'국어';
+    const sem=tr.querySelector('.pdf-subsem')?.value||'2-1';
+    const type=tr.querySelector('.pdf-subtype')?.value||'student';
+    if(name) subjects.push({id:'p'+i+'_'+Date.now(),name,cr,area,sem,type,subtype:'general',tags:[],why:''});
+  });
+  return subjects;
+}
+
+function savePdfSchool(){
+  const name=document.getElementById('pdf-school-name')?.value?.trim();
+  const short=document.getElementById('pdf-school-short')?.value?.trim();
+  const loc=document.getElementById('pdf-school-loc')?.value?.trim();
+  if(!name){alert('학교 이름을 입력해 주세요!');return;}
+  const subjects=pdfCollectData();
+  if(subjects.length===0){alert('과목이 하나도 없어요. 과목을 추가해 주세요.');return;}
+  const id='pdf_'+Date.now();
+  S.customSchools[id]={
+    name,short:short||name,emoji:'📄',location:loc||'',
+    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
+    subjects
+  };
+  alert(`✅ "${name}" 학교를 추가했어요! (${subjects.length}개 과목)`);
+  pickSchool(id);
+}
+
+// ============================================================
+// RENDER ROUTER
+// ============================================================
+function render(){
+  const map={
+    home:rHome, school_select:rSchoolSelect, add_school:rAddSchool,
+    pdf_upload:rPdfUpload,
+    career_explore:rExplore, career_confirm:rConfirm,
+    subject_select:rSubjectSel, summary:rSummary
+  };
+  document.getElementById('app').innerHTML=(map[S.screen]||rHome)();
+  attachEv();
+}
+
+function rHdr(title,sub,prog){
+  return `<div class="hdr">
+    <div class="hdr-sub">🎓 고교학점제 진로설계 실습</div>
+    <h1>${title}</h1>
+    ${sub?`<p>${sub}</p>`:''}
+    ${prog!==undefined?`<div class="prog-wrap"><div class="prog-fill" style="width:${prog}%"></div></div>`:''}
+  </div>`;
+}
+function rSteps(cur,total){
+  return `<div class="steps">${Array.from({length:total},(_,i)=>`<div class="sdot${i===cur?' active':''}"></div>`).join('')}</div>`;
+}
+
+// ============================================================
+// HOME
+// ============================================================
+function rHome(){
+  // ── 재사용 SVG paths (stroke="currentColor") ─────────────────
+  const I={
+    cap:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M6 12v5c3 3 9 3 12 0v-5"/><path d="M2 10l10-5 10 5-10 5-10-5z"/></svg>',
+    lock:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    school:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10L12 3l9 7v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10z"/><polyline points="9 22 9 13 15 13 15 22"/></svg>',
+    pencil:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    compass:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+    clip:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+    doc:'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>',
+  };
+  // 아이콘 박스: 그라디언트 bg + 흰 아이콘
+  const iBox=(grad,svg,sh)=>`<div style="width:56px;height:56px;border-radius:18px;background:${grad};margin:0 auto 11px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:${sh}">${svg}</div>`;
+
+  const steps=[
+    {svg:I.school, label:'학교선택', active:true},
+    {svg:I.compass,label:'진로탐색', active:false},
+    {svg:I.clip,   label:'과목선택', active:false},
+    {svg:I.doc,    label:'결과저장', active:false},
+  ];
+
+  return `<div class="screen">
+    ${rHdr('나의 진로 설계 🚀','고교학점제 과목선택 실습 시뮬레이터')}
+    <div class="card">
+
+      <!-- 히어로 -->
+      <div style="text-align:center;padding:14px 0 10px">
+        <div style="width:74px;height:74px;border-radius:24px;background:linear-gradient(135deg,#4338ca,#6366f1,#7c3aed);margin:0 auto 13px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 10px 28px rgba(99,102,241,.38)">
+          ${I.cap}
+        </div>
+        <h2 style="font-size:1.22rem;color:var(--s9);margin-bottom:10px;justify-content:center;letter-spacing:-.02em">고교학점제란?</h2>
+        <p style="color:var(--s5);font-size:.87rem;line-height:1.9;word-break:keep-all">
+          고등학교 3년간 총 <strong style="color:var(--pd)">192학점</strong>을 이수하면 졸업해요.<br>
+          공통 필수과목 외에 <strong style="color:var(--s9)">내 진로에 맞는 과목을 직접 선택</strong>할 수 있어요!
+        </p>
+      </div>
+
+      <!-- 과목 유형 3가지 -->
+      <div class="home-grid">
+        <div class="hg-card" style="background:linear-gradient(150deg,#f5f3ff,#ede9fe);border:1.5px solid #ddd6fe">
+          ${iBox('linear-gradient(135deg,#4f46e5,#7c3aed)',I.lock,'0 6px 16px rgba(79,70,229,.32)')}
+          <div style="font-size:.8rem;font-weight:800;color:var(--pd)">공통필수</div>
+          <div style="font-size:.67rem;color:var(--s5);margin-top:4px;line-height:1.6">자동 포함<br>변경 불가</div>
+        </div>
+        <div class="hg-card" style="background:linear-gradient(150deg,#fffbeb,#fef3c7);border:1.5px solid #fcd34d">
+          ${iBox('linear-gradient(135deg,#d97706,#f59e0b)',I.school,'0 6px 16px rgba(217,119,6,.3)')}
+          <div style="font-size:.8rem;font-weight:800;color:#d97706">학교지정</div>
+          <div style="font-size:.67rem;color:var(--s5);margin-top:4px;line-height:1.6">학교가 정한<br>권장 과목</div>
+        </div>
+        <div class="hg-card" style="background:linear-gradient(150deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac">
+          ${iBox('linear-gradient(135deg,#059669,#10b981)',I.pencil,'0 6px 16px rgba(5,150,105,.3)')}
+          <div style="font-size:.8rem;font-weight:800;color:#059669">학생자율</div>
+          <div style="font-size:.67rem;color:var(--s5);margin-top:4px;line-height:1.6">내가 직접<br>선택하는 과목</div>
+        </div>
+      </div>
+
+      <!-- 학점 구성 바 -->
+      <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-radius:13px;padding:13px 16px;margin-bottom:14px;border:1.5px solid #c7d2fe">
+        <div style="font-size:.83rem;font-weight:800;color:var(--pd);margin-bottom:9px">📌 총 192학점 구성</div>
+        <div style="display:flex;gap:3px;margin-bottom:9px;border-radius:8px;overflow:hidden;height:11px">
+          <div style="flex:174;background:linear-gradient(90deg,var(--pd),var(--vio))"></div>
+          <div style="flex:18;background:#10b981"></div>
+        </div>
+        <div style="display:flex;gap:14px;font-size:.76rem;margin-bottom:7px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(135deg,var(--pd),var(--vio));display:inline-block;flex-shrink:0"></span>
+            <span>교과 <strong style="color:var(--pd)">174학점</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="width:10px;height:10px;border-radius:3px;background:#10b981;display:inline-block;flex-shrink:0"></span>
+            <span>창체 <strong style="color:#059669">18학점</strong></span>
+          </div>
+        </div>
+        <div style="font-size:.75rem;color:var(--s5);line-height:1.55;word-break:keep-all">
+          선택과목은 <strong style="color:var(--s9)">2·3학년에서 약 30과목 이상</strong>을 직접 골라야 해요!
+        </div>
+      </div>
+
+      <!-- 4단계 흐름 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:16px">
+        ${steps.map((s,i,a)=>{
+          const bg=s.active?'linear-gradient(135deg,#4338ca,#6366f1,#7c3aed)':'#f1f5f9';
+          const iconBg=s.active?'rgba(255,255,255,.18)':'rgba(0,0,0,.05)';
+          const iconColor=s.active?'#fff':'#94a3b8';
+          const labelColor=s.active?'rgba(255,255,255,.92)':'#94a3b8';
+          const arrow=i<a.length-1?`<div style="position:absolute;right:-3px;top:50%;transform:translateY(-50%);color:#cbd5e1;font-size:.6rem;z-index:2">▶</div>`:'';
+          return `<div style="position:relative;text-align:center">
+            <div style="border-radius:12px;padding:10px 4px 9px;background:${bg}">
+              <div style="width:36px;height:36px;border-radius:10px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;background:${iconBg};color:${iconColor}">
+                ${s.svg}
+              </div>
+              <div style="font-size:.63rem;font-weight:700;color:${labelColor}">${s.label}</div>
+            </div>
+            ${arrow}
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- 시작 버튼 -->
+      <button class="btn btn-primary btn-block" style="font-size:1.02rem;padding:15px;letter-spacing:-.01em;gap:8px" onclick="set({screen:'school_select'})">
+        ${I.school} 지금 시작하기 →
+      </button>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// SCHOOL SELECT
+// ============================================================
+function rSchoolSelect(){
+  const schools=allSchools();
+  const SCHOOL_COLORS=['linear-gradient(135deg,#4f46e5,#7c3aed)','linear-gradient(135deg,#0369a1,#0ea5e9)','linear-gradient(135deg,#be185d,#ec4899)','linear-gradient(135deg,#059669,#10b981)'];
+  return `<div class="screen">
+    ${rHdr('학교 선택','내가 다니는 학교를 선택하세요',10)}
+    ${rSteps(0,5)}
+    <div class="card">
+      <h2>📍 학교를 선택하세요</h2>
+      <p style="font-size:.8rem;color:var(--s5);margin-bottom:14px">
+        학교마다 편성된 과목이 달라요. 학교를 선택하면 해당 학교 교육과정으로 실습할 수 있어요.
+      </p>
+      <div class="school-grid">
+        ${schools.map((sc,i)=>`
+          <div class="school-card${S.schoolId===sc.id?' sel':''}" onclick="pickSchool('${sc.id}')">
+            ${S.schoolId===sc.id?'<div class="school-badge">선택됨 ✓</div>':''}
+            <div style="width:52px;height:52px;border-radius:50%;background:${SCHOOL_COLORS[i%4]};display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 4px;box-shadow:0 4px 12px rgba(0,0,0,.15)">${sc.emoji||'🏫'}</div>
+            <div class="s-name">${sc.short||sc.name}</div>
+            <div class="s-loc">📍 ${sc.location||'위치 미상'}</div>
+          </div>`).join('')}
+        <div class="add-school-btn" onclick="set({screen:'add_school'})">
+          <div style="font-size:1.6rem;margin-bottom:5px">➕</div>
+          <div style="font-size:.84rem;font-weight:700">직접 추가</div>
+          <div style="font-size:.7rem;margin-top:2px;color:var(--s4)">기본 과목으로 시작</div>
+        </div>
+      </div>
+
+      <!-- PDF 업로드 섹션 -->
+      <div class="pdf-school-btn" onclick="set({screen:'pdf_upload'})">
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:1.8rem">📄</span>
+          <div style="text-align:left">
+            <div style="font-size:.9rem;font-weight:800;color:var(--pd)">편제표 PDF로 우리 학교 추가하기</div>
+            <div style="font-size:.73rem;color:var(--s5);margin-top:2px">PDF를 올리면 과목 데이터를 자동으로 인식해드려요</div>
+          </div>
+          <span style="font-size:.8rem;background:linear-gradient(135deg,var(--pd),var(--vio));color:#fff;padding:4px 10px;border-radius:7px;font-weight:700;white-space:nowrap">시도해보기 →</span>
+        </div>
+      </div>
+
+      <div class="warn-box" style="margin-top:10px">
+        ⚠️ 이 앱의 교육과정은 <strong>연습용 예시</strong>입니다.<br>
+        실제 과목 선택 시에는 담임·진로 선생님과 반드시 상담하세요.
+      </div>
+    </div>
+  </div>`;
+}
+
+function pickSchool(id){
+  initSchoolSel(id);
+  set({screen:'career_explore',mode:'guided',gStep:0,gScores:{}});
+}
+
+// ============================================================
+// ADD SCHOOL
+// ============================================================
+function rAddSchool(){
+  return `<div class="screen">
+    ${rHdr('학교 추가','우리 학교 교육과정을 입력하세요',10)}
+    <div class="card">
+      <h2>🏫 새 학교 추가</h2>
+      <p style="font-size:.8rem;color:#6b7280;margin-bottom:12px">
+        학교 이름을 입력하면, 기본 교육과정(공통과목)이 자동으로 포함돼요.<br>
+        선택과목 목록은 나중에 과목 선택 화면에서 직접 추가할 수 있어요.
+      </p>
+      <div class="form-group">
+        <label class="form-label">학교 이름 *</label>
+        <input class="form-input" id="ns-name" type="text" placeholder="예: ○○고등학교" value="${S.newSchool.name||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">지역</label>
+        <input class="form-input" id="ns-loc" type="text" placeholder="예: 제주특별자치도" value="${S.newSchool.location||''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">학교 약칭</label>
+        <input class="form-input" id="ns-short" type="text" placeholder="예: ○○고" value="${S.newSchool.short||''}">
+      </div>
+      <div class="info-box">
+        💡 추가된 학교는 공통필수 과목이 기본 포함되어 있어요.<br>
+        선택과목은 제주사대부고와 동일한 목록으로 시작해요.<br>
+        향후 선생님이 직접 과목 목록을 편집하는 기능이 추가될 예정이에요.
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-secondary" style="flex:1" onclick="set({screen:'school_select'})">← 취소</button>
+        <button class="btn btn-primary" style="flex:2" onclick="addSchool()">✅ 이 이름으로 시작하기</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addSchool(){
+  const name=document.getElementById('ns-name')?.value?.trim();
+  const loc=document.getElementById('ns-loc')?.value?.trim();
+  const short=document.getElementById('ns-short')?.value?.trim();
+  if(!name){alert('학교 이름을 입력해 주세요!');return;}
+  const id='custom_'+Date.now();
+  // Clone jejusadaebugo subjects with new IDs
+  const baseSubs=SCHOOLS_DB.jejusadaebugo.subjects.map(s=>({...s,id:s.id+'_c'}));
+  S.customSchools[id]={
+    name, short:short||name, emoji:'🏫', location:loc||'',
+    semTarget:{...SCHOOLS_DB.jejusadaebugo.semTarget},
+    subjects:baseSubs
+  };
+  set({newSchool:{name:'',location:'',short:''}});
+  pickSchool(id);
+}
+
+// ============================================================
+// CAREER EXPLORE
+// ============================================================
+function rExplore(){
+  const sc=getSchool();
+  return `<div class="screen">
+    ${rHdr('진로 탐색','나의 꿈을 찾아볼게요',25)}
+    ${rSteps(1,5)}
+    ${sc?`<div style="font-size:.78rem;color:#4f46e5;background:#eef2ff;padding:5px 10px;border-radius:8px;margin-bottom:9px;text-align:center">🏫 ${sc.short||sc.name}</div>`:''}
+    <div class="mode-tabs">
+      <div class="mtab${S.mode==='guided'?' active':''}" onclick="set({mode:'guided',gStep:0,gScores:{}})">🧭 진로 가이드</div>
+      <div class="mtab${S.mode==='search'?' active':''}" onclick="set({mode:'search',searchQ:'',searchR:[]})">🔍 직업 검색</div>
+      <div class="mtab${S.mode==='category'?' active':''}" onclick="set({mode:'category',selCat:null})">📂 분야별 보기</div>
+    </div>
+    ${S.mode==='guided'?rGuided():S.mode==='search'?rSearch():rCategory()}
+  </div>`;
+}
+
+function rGuided(){
+  if(S.gStep>=GQ.length){
+    const sc=S.gScores;
+    const sorted=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const top3=sorted.map(([cid])=>CAT.find(c=>c.id===cid)).filter(Boolean);
+    // 기본 직업: 상위 2개 분야에서 4개씩
+    const topJobs=sorted.slice(0,2).flatMap(([cid])=>(JOBS[cid]||[]).slice(0,4));
+    // 더 많은 직업: 상위 3개 분야 전체
+    const allRelatedCats=sorted.map(([cid])=>CAT.find(c=>c.id===cid)).filter(Boolean);
+
+    return `<div class="card" style="padding:0;overflow:hidden;border:none">
+      <!-- 결과 헤더 -->
+      <div style="background:linear-gradient(135deg,#059669,#10b981);padding:18px 20px;color:#fff;text-align:center">
+        <div style="font-size:2rem;margin-bottom:6px">🎉</div>
+        <div style="font-size:1.05rem;font-weight:800">탐색 완료!</div>
+        <div style="font-size:.75rem;opacity:.8;margin-top:3px">나에게 어울리는 진로 분야예요</div>
+      </div>
+      <div style="padding:16px">
+      ${top3.map((cat,i)=>`
+        <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;background:${i===0?'linear-gradient(135deg,#f5f3ff,#eef2ff)':'#f9fafb'};border-radius:12px;margin-bottom:7px;border:${i===0?'2px solid #4f46e5':'2px solid #f3f4f6'};transition:transform .2s">
+          <div style="width:44px;height:44px;border-radius:12px;background:${i===0?'linear-gradient(135deg,#4f46e5,#7c3aed)':i===1?'linear-gradient(135deg,#0369a1,#0ea5e9)':'linear-gradient(135deg,#059669,#10b981)'};display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">
+            ${cat.emoji}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:.9rem;color:${i===0?'#3730a3':'#374151'}">${cat.name}</div>
+            <div style="font-size:.72rem;color:#6b7280;margin-top:2px">${cat.desc}</div>
+          </div>
+          ${i===0?`<span style="font-size:.68rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:3px 9px;border-radius:20px;font-weight:700;flex-shrink:0">1위 추천</span>`:
+            i===1?`<span style="font-size:.68rem;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:20px;font-weight:700;flex-shrink:0">2위</span>`:''}
+        </div>`).join('')}
+
+      <p style="font-size:.82rem;font-weight:700;color:#374151;margin:10px 0 7px">✨ 관련 직업 선택</p>
+      <div class="chips">
+        ${topJobs.map(j=>{
+          const c=sorted.find(([cid])=>(JOBS[cid]||[]).includes(j))?.[0]||sorted[0][0];
+          return `<span class="chip" data-job="${j}" data-cat="${c}">${j}</span>`;
+        }).join('')}
+      </div>
+
+      ${S.showMoreJobs?`
+        <!-- 더 많은 직업 패널 -->
+        <div style="margin-top:12px;background:#f8faff;border-radius:10px;padding:12px;border:1px solid #c7d2fe">
+          <div style="font-size:.82rem;font-weight:700;color:#4338ca;margin-bottom:10px">📋 추천 분야별 전체 직업 목록</div>
+          ${allRelatedCats.map((cat,i)=>`
+            <div style="margin-bottom:10px">
+              <div style="font-size:.8rem;font-weight:700;color:#374151;margin-bottom:5px">
+                ${cat.emoji} ${cat.name} ${i===0?'<span style="font-size:.68rem;background:#4f46e5;color:#fff;padding:1px 6px;border-radius:4px;margin-left:4px">1위 추천</span>':''}
+              </div>
+              <div class="chips">
+                ${(JOBS[cat.id]||[]).map(j=>`<span class="chip" data-job="${j}" data-cat="${cat.id}">${j}</span>`).join('')}
+              </div>
+            </div>`).join('')}
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
+            <div style="font-size:.8rem;font-weight:700;color:#374151;margin-bottom:5px">🔍 다른 분야도 찾고 싶다면?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              ${CAT.filter(c=>!allRelatedCats.find(r=>r.id===c.id)).map(c=>`
+                <span style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:.76rem;cursor:pointer;background:#fff" onclick="set({mode:'category',selCat:'${c.id}',showMoreJobs:false})">
+                  ${c.emoji} ${c.name}
+                </span>`).join('')}
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="set({showMoreJobs:false})">▲ 접기</button>
+      `:`
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%" onclick="set({showMoreJobs:true})">
+          📋 더 많은 직업 보기 (추천 분야 전체 목록)
+        </button>
+      `}
+
+      <div style="display:flex;gap:7px;margin-top:10px">
+        <button class="btn btn-secondary btn-sm" onclick="set({gStep:0,gScores:{},showMoreJobs:false})">↩ 다시 탐색</button>
+        <button class="btn btn-outline btn-sm" onclick="set({mode:'category',selCat:null,showMoreJobs:false})">📂 분야별 직접 선택</button>
+      </div>
+      </div>
+    </div>`;
+  }
+  const q=GQ[S.gStep];
+  const pct=Math.round((S.gStep/GQ.length)*100);
+  return `<div class="card" style="padding:0;overflow:hidden;border:none">
+    <!-- 그라디언트 헤더 -->
+    <div style="background:linear-gradient(135deg,#3730a3 0%,#4f46e5 50%,#7c3aed 100%);padding:22px 20px 20px;color:#fff">
+      <!-- 단계 표시 점 -->
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px">
+        ${GQ.map((_,i)=>`<div style="height:7px;border-radius:4px;background:${i<S.gStep?'rgba(255,255,255,.55)':i===S.gStep?'#fff':'rgba(255,255,255,.22)'};width:${i===S.gStep?26:7}px;transition:all .3s"></div>`).join('')}
+      </div>
+      <!-- 질문 번호 + 프로그레스 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:.7rem;opacity:.7;font-weight:600">질문 ${S.gStep+1} / ${GQ.length}</span>
+        <span style="font-size:.7rem;opacity:.7;font-weight:600">${pct}% 완료</span>
+      </div>
+      <div style="background:rgba(255,255,255,.22);border-radius:6px;height:5px;margin-bottom:16px">
+        <div style="width:${pct}%;background:#fff;border-radius:6px;height:100%;transition:width .4s cubic-bezier(.4,0,.2,1)"></div>
+      </div>
+      <!-- 질문 텍스트 -->
+      <div style="font-size:1.08rem;font-weight:800;line-height:1.45;text-align:center">${q.q}</div>
+    </div>
+    <!-- 선택지 -->
+    <div style="padding:16px 16px 12px">
+      ${q.opts.map(opt=>`<button class="btn guided-opt" data-gans='${JSON.stringify(opt.cats)}'><span>${opt.t}</span><span class="opt-arrow">›</span></button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function rSearch(){
+  return `<div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="width:36px;height:36px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem">🔍</div>
+      <div>
+        <div style="font-weight:800;font-size:.95rem;color:#1e1b4b">직업 검색</div>
+        <div style="font-size:.71rem;color:#9ca3af">희망 직업 이름을 입력하세요</div>
+      </div>
+    </div>
+    <div class="s-box" style="margin-bottom:10px">
+      <input id="jSearch" type="text" placeholder="예: 의사, 프로그래머, 교사..." value="${S.searchQ}" oninput="doSearch(this.value)" autocomplete="off">
+    </div>
+    ${S.searchR.length>0
+      ?`<div class="s-results">${S.searchR.map(r=>`<div class="s-item" data-job="${r.name}" data-cat="${r.cat}"><span>${CAT.find(c=>c.id===r.cat)?.emoji||'🎯'} ${r.name}</span><span style="font-size:.7rem;color:#9ca3af;background:#f3f4f6;padding:2px 7px;border-radius:5px">${CAT.find(c=>c.id===r.cat)?.name||''}</span></div>`).join('')}</div>`
+      :S.searchQ
+        ?`<div style="text-align:center;padding:18px 14px;color:#6b7280;font-size:.83rem;background:#f9fafb;border-radius:12px">
+            <div style="font-size:1.5rem;margin-bottom:6px">🤔</div>
+            <div>"<strong style="color:#374151">${S.searchQ}</strong>"으로 바로 시작해도 돼요!</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="pickCustomJob('${S.searchQ.replace(/'/g,"\\'")}')">이 직업으로 계속하기 →</button>
+          </div>`
+        :`<div>
+            <p style="font-size:.78rem;font-weight:700;color:#6b7280;margin-bottom:9px;display:flex;align-items:center;gap:5px">
+              <span style="background:#fef3c7;padding:2px 8px;border-radius:6px;color:#92400e">⭐ 인기 직업</span>
+            </p>
+            <div class="chips">${['의사','소프트웨어개발자','교사','변호사','그래픽디자이너','유튜버·크리에이터','간호사','AI엔지니어','경영컨설턴트','초등교사'].map(j=>{const f=ALL_JOBS.find(x=>x.name===j);return `<span class="chip" data-job="${j}" data-cat="${f?.cat||'stem'}">${j}</span>`;}).join('')}</div>
+          </div>`}
+  </div>`;
+}
+
+function rCategory(){
+  const CAT_COLORS=['linear-gradient(135deg,#4f46e5,#7c3aed)','linear-gradient(135deg,#dc2626,#ef4444)','linear-gradient(135deg,#0369a1,#0ea5e9)','linear-gradient(135deg,#059669,#10b981)','linear-gradient(135deg,#d97706,#f59e0b)','linear-gradient(135deg,#7c3aed,#a855f7)','linear-gradient(135deg,#be185d,#ec4899)','linear-gradient(135deg,#0f766e,#14b8a6)','linear-gradient(135deg,#1d4ed8,#3b82f6)','linear-gradient(135deg,#9a3412,#ea580c)'];
+  return `<div class="card">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="width:36px;height:36px;background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem">📂</div>
+      <div>
+        <div style="font-weight:800;font-size:.95rem;color:#1e1b4b">분야별 탐색</div>
+        <div style="font-size:.71rem;color:#9ca3af">관심 분야를 직접 선택하세요</div>
+      </div>
+    </div>
+    <div class="cat-grid">
+      ${CAT.map((c,i)=>`<div class="cat-card${S.selCat===c.id?' sel':''}" onclick="set({selCat:'${c.id}'})">
+        <div style="width:44px;height:44px;border-radius:13px;background:${CAT_COLORS[i%CAT_COLORS.length]};display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 8px">
+          ${c.emoji}
+        </div>
+        <div class="cat-name" style="font-weight:800;font-size:.84rem">${c.name}</div>
+        <div class="cat-desc" style="font-size:.68rem;color:#9ca3af;margin-top:3px">${c.desc}</div>
+        ${S.selCat===c.id?`<div style="position:absolute;top:8px;right:8px;width:18px;height:18px;background:#4f46e5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff">✓</div>`:''}
+      </div>`).join('')}
+    </div>
+    ${S.selCat?`
+      <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:2px solid #c7d2fe;border-radius:12px;padding:12px 14px;margin-top:4px">
+        <p style="font-size:.82rem;font-weight:800;color:#3730a3;margin-bottom:8px">${CAT.find(c=>c.id===S.selCat)?.emoji} ${CAT.find(c=>c.id===S.selCat)?.name} 관련 직업</p>
+        <div class="chips">${(JOBS[S.selCat]||[]).map(j=>`<span class="chip" data-job="${j}" data-cat="${S.selCat}">${j}</span>`).join('')}</div>
+      </div>`:''}
+  </div>`;
+}
+
+// ============================================================
+// CAREER CONFIRM
+// ============================================================
+function rConfirm(){
+  const sc=getSchool();
+  const cat=CAT.find(c=>c.id===S.career?.cat);
+  const recList=recSubjects().slice(0,10);
+  return `<div class="screen">
+    ${rHdr('진로 확인 ✅','이 진로로 과목을 선택할게요',45)}
+    ${rSteps(2,5)}
+    <div class="card">
+      <div class="hi-box">
+        <div style="font-size:2rem;margin-bottom:5px">${cat?.emoji||'🎯'}</div>
+        <div style="font-size:1.25rem;font-weight:800;color:#1e1b4b">${S.career?.name}</div>
+        <div style="font-size:.8rem;color:#374151;margin-top:3px">${cat?.name||''} 분야</div>
+      </div>
+      ${sc?`<div style="font-size:.78rem;color:#4f46e5;background:#eef2ff;padding:5px 10px;border-radius:7px;margin-bottom:10px;text-align:center">🏫 ${sc.short||sc.name} 교육과정 기준</div>`:''}
+      <h3 style="font-size:.88rem;font-weight:700;margin-bottom:8px">🎯 이 진로에 맞는 추천 과목</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
+        ${recList.map(s=>`<span style="padding:3px 9px;background:#e0e7ff;color:#3730a3;border-radius:7px;font-size:.76rem;font-weight:600">${s.name} (${s.cr}학점)</span>`).join('')}
+      </div>
+      <div class="info-box">
+        📌 다음 단계에서 <strong>학년별로 과목을 직접 선택</strong>해 보세요!<br>
+        ⭐ <strong>추천 과목</strong>은 초록색 테두리로 강조 표시돼요.<br>
+        🔒 필수 과목과 🏫 학교지정 과목은 이미 포함되어 있어요.
+      </div>
+      <div class="nav-row">
+        <button class="btn btn-secondary" style="flex:1" onclick="set({screen:'career_explore'})">← 다시</button>
+        <button class="btn btn-primary" style="flex:2" onclick="set({screen:'subject_select',grade:1})">📚 과목 선택하기 →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// SUBJECT SELECT — 테이블 방식, 학년 단위
+// ============================================================
+function rSubjectSel(){
+  const sc=getSchool();
+  if(!sc) return `<div class="card"><p>학교를 먼저 선택해 주세요.</p><button class="btn btn-primary" onclick="set({screen:'school_select'})">학교 선택</button></div>`;
+  const grade=S.grade||2;
+  const gradeCr=gradeCredits(grade);
+  const gradeTgt=gradeTarget(grade);
+  const totalCr=totalCredits();
+  const diff=gradeCr-gradeTgt;
+  const stClass=diff<-4?'st-under':diff<10?'st-ok':'st-over';
+  const stTxt=diff<-4?`${Math.abs(diff)}학점 부족`:diff<10?'이번 학년 완료 🎉':`${diff}학점 초과`;
+  const GL={1:'1학년',2:'2학년',3:'3학년'};
+  const GE={1:'📌',2:'✋',3:'🎓'};
+
+  // 이 학년 전체 과목 (창체 제외)
+  const allGrade=sc.subjects.filter(s=>s.sem.startsWith(grade+'-')&&s.area!=='창체');
+
+  // 필터 없이 전체 표시
+  const filtered=allGrade;
+
+  const recIds=new Set(recSubjects().filter(s=>s.sem.startsWith(grade+'-')).map(s=>s.id));
+
+  return `<div class="screen">
+    ${rHdr('학년별 과목 선택 📚','과목을 선택해 학점을 채워보세요',55)}
+    ${rSteps(3,5)}
+
+    <!-- 전체 학점 바 -->
+    <div class="cr-bar">
+      <div>
+        <div class="cr-num" style="color:${totalCr<150?'#d97706':totalCr<192?'#059669':'#2563eb'}">${totalCr}학점</div>
+        <div class="cr-lbl">목표 192학점 (교과174+창체18) | ${GL[grade]} ${gradeCr}/${gradeTgt}학점</div>
+      </div>
+      <div class="cr-status ${stClass}">${stTxt}</div>
+    </div>
+
+    <!-- 학년 탭 -->
+    <div class="grade-tabs">
+      ${[1,2,3].map(g=>{
+        const gcr=gradeCredits(g);const gtgt=gradeTarget(g);const ok=gcr>=gtgt-4;
+        return `<div class="gtab${grade===g?' active':''}" onclick="set({grade:${g}})">
+          <div class="gtab-name">${GE[g]} ${GL[g]}</div>
+          <div class="gtab-cr" style="color:${ok?'#059669':'#d97706'}">${gcr}/${gtgt}학점</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- 학년 단위 안내 -->
+    <div class="info-box" style="margin-bottom:8px;font-size:.8rem">
+      📅 <strong>과목 선택은 학년 단위로 합니다</strong> &nbsp;|&nbsp;
+      1학년 말 → 2학년 과목 선택 &nbsp;|&nbsp; 2학년 말 → 3학년 과목 선택
+    </div>
+
+
+    <!-- 1학년 안내 (선택 불가) -->
+    ${grade===1?`
+    <div class="card" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fbbf24;margin-bottom:10px;text-align:center;padding:20px 16px">
+      <div style="font-size:2rem;margin-bottom:8px">📌</div>
+      <div style="font-size:1rem;font-weight:800;color:#92400e;margin-bottom:8px">1학년은 모든 과목이 자동 배정돼요!</div>
+      <div style="font-size:.84rem;color:#78350f;line-height:1.75;margin-bottom:14px">
+        고등학교 1학년은 <strong>공통 필수과목</strong>으로 구성돼 있어<br>
+        학생이 직접 선택할 수 없어요.<br>
+        아래 과목 목록을 <strong>확인</strong>한 후 버튼을 눌러주세요!
+      </div>
+      <button class="btn btn-primary btn-block" style="max-width:320px;margin:0 auto;font-size:.95rem" onclick="set({grade:2})">
+        ✅ 1학년 과목 확인 완료! 2학년 과목 선택하러 가기 →
+      </button>
+    </div>
+    `:''}
+    <!-- 2학년 안내 -->
+    ${grade===2?`<div class="info-box" style="margin-bottom:8px">
+      ✋ <strong>2학년 과목을 선택하세요!</strong> &nbsp;|&nbsp; 1학년 말에 선택 &nbsp;|&nbsp; 각 선택군에서 정해진 수만큼 골라주세요
+    </div>`:''}
+    <!-- 3학년 안내 -->
+    ${grade===3?`<div class="info-box" style="margin-bottom:8px">
+      🎓 <strong>3학년 과목을 선택하세요!</strong> &nbsp;|&nbsp; 2학년 말에 선택 &nbsp;|&nbsp; 진로와 연계해 심화과목을 골라보세요
+    </div>`:''}
+
+    <!-- 과목 테이블 -->
+    <div class="tbl-wrap">
+      <table class="sub-table">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">선택</th>
+            <th>과목명</th>
+            <th>필수 이수영역</th>
+            <th>구분·유형</th>
+            <th>학기</th>
+            <th style="text-align:right;width:44px">학점</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${renderGroupedRows(filtered,recIds,grade)}
+          ${!filtered.length?`<tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;font-size:.85rem">검색 결과가 없어요</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 범례 & 안내 -->
+    <div class="tbl-note">
+      <span style="display:inline-block;width:10px;height:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:2px;vertical-align:middle;margin-right:3px"></span> 학기 구분 &nbsp;
+      <span style="display:inline-block;width:10px;height:10px;background:#fef2f2;border-left:3px solid #ef4444;vertical-align:middle;margin-right:3px"></span> 🔒 공통필수·학교지정 (자동 이수) &nbsp;
+      <span style="display:inline-block;width:10px;height:10px;background:#fff7ed;border-left:3px solid #f59e0b;vertical-align:middle;margin-right:3px"></span> ◻️ 미선택 &nbsp;
+      <span style="display:inline-block;width:10px;height:10px;background:#d1fae5;border-left:3px solid #10b981;vertical-align:middle;margin-right:3px"></span> ✅ 선택완료<br>
+      <span class="badge-type badge-career-t">진로</span> 진로선택 &nbsp;
+      <span class="badge-type badge-fusion-t">융합</span> 융합선택 &nbsp;
+      <span class="badge-type badge-common-t">공통·일반</span> 공통/일반과목<br>
+      ${S.career?`⭐ <strong style="color:#059669">${S.career.name} 추천</strong> 과목을 우선적으로 선택하세요! &nbsp;`:''}
+      🎨 창의적 체험활동 18학점(학기당 3학점)은 자동 포함
+    </div>
+
+    <!-- 학점 자동 체크 패널 -->
+    ${rCreditCheck()}
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="set({screen:'career_confirm'})">← 이전</button>
+      <button class="btn btn-primary" style="flex:1" onclick="set({screen:'summary'})">📋 최종 확인 →</button>
+    </div>
+  </div>`;
+}
+
+// ── 과목 한 행 렌더링 (6열) ──────────────────────────────
+// grp: {color, isFirst, isLast} — 선택군 박스 테두리용, null이면 테두리 없음
+function renderSubRow(s,recIds,grade,grp=null){
+  const on=S.sel[s.id];
+  const locked=s.type==='mandatory';
+  const school=s.type==='school';
+  const canClick=!locked&&!school&&grade!==1;
+  const isRec=recIds.has(s.id);
+  const rowClass=locked?'mandatory-row':school?'school-row':isRec&&on?'rec-sel-row':isRec?'rec-row':on?'sel-row':'';
+  const typBadge=s.subtype==='career'?'badge-career-t':s.subtype==='fusion'?'badge-fusion-t':'badge-common-t';
+  const typLabel=s.subtype==='common'?'공통':s.subtype==='career'?'진로':s.subtype==='fusion'?'융합':'일반';
+  const why=getWhy(s);
+
+  // 선택군 박스 테두리 스타일 (left·right + 첫행 top, 마지막행 bottom)
+  const bL=grp?`border-left:2.5px solid ${grp.color};`:'';
+  const bR=grp?`border-right:2.5px solid ${grp.color};`:'';
+  const bT=grp&&grp.isFirst?`border-top:2px solid ${grp.color};`:'';
+  const bB=grp&&grp.isLast?`border-bottom:2.5px solid ${grp.color};`:'';
+  const cellBase=bL+bR+bT+bB;  // 모든 td 공통 테두리
+
+  return `<tr class="${rowClass}${canClick?' clickable':''}" ${canClick?`onclick="toggleSub('${s.id}')"`:''}}>
+    <td style="text-align:center;${cellBase}">
+      ${locked||school||grade===1
+        ?`<div class="tbl-chk locked">✓</div>`
+        :`<div class="tbl-chk${on?' on':''}" onclick="event.stopPropagation();toggleSub('${s.id}')">${on?'✓':''}</div>`}
+    </td>
+    <td style="${cellBase}">
+      ${isRec&&grade!==1?`<div class="rec-label">⭐ ${S.career?.name||'진로'} 추천</div>`:''}
+      <strong style="font-size:.84rem">${locked?'🔒 ':school?'🏫 ':''}${s.name}</strong>
+      ${why&&!locked?`<div style="font-size:.69rem;color:#4f46e5;margin-top:2px;line-height:1.4">💡 ${why}</div>`:''}
+      ${PREREQ_MAP[s.name]?`<div style="font-size:.67rem;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;padding:2px 7px;border-radius:5px;margin-top:3px;display:inline-block;line-height:1.5">📋 선수과목: ${PREREQ_MAP[s.name].join(' · ')}</div>`:''}
+    </td>
+    <td style="font-size:.78rem;color:#374151;white-space:nowrap;${cellBase}">${s.area}</td>
+    <td style="white-space:nowrap;${cellBase}">
+      <span class="badge-type ${typBadge}">${typLabel}</span>
+    </td>
+    <td style="font-size:.74rem;color:#6b7280;white-space:nowrap;${cellBase}">${s.sem.endsWith('-1')?'1학기':'2학기'}</td>
+    <td style="text-align:right;font-weight:700;font-size:.85rem;color:${on||locked||school?'#4f46e5':'#9ca3af'};${cellBase}">${s.cr}</td>
+  </tr>`;
+}
+
+// ── 블록 그룹핑 tbody 렌더링 ─────────────────────────────
+function renderGroupedRows(filtered,recIds,grade){
+  const rows=[];
+  const sems=grade===1?['1-1','1-2']:grade===2?['2-1','2-2']:['3-1','3-2'];
+  const sc=getSchool();
+
+  for(const sem of sems){
+    const semSubs=filtered.filter(s=>s.sem===sem);
+    if(!semSubs.length) continue;
+
+    // ① 학기 구분 행 (보라 그라디언트)
+    const semLabel=sem.endsWith('-1')?'1학기':'2학기';
+    const semCr=semSubs
+      .filter(s=>S.sel[s.id]||s.type==='mandatory'||s.type==='school')
+      .reduce((a,s)=>a+s.cr,0);
+    const semTgt=sc&&sc.semTarget?sc.semTarget[sem]:0;
+    const semOk=semCr>=semTgt;
+    const semStatusColor=semOk?'#6ee7b7':'#fcd34d';
+    const semStatusTxt=semOk?`✅ ${semCr}/${semTgt}학점 완료`:`◻️ ${semCr}/${semTgt}학점 (${semTgt-semCr}학점 부족)`;
+    rows.push(`<tr>
+      <td colspan="6" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:.82rem;font-weight:800;padding:9px 13px;letter-spacing:.4px">
+        📅 ${grade}학년 ${semLabel}
+        <span style="font-size:.71rem;font-weight:700;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:2px 9px;border-radius:20px;margin-left:8px;color:${semStatusColor}">${semStatusTxt}</span>
+        <span style="font-size:.68rem;font-weight:500;opacity:.7;margin-left:6px">+ 창체 3학점 자동포함</span>
+      </td>
+    </tr>`);
+
+    // ② 공통필수·학교지정 블록
+    const autoSubs=semSubs.filter(s=>s.type==='mandatory'||s.type==='school');
+    if(autoSubs.length){
+      const autoCr=autoSubs.reduce((a,s)=>a+s.cr,0);
+      rows.push(`<tr>
+        <td colspan="6" style="background:#fef2f2;border-left:4px solid #ef4444;border-bottom:1px solid #fca5a5;padding:6px 11px">
+          <span style="font-size:.76rem;font-weight:800;color:#991b1b">🔒 공통필수·학교지정 과목</span>
+          <span style="font-size:.7rem;color:#b91c1c;margin-left:8px">자동 이수 · ${autoCr}학점</span>
+        </td>
+      </tr>`);
+      autoSubs.forEach(s=>rows.push(renderSubRow(s,recIds,grade)));
+    }
+
+    // ③ 각 선택군 블록 (필터 적용: 학기·교과군 필터 시 그룹 일부 과목만 나올 수 있음)
+    const allSemSubIds=new Set(sc?sc.subjects.filter(s=>s.sem===sem).map(s=>s.id):[]);
+    if(grade!==1&&allSemSubIds.size){
+      const grpEntries=Object.entries(COURSE_GROUPS).filter(([,g])=>g.ids.some(id=>allSemSubIds.has(id)));
+      for(const [gid,g] of grpEntries){
+        const grpSubs=g.ids.map(id=>semSubs.find(s=>s.id===id)).filter(Boolean);
+        if(!grpSubs.length) continue;
+
+        const isSingle=g.ids.length===1;
+        const selCnt=g.ids.filter(id=>S.sel[id]).length;
+        const ok=selCnt>=g.pick;
+        const over=selCnt>g.pick;
+        // 단일 선택(필수선택)은 항상 초록 처리
+        const hBg=isSingle?'#f0fdf4':over?'#dbeafe':ok?'#d1fae5':'#fff7ed';
+        const hBorder=isSingle?'#10b981':over?'#3b82f6':ok?'#10b981':'#f59e0b';
+        const hColor=isSingle?'#065f46':over?'#1e40af':ok?'#065f46':'#92400e';
+        const sIcon=isSingle?'📌':over?'⚠️':ok?'✅':'◻️';
+        const sTxt=isSingle?'필수선택':over?`초과 (${selCnt}/${g.pick})`:`${selCnt}/${g.pick} 선택됨`;
+        const noteLabel=isSingle?'필수':g.note;
+
+        rows.push(`<tr>
+          <td colspan="6" style="background:${hBg};border-left:4px solid ${hBorder};border-bottom:1px solid ${hBorder}55;padding:6px 11px">
+            <span style="font-size:.77rem;font-weight:800;color:${hColor}">${sIcon} ${g.label}</span>
+            <span style="font-size:.72rem;font-weight:700;background:${hBorder}22;color:${hColor};padding:2px 9px;border-radius:5px;margin-left:7px">${noteLabel}</span>
+            <span style="font-size:.7rem;color:${hColor};margin-left:6px">${sTxt}</span>
+          </td>
+        </tr>`);
+        // 선택군 과목: 박스 테두리 (isFirst/isLast로 위·아래 테두리 추가)
+        grpSubs.forEach((s,idx)=>rows.push(
+          renderSubRow(s,recIds,grade,{color:hBorder,isFirst:idx===0,isLast:idx===grpSubs.length-1})
+        ));
+        // 선택군 간 공백 행
+        rows.push(`<tr><td colspan="6" style="height:4px;background:#f8fafc;padding:0"></td></tr>`);
+      }
+    }
+  }
+  return rows.join('');
+}
+
+// ── 선택군 비고 셀 렌더링 (레거시 — 참고용 보존) ──────────
+function getGroupNote(s){
+  const gid=SUB_TO_GRP[s.id];
+  if(!gid) return '<span style="color:#d1d5db;font-size:.72rem">—</span>';
+  const g=COURSE_GROUPS[gid];
+  const selCnt=g.ids.filter(id=>S.sel[id]).length;
+  const ok=selCnt>=g.pick;
+  const over=selCnt>g.pick;
+  const bg=over?'#dbeafe':ok?'#d1fae5':'#fff7ed';
+  const cl=over?'#1e40af':ok?'#065f46':'#92400e';
+  const icon=over?'⚠️':ok?'✅':'◻️';
+  return `<div style="font-size:.68rem;font-weight:700;padding:3px 7px;border-radius:5px;background:${bg};color:${cl};white-space:nowrap;display:inline-block;line-height:1.5">
+    ${icon} ${g.note} 선택군<br>
+    <span style="font-weight:400">(${selCnt}/${g.pick}과목 선택)</span>
+  </div>`;
+}
+
+// ── 교과군별 총 이수학점 계산 ────────────────────────────
+function getAreaCr(area){
+  const sc=getSchool();
+  if(!sc) return 0;
+  return sc.subjects
+    .filter(s=>s.area===area&&(s.type==='mandatory'||s.type==='school'||S.sel[s.id]))
+    .reduce((a,s)=>a+s.cr,0);
+}
+
+// ── 학점 자동 체크 패널 ──────────────────────────────────
+function rCreditCheck(){
+  const sc=getSchool();
+  if(!sc) return '';
+  const statusPill=(ok,t)=>`<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:5px;background:${ok?'#d1fae5':'#fef3c7'};color:${ok?'#065f46':'#92400e'}">${ok?'✅':'⚠️'} ${t}</span>`;
+
+  // ① 학기별
+  const semRows=SEMS.map(sem=>{
+    const cr=semCredits(sem);const tgt=semTarget(sem)+CCHA_PER_SEM;const ok=cr>=tgt-2&&cr<=tgt+4;
+    return {label:SEM_LABEL[sem],cr,tgt,ok};
+  });
+  const totalCr=totalCredits();
+
+  // ② 필수 이수영역
+  const areaRows=Object.entries(MIN_AREA).map(([area,min])=>{
+    const cr=getAreaCr(area);return {area,cr,min,ok:cr>=min};
+  });
+  const selCr=['기술정보','제2외국어','교양'].reduce((a,area)=>a+getAreaCr(area),0);
+  const selOk=selCr>=MIN_SELECT;
+  const reqTotal=areaRows.reduce((a,r)=>a+r.cr,0)+selCr;
+  const reqOk=reqTotal>=MIN_REQ;
+
+  // ③ 국영수 합
+  const kor=getAreaCr('국어'),eng=getAreaCr('영어'),mat=getAreaCr('수학');
+  const kem=kor+eng+mat;const kemOk=kem<=MAX_KEM;
+
+  return `<div style="margin-bottom:14px">
+    <div style="font-size:.9rem;font-weight:800;color:#1e1b4b;margin-bottom:8px">📋 학점 이수 자동 체크</div>
+
+    <!-- ① 학기별 이수학점 -->
+    <details open style="margin-bottom:8px">
+      <summary style="font-size:.82rem;font-weight:700;color:#374151;cursor:pointer;padding:9px 13px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;list-style:none">
+        ① 학기별 이수학점 &nbsp; ${semRows.every(r=>r.ok)?statusPill(true,'전 학기 완료'):statusPill(false,'미달 학기 있음')}
+      </summary>
+      <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
+        <table class="cr-table">
+          <thead><tr><th style="text-align:left">학기</th><th>현재</th><th>목표</th><th>상태</th></tr></thead>
+          <tbody>
+            ${semRows.map(r=>`<tr>
+              <td style="text-align:left;font-weight:600">${r.label}</td>
+              <td style="font-weight:700;color:${r.ok?'#059669':'#d97706'}">${r.cr}학점</td>
+              <td>${r.tgt}학점</td>
+              <td>${statusPill(r.ok,r.ok?'완료':'부족')}</td>
+            </tr>`).join('')}
+            <tr class="total-row">
+              <td style="text-align:left">합계 (교과+창체)</td>
+              <td>${totalCr}학점</td><td>192학점</td>
+              <td>${statusPill(totalCr>=192,totalCr>=192?'달성!':'부족')}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ② 필수 이수영역 -->
+    <details open style="margin-bottom:8px">
+      <summary style="font-size:.82rem;font-weight:700;color:#374151;cursor:pointer;padding:9px 13px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;list-style:none">
+        ② 필수 이수학점 (교과군 최소 기준) &nbsp; ${reqOk?statusPill(true,'기준 충족'):statusPill(false,'미충족 있음')}
+      </summary>
+      <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
+        <table class="cr-table">
+          <thead><tr><th style="text-align:left">필수 이수영역</th><th>현재</th><th>학교 최소</th><th>상태</th></tr></thead>
+          <tbody>
+            ${areaRows.map(r=>`<tr>
+              <td style="text-align:left;font-weight:600">${r.area}${(r.area==='예술'||r.area==='체육')?`<br><span style="font-size:.62rem;font-weight:400;color:#9ca3af">국가기준 10학점, 진로에 따라 추가 선택</span>`:''}</td>
+              <td style="font-weight:700;color:${r.ok?'#059669':'#d97706'}">${r.cr}학점</td>
+              <td>${r.min}학점 이상</td>
+              <td>${statusPill(r.ok,r.ok?'충족':'부족')}</td>
+            </tr>`).join('')}
+            <tr>
+              <td style="text-align:left;font-weight:600">선택계열<br><span style="font-size:.67rem;font-weight:400;color:#9ca3af">(기술정보+제2외+교양)</span></td>
+              <td style="font-weight:700;color:${selOk?'#059669':'#d97706'}">${selCr}학점</td>
+              <td>${MIN_SELECT}학점 이상</td>
+              <td>${statusPill(selOk,selOk?'충족':'부족')}</td>
+            </tr>
+            <tr class="total-row">
+              <td style="text-align:left">필수 이수 합계</td>
+              <td>${reqTotal}학점</td><td>${MIN_REQ}학점 이상</td>
+              <td>${statusPill(reqOk,reqOk?'충족':'부족')}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- ③ 국영수 합 -->
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:9px">
+        ③ 국어·영어·수학 합계 상한 체크 &nbsp; ${statusPill(kemOk,kemOk?`${kem}학점 (기준 이하 ✓)`:`${kem}학점 (${kem-MAX_KEM}학점 초과!)`)}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${[['국어',kor],['영어',eng],['수학',mat]].map(([l,v],i)=>`
+          <div style="background:#f5f3ff;border-radius:8px;padding:8px 12px;text-align:center;min-width:64px">
+            <div style="font-size:.7rem;color:#6b7280">${l}</div>
+            <div style="font-size:1.05rem;font-weight:800;color:#4f46e5">${v}학점</div>
+          </div>
+          ${i<2?'<span style="color:#9ca3af;font-weight:700">+</span>':''}`).join('')}
+        <span style="color:#9ca3af;font-weight:700">=</span>
+        <div style="background:${kemOk?'#f0fdf4':'#fef3c7'};border:2px solid ${kemOk?'#86efac':'#fcd34d'};border-radius:8px;padding:8px 12px;text-align:center;min-width:72px">
+          <div style="font-size:.7rem;color:#6b7280">합계</div>
+          <div style="font-size:1.05rem;font-weight:800;color:${kemOk?'#059669':'#d97706'}">${kem}학점</div>
+        </div>
+      </div>
+      <p style="font-size:.72rem;color:#6b7280;margin-top:7px">* 국어·영어·수학 3과목 합계는 <strong>${MAX_KEM}학점</strong>을 초과하면 안 됩니다.</p>
+    </div>
+  </div>`;
+}
+
+// 교과군별 선택 현황 미니카드
+function rAreaStatus(sc){
+  const AREAS=['국어','수학','영어','사회','과학','체육','예술','기술정보','제2외국어','교양'];
+  const rows=AREAS.map(area=>{
+    const subs=sc.subjects.filter(s=>s.area===area);
+    if(!subs.length) return null;
+    const g=AREA_GUIDE[area]||{rec:'1~2과목',min:0};
+    const selCnt=subs.filter(s=>S.sel[s.id]).length;
+    const ok=selCnt>=g.min&&selCnt>0;
+    return {area,rec:g.rec,selCnt,ok,min:g.min};
+  }).filter(Boolean);
+  return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 13px;margin-bottom:10px">
+    <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:6px">📊 교과군별 선택 현황 (3년 전체)</div>
+    <p style="font-size:.72rem;color:#6b7280;margin-bottom:8px">각 교과군에서 <strong>권장 개수</strong>만큼 선택하면 돼요 — 국어 전체를 고르는 게 아니라 1~2개만 골라요!</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
+      ${rows.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:${r.ok?'#f0fdf4':'#fafafa'};border-radius:7px;border:1px solid ${r.ok?'#86efac':'#f3f4f6'}">
+        <span style="font-size:.76rem;font-weight:700;color:#374151">${r.area}</span>
+        <span style="font-size:.68rem;color:#9ca3af">${r.rec}</span>
+        <span style="font-size:.72rem;font-weight:700;padding:1px 7px;border-radius:4px;background:${r.selCnt>0?'#d1fae5':'#f3f4f6'};color:${r.selCnt>0?'#065f46':'#6b7280'}">${r.selCnt>0?r.selCnt+'과목':'미선택'}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function rSubCard(s, isSchool){
+  const on=S.sel[s.id];
+  const locked=s.type==='mandatory';
+  const schoolFixed=s.type==='school';
+  const why=getWhy(s);
+  const isRec=!locked&&!schoolFixed&&S.career&&s.tags&&s.tags.includes(S.career.cat);
+  const typeBadge=locked?'b-req':schoolFixed?'b-sch':isRec?'b-rec-star':'b-elec';
+  const typeLabel=locked?'필수':schoolFixed?'학교지정':s.subtype==='career'?'진로선택':s.subtype==='fusion'?'융합선택':'일반선택';
+  let cardClass=locked?'mandatory':schoolFixed?'school-set':'';
+  if(!locked&&!schoolFixed){
+    if(isRec) cardClass='recommended';
+    if(on) cardClass+=(cardClass?' ':'')+'selected';
+  }
+  return `<div class="sub-card ${cardClass}" ${!locked&&!schoolFixed?`onclick="toggleSub('${s.id}')"`:''}>
+    <div class="sub-left">
+      ${isRec?`<div class="rec-top-badge">⭐ ${S.career.name} 추천 과목</div>`:''}
+      <div class="sub-name">${locked?'🔒 ':schoolFixed?'🏫 ':''}${s.name}</div>
+      <div class="sub-info">${s.area} · ${s.cr}학점 · ${typeLabel}</div>
+      ${why&&!locked?`<div class="sub-why">💡 ${why}</div>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <span class="badge ${typeBadge}">${isRec?'🌟 추천':typeLabel}</span>
+      ${!locked&&!schoolFixed?`<div class="chk${on?' on':''}">
+        ${on?'<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>':''}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function rAreaGrouped(subjects,isRec){
+  const groups={};
+  subjects.forEach(s=>{
+    if(!groups[s.area])groups[s.area]=[];
+    groups[s.area].push(s);
+  });
+  return Object.entries(groups).map(([area,subs])=>{
+    const g=AREA_GUIDE[area]||{rec:'1~2과목',min:0,max:2,hint:'진로에 맞게 선택하세요.'};
+    const selCnt=subs.filter(s=>S.sel[s.id]).length;
+    const selCr=subs.filter(s=>S.sel[s.id]).reduce((a,s)=>a+s.cr,0);
+    const isOk=selCnt>0;
+    const isOver=selCnt>g.max;
+    const cntClass=selCnt===0?'':isOver?'over':'ok';
+    return `<div class="area-group">
+      <div class="area-hdr">
+        <div><span class="area-name">${area}</span><span class="area-rec">권장 ${g.rec}</span></div>
+        <div class="area-cnt ${cntClass}">${selCnt===0?'미선택':`${selCnt}과목 (${selCr}학점)`}</div>
+      </div>
+      ${g.hint?`<div class="area-hint">${g.hint}</div>`:''}
+      ${subs.map(s=>rSubCard(s,false)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function rSelGuide(subs){
+  const groups={};
+  subs.forEach(s=>{if(!groups[s.area])groups[s.area]=[];groups[s.area].push(s);});
+  const areas=Object.keys(groups);
+  if(!areas.length) return '';
+  return `<div style="background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fcd34d;border-radius:10px;padding:10px 13px;margin-bottom:10px">
+    <div style="font-size:.85rem;font-weight:700;color:#92400e;margin-bottom:7px">📋 영역별 선택 현황</div>
+    <p style="font-size:.75rem;color:#78350f;margin-bottom:8px">각 영역에서 <strong>권장 개수</strong>만큼 선택하면 돼요. 국어를 전부 선택하는 게 아니라 1~2개만 골라요!</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">
+      ${areas.map(area=>{
+        const sg=groups[area];
+        const g=AREA_GUIDE[area]||{rec:'1~2과목',min:0};
+        const cnt=sg.filter(s=>S.sel[s.id]).length;
+        const ok=cnt>=g.min;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(255,255,255,.6);border-radius:6px;font-size:.76rem">
+          <span style="font-weight:600;color:#374151">${area}</span>
+          <span style="font-size:.7rem;color:#6b7280">${g.rec}</span>
+          <span style="font-weight:700;padding:1px 6px;border-radius:5px;background:${cnt>0&&ok?'#d1fae5':'#fef3c7'};color:${cnt>0&&ok?'#065f46':'#92400e'}">${cnt>0?cnt+'개':'미선택'}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function rCrTable(){
+  const sc=getSchool();
+  if(!sc) return '';
+  const AREAS=['국어','수학','영어','사회','과학','체육','예술','기술정보','제2외국어','교양'];
+  const rows=AREAS.map(area=>{
+    const schoolCr=sc.subjects.filter(s=>s.area===area&&(s.type==='mandatory'||s.type==='school')).reduce((a,s)=>a+s.cr,0);
+    const studentCr=sc.subjects.filter(s=>s.area===area&&s.type==='student'&&S.sel[s.id]).reduce((a,s)=>a+s.cr,0);
+    const total=schoolCr+studentCr;
+    return {area,schoolCr,studentCr,total};
+  }).filter(r=>r.total>0||r.schoolCr>0);
+  const totalSchool=rows.reduce((a,r)=>a+r.schoolCr,0);
+  const totalStudent=rows.reduce((a,r)=>a+r.studentCr,0);
+  const grandTotal=totalSchool+totalStudent+18;
+  return `<div style="margin-top:14px;margin-bottom:10px">
+    <div style="font-size:.88rem;font-weight:700;color:#1e1b4b;margin-bottom:6px">📊 교과군별 학점 현황</div>
+    <table class="cr-table">
+      <thead><tr><th>교과(군)</th><th>학교지정</th><th>학생선택</th><th>합계</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr><td style="text-align:left;font-weight:600">${r.area}</td><td>${r.schoolCr||'-'}</td><td class="${r.studentCr>0?'cr-ok':'cr-under'}">${r.studentCr||'-'}</td><td style="font-weight:700">${r.total}</td></tr>`).join('')}
+        <tr><td style="text-align:left;font-weight:600">창의적 체험활동</td><td>-</td><td>-</td><td style="font-weight:700">18</td></tr>
+      </tbody>
+      <tfoot><tr class="total-row"><td style="text-align:left">합계</td><td>${totalSchool}</td><td>${totalStudent}</td><td>${grandTotal} / 192</td></tr></tfoot>
+    </table>
+    <p style="font-size:.72rem;color:#6b7280;margin-top:5px">* 창의적 체험활동 18학점은 자동 포함</p>
+  </div>`;
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function rSummary(){
+  const sc=getSchool();
+  const totalCr=totalCredits();
+  const done=totalCr>=192;
+  const AREAS=['국어','수학','영어','사회','과학','체육','예술','기술정보','제2외국어','교양','창체'];
+
+  return `<div class="screen">
+    ${rHdr('나의 과목 선택표 📋','선택한 과목 전체 목록',100)}
+    ${rSteps(4,5)}
+
+    ${done?`<div class="confetti">🎉 🎊 🏆 🎊 🎉</div><div class="hi-box" style="text-align:center;margin-bottom:10px"><div style="font-size:1.4rem;font-weight:800;color:#059669">총 ${totalCr}학점 — 졸업 기준 달성!</div></div>`
+    :`<div class="cr-bar" style="margin-bottom:10px"><div><div class="cr-num">${totalCr}학점</div><div class="cr-lbl">/ 졸업 기준 192학점 (${192-totalCr}학점 더 필요)</div></div><div class="cr-status st-under">${192-totalCr}학점 부족</div></div>`}
+
+    <!-- 학기별 요약 -->
+    <div class="sem-sum">
+      ${SEMS.map(s=>{const cr=semCredits(s);const tg=semTarget(s)+CCHA_PER_SEM;const ok=cr>=tg-4;return `<div class="ss-card"><div class="ss-sem">${SEM_LABEL[s]}</div><div class="ss-cr ${ok?'cr-green':'cr-orange'}">${cr}/${tg}학점</div></div>`;}).join('')}
+    </div>
+
+    <!-- 학점 자동 체크 -->
+    ${rCreditCheck()}
+
+    <!-- 선택 과목 목록 (학기별) -->
+    <div class="card">
+      <h2>🎯 진로: ${S.career?.name||'미선택'} &nbsp;<span style="font-size:.8rem;font-weight:400;color:#6b7280">${CAT.find(c=>c.id===S.career?.cat)?.name||''}</span></h2>
+      <div style="font-size:.78rem;color:#6b7280;margin-top:4px;margin-bottom:10px">🏫 ${sc?.short||''}</div>
+      ${SEMS.map(sem=>{
+        const subs=sc?sc.subjects.filter(s=>s.sem===sem&&S.sel[s.id]):[];
+        if(!subs.length) return '';
+        return `<div style="margin-bottom:12px">
+          <div style="font-size:.8rem;font-weight:700;color:#4f46e5;padding:4px 9px;background:#eef2ff;border-radius:6px;display:inline-block;margin-bottom:6px">${SEM_LABEL[sem]}</div>
+          ${subs.map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:.84rem">
+            <span>${s.type==='mandatory'?'🔒':s.type==='school'?'🏫':''} ${s.name}</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge ${s.type==='mandatory'?'b-req':s.type==='school'?'b-sch':'b-elec'}">${s.type==='mandatory'?'필수':s.type==='school'?'학교지정':'선택'}</span>
+              <span style="font-weight:700;color:#4f46e5;min-width:38px;text-align:right">${s.cr}학점</span>
+            </div>
+          </div>`).join('')}
+          <div style="text-align:right;font-size:.75rem;color:#6b7280;margin-top:3px">교과 ${subs.reduce((a,s)=>a+s.cr,0)}학점 + 창체 ${CCHA_PER_SEM}학점 = ${subs.reduce((a,s)=>a+s.cr,0)+CCHA_PER_SEM}학점</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="warn-box">⚠️ 이 목록은 <strong>연습용</strong>입니다. 실제 과목 선택 시 담임·진로 선생님과 상담하세요!</div>
+
+    <!-- PDF 저장 버튼 -->
+    <button class="btn btn-primary btn-block no-print" style="margin-bottom:8px;background:linear-gradient(135deg,#dc2626,#ef4444);font-size:1rem" onclick="printDoc()">
+      📄 PDF로 저장하기
+    </button>
+    <div class="nav-row no-print">
+      <button class="btn btn-secondary" style="flex:1" onclick="set({screen:'subject_select',grade:3})">← 수정</button>
+      <button class="btn btn-primary" style="flex:1" onclick="resetApp()">🔄 처음부터</button>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// EVENTS & ACTIONS
+// ============================================================
+function attachEv(){
+  document.querySelectorAll('[data-job]').forEach(el=>{
+    el.addEventListener('click',()=>set({career:{name:el.dataset.job,cat:el.dataset.cat},screen:'career_confirm'}));
+  });
+  document.querySelectorAll('[data-gans]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const cats=JSON.parse(el.dataset.gans);
+      const ns={...S.gScores};
+      cats.forEach(c=>{ns[c]=(ns[c]||0)+1;});
+      set({gScores:ns,gStep:S.gStep+1});
+    });
+  });
+  // PDF drag & drop
+  const dz=document.getElementById('pdf-drop-zone');
+  if(dz){
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+    dz.addEventListener('drop',e=>{
+      e.preventDefault();dz.classList.remove('drag-over');
+      const f=e.dataTransfer.files[0];
+      if(f&&f.type==='application/pdf') handlePdfUpload(f);
+      else alert('PDF 파일만 업로드할 수 있어요.');
+    });
+  }
+}
+
+function doSearch(q){
+  const r=ALL_JOBS.filter(j=>j.name.includes(q)).slice(0,8);
+  set({searchQ:q,searchR:r},true);
+  render();
+  setTimeout(()=>{const el=document.getElementById('jSearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0);
+}
+
+function pickCustomJob(name){set({career:{name,cat:'hum'},screen:'career_confirm'});}
+
+function toggleSub(id){
+  const sc=getSchool();
+  if(!sc) return;
+  const s=sc.subjects.find(x=>x.id===id);
+  if(!s||s.type==='mandatory'||s.type==='school') return; // 필수·학교지정 잠금
+  const ns={...S.sel};
+  ns[id]=!ns[id];
+  const scrollY=window.scrollY;
+  set({sel:ns});
+  requestAnimationFrame(()=>window.scrollTo(0,scrollY));
+}
+
+function doFilterQ(q){
+  S.filterQ=q;
+  const scrollY=window.scrollY;
+  render();
+  setTimeout(()=>{
+    window.scrollTo(0,scrollY);
+    const el=document.getElementById('fq');
+    if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}
+  },0);
+}
+
+function printDoc(){
+  // 현재 화면이 summary가 아니면 summary로 이동 후 출력
+  if(S.screen!=='summary') { set({screen:'summary'}); setTimeout(()=>window.print(),400); }
+  else window.print();
+}
+
+function resetApp(){
+  set({screen:'home',schoolId:null,sel:{},career:null,mode:'guided',gStep:0,gScores:{},searchQ:'',searchR:[],selCat:null,grade:1,showMoreJobs:false,newSchool:{name:'',location:'',short:''}});
+}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+</script>
+</body>
+</html>
