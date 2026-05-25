@@ -514,8 +514,21 @@ footer {
 .foot-col a:hover { color: var(--paper); }
 .foot-bottom {
   padding-top: 24px;
-  display: flex; justify-content: space-between;
+  display: flex; justify-content: space-between; align-items: center;
   font-size: 12px; color: #6c6457;
+}
+.claude-made {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em;
+  opacity: 1;
+}
+.claude-made::before {
+  content: '✦';
+  font-size: 10px;
+  color: var(--accent-warm);
 }
 
 /* ── Mobile nav toggle (hamburger) ── */
@@ -617,7 +630,7 @@ footer {
   /* 좌우 여백 보정: .section / .hero 의 padding 단축형이 좌우를 0으로 덮어쓰는 현상 수정 */
   .section.wrap { padding-left: 20px; padding-right: 20px; }
   .hero.wrap    { padding-left: 20px; padding-right: 20px; }
-  .hero { padding: 36px 0 130px; }
+  .hero { padding: 36px 0 60px; }
   .hero h1 { font-size: 40px; letter-spacing: -0.04em; word-break: keep-all; }
   .hero-quote { font-size: 16px; margin-top: 20px; word-break: keep-all; }
   .hero-actions { flex-direction: column; gap: 10px; }
@@ -629,11 +642,11 @@ footer {
   .section-title { font-size: 28px; }
   .portrait-tag {
     left: 0; right: 0;
-    bottom: -110px;
+    bottom: 10px;
     min-width: unset;
     margin: 0 16px;
   }
-  .portrait-wrap { padding-bottom: 120px; }
+  .portrait-wrap { padding-bottom: 110px; }
   .training-list { grid-template-columns: 1fr; }
   .philo-card { padding: 28px 20px; }
   .philo-title { font-size: 20px; }
