@@ -4,9 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>강의 스케쥴 관리 · 강지애</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌼</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script>
+/* 이미 인증된 세션이면 PIN 화면 플래시 방지 */
+if (sessionStorage.getItem('kja_sch_v1') === '1') {
+  document.documentElement.classList.add('pin-authed');
+}
+</script>
 <style>
+.pin-authed #pinLock { display:none !important; }
 /* ── 프로필 페이지 팔레트 ── */
 :root {
   --bg:          #f4ede2;
@@ -36,29 +46,54 @@ a { color:inherit; text-decoration:none; }
 
 /* ── TOP BAR ── */
 .topbar {
-  position:sticky; top:0; z-index:100;
-  background:var(--nav-bg); border-bottom:1px solid var(--line-soft);
+  position:sticky; top:0; z-index:50;
+  background:#c9c3b9; border-bottom:1px solid var(--line-soft);
 }
 .topbar-inner {
-  max-width:1200px; margin:0 auto;
+  max-width:1280px; margin:0 auto;
   display:flex; align-items:center; justify-content:space-between;
-  padding:14px 40px;
+  padding:18px 40px;
 }
-.brand { display:flex; align-items:center; gap:12px; }
-.brand-mark {
-  width:44px; height:44px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-}
-.brand-name { font-family:'Noto Serif KR',serif; font-size:16px; font-weight:600; color:var(--ink); }
-.brand-sub  { font-size:11px; color:var(--muted); letter-spacing:0.14em; text-transform:uppercase; }
-.topbar-nav { display:flex; align-items:center; gap:6px; }
-.nav-a {
-  font-size:13px; color:var(--ink-soft);
-  padding:8px 14px; border-radius:999px;
-  border:1px solid var(--line); transition:background .15s, color .15s;
-  display:flex; align-items:center; gap:5px;
-}
-.nav-a:hover { background:var(--bg-deep); color:var(--ink); }
+.brand { display:flex; align-items:baseline; gap:14px; }
+.brand-mark { width:50px; height:50px; object-fit:contain; align-self:center; flex-shrink:0; }
+.brand-name { font-family:'Noto Serif KR',serif; font-size:19px; font-weight:600; }
+.brand-sub  { font-size:12px; color:var(--muted); letter-spacing:0.14em; text-transform:uppercase; }
+.nav { display:flex; align-items:center; gap:6px; }
+.nav a { font-size:14px; color:var(--ink-soft); padding:10px 16px; border-radius:999px; transition:background .15s, color .15s; }
+.nav a:hover { background:var(--bg-deep); color:var(--ink); }
+.nav a.cta { background:var(--accent); color:var(--paper); display:inline-flex; align-items:center; gap:8px; }
+.nav a.cta:hover { background:#14201a; color:var(--paper); }
+.nav a.cta.alt { background:var(--paper); color:var(--ink); border:1px solid var(--line); }
+.nav a.cta.alt:hover { background:var(--bg-deep); }
+.live-dot { width:7px; height:7px; border-radius:50%; background:#e5573f; box-shadow:0 0 0 0 rgba(229,87,63,.6); animation:pulse 1.6s infinite; display:inline-block; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(229,87,63,.55);} 70%{box-shadow:0 0 0 8px rgba(229,87,63,0);} 100%{box-shadow:0 0 0 0 rgba(229,87,63,0);} }
+/* Mobile toggle */
+.nav-toggle { display:none; flex-direction:column; justify-content:center; gap:5px; background:none; border:none; cursor:pointer; padding:8px; border-radius:8px; transition:background .15s; width:40px; height:40px; flex-shrink:0; }
+.nav-toggle:hover { background:var(--bg-deep); }
+.nav-toggle .bar { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; transition:transform .28s ease, opacity .28s; }
+.nav-toggle.open .bar:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.nav-toggle.open .bar:nth-child(2) { opacity:0; transform:scaleX(0); }
+.nav-toggle.open .bar:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.nav-mobile { display:none; position:fixed; inset:0; z-index:200; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:40px 24px; }
+.nav-mobile.open { display:flex; }
+.nav-mobile a { font-size:22px; font-family:'Noto Serif KR',serif; color:var(--ink); padding:16px 36px; border-radius:12px; transition:background .15s; width:100%; max-width:340px; text-align:center; }
+.nav-mobile a:hover { background:var(--bg-deep); }
+.nav-mobile a.cta { background:var(--accent); color:var(--paper); display:flex; align-items:center; justify-content:center; gap:10px; }
+.nav-mobile a.cta:hover { background:#14201a; }
+.nav-mobile-divider { width:40px; height:1px; background:var(--line); }
+/* Wrap & Footer */
+.wrap { max-width:1280px; margin:0 auto; padding:0 40px; }
+footer { background:#1b1a18; color:#c9bfae; padding:64px 0 32px; }
+.foot-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:48px; border-bottom:1px solid #2e2a25; }
+.foot-brand-name { font-family:'Noto Serif KR',serif; font-size:24px; color:var(--paper); }
+.foot-brand-sub { font-size:13px; margin-top:10px; color:#8a8074; max-width:320px; line-height:1.6; }
+.foot-col h5 { font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:#8a8074; margin-bottom:16px; }
+.foot-col ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-col a { font-size:14px; color:#c9bfae; transition:color .15s; }
+.foot-col a:hover { color:var(--paper); }
+.foot-bottom { padding-top:24px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#6c6457; }
+.claude-made { display:inline-flex; align-items:center; gap:6px; color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.08em; }
+.claude-made::before { content:'✦'; font-size:10px; color:var(--accent-warm); }
 
 /* ── MAIN ── */
 main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
@@ -255,33 +290,154 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
 ::-webkit-scrollbar-track { background:var(--bg); }
 ::-webkit-scrollbar-thumb { background:var(--line); border-radius:3px; }
 
+/* ── PIN LOCK ── */
+.pin-lock {
+  position:fixed; inset:0; z-index:999;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
+}
+.pin-card {
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:12px; padding:2.8rem 2rem 2rem;
+  width:100%; max-width:320px; text-align:center;
+  box-shadow:0 24px 60px -16px rgba(27,26,24,.18);
+}
+.pin-logo { margin-bottom:1rem; }
+.pin-ttl {
+  font-family:'Noto Serif KR',serif; font-size:1.15rem; font-weight:600;
+  color:var(--ink); margin-bottom:.3rem;
+}
+.pin-desc {
+  font-size:.68rem; color:var(--muted);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:1.8rem;
+}
+.pin-dots { display:flex; justify-content:center; gap:12px; margin-bottom:1.2rem; }
+.pd {
+  width:13px; height:13px; border-radius:50%;
+  border:2px solid var(--line); background:transparent;
+  transition:background .18s, border-color .18s, transform .18s;
+}
+.pd.filled { background:var(--accent); border-color:var(--accent); transform:scale(1.1); }
+.pd.err    { background:#c04a3a; border-color:#c04a3a; transform:scale(1.1); }
+.pin-inp {
+  width:100%; background:var(--bg); border:1px solid var(--line);
+  color:transparent; caret-color:var(--accent);
+  padding:10px 14px; border-radius:var(--r-sm);
+  font-size:1.5rem; text-align:center; letter-spacing:.5em;
+  font-family:inherit; outline:none;
+  transition:border-color .15s;
+}
+.pin-inp:focus { border-color:var(--accent); background:var(--paper); }
+.pin-inp.err-state { border-color:#c04a3a; }
+.pin-err { font-size:.73rem; color:#c04a3a; margin-top:.7rem; min-height:1.1em; line-height:1.4; }
+.pin-lockout {
+  font-size:.72rem; color:var(--muted);
+  background:var(--bg-deep); border:1px solid var(--line);
+  padding:.55rem 1rem; border-radius:var(--r-sm);
+  margin-top:.8rem; display:none;
+}
+.pin-submit {
+  margin-top:1.2rem; width:100%;
+  background:var(--accent); color:var(--paper);
+  border:none; border-radius:999px; padding:12px;
+  font-size:.85rem; font-weight:600; font-family:inherit;
+  cursor:pointer; transition:background .15s, opacity .15s;
+  letter-spacing:.04em;
+}
+.pin-submit:hover { background:#14201a; }
+.pin-submit:disabled { opacity:.35; cursor:not-allowed; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)} 40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+}
+.do-shake { animation:shake .38s ease; }
+
+@media(max-width:980px){
+  .foot-grid { grid-template-columns:1fr 1fr; }
+}
 @media(max-width:640px){
-  .topbar-inner,main { padding-left:20px; padding-right:20px; }
+  .topbar-inner { padding-left:20px; padding-right:20px; }
+  main { padding-left:20px; padding-right:20px; }
+  .nav { display:none; }
+  .nav-toggle { display:flex; }
   .cal-cell { min-height:66px; padding:4px 3px; }
   .form-grid { grid-template-columns:1fr; }
   .month-title { font-size:1.15rem; min-width:130px; }
+  .foot-grid { display:flex; flex-direction:column; gap:32px; padding-left:20px; padding-right:20px; }
+  .foot-bottom { padding:20px 20px 0; flex-direction:column; gap:8px; }
+  .wrap { padding-left:20px; padding-right:20px; }
 }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="brand-mark">
-        <img src="assets/daisy.png" alt="데이지" width="44" height="44" style="object-fit:contain;display:block;">
-      </div>
-      <div>
-        <div class="brand-name">강지애 · 강의 스케쥴</div>
-        <div class="brand-sub">Lecture Schedule Manager</div>
-      </div>
+<!-- ── PIN LOCK OVERLAY ── -->
+<div id="pinLock" class="pin-lock">
+  <div class="pin-card">
+    <div class="pin-logo">
+      <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
     </div>
-    <nav class="topbar-nav">
-      <a href="index.html" class="nav-a">← 프로필</a>
-    </nav>
+    <div class="pin-ttl">강의 스케쥴</div>
+    <div class="pin-desc">Private · Kang Ji-ae</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <input type="password" id="pinInp" class="pin-inp"
+           maxlength="6" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" placeholder="● ● ● ● ● ●" autofocus>
+    <div class="pin-err"     id="pinErr"></div>
+    <div class="pin-lockout" id="pinLockout"></div>
+    <button class="pin-submit" id="pinSubmit">입장</button>
   </div>
 </div>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand">
+      <img src="assets/daisy.png" alt="데이지" class="brand-mark">
+      <div>
+        <div class="brand-name">강지애</div>
+        <div class="brand-sub">DIGITAL TUTOR · EDUTECH</div>
+      </div>
+    </a>
+    <nav class="nav">
+      <a href="index.html#about">소개</a>
+      <a href="index.html#competency">핵심역량</a>
+      <a href="index.html#certificates">자격·연수</a>
+      <a href="index.html#experience">강의 경력</a>
+      <a href="schedule.html" aria-current="page" style="font-weight:600;color:var(--ink)">강의 스케쥴</a>
+      <a href="all.html" class="cta alt">수업 앱 모음</a>
+      <a href="edu.html" class="cta">실시간&nbsp; 교육&nbsp; 모니터링</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+</header>
+
+<!-- MOBILE NAV -->
+<nav class="nav-mobile" id="navMobile">
+  <a href="index.html#about">소개</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#competency">핵심역량</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#certificates">자격·연수</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#experience">강의 경력</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="schedule.html" style="font-weight:700">강의 스케쥴 ✓</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="all.html">수업 앱 모음</a>
+  <a href="edu.html" class="cta">
+    <span class="live-dot"></span>실시간 교육 모니터링
+  </a>
+</nav>
 
 <main>
   <div class="stats-row" id="statsRow"></div>
@@ -316,6 +472,46 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
   <img src="assets/flower-bar.png" alt="" style="width:100%;height:72px;object-fit:cover;display:block;margin-top:2.5rem;border-radius:var(--r);overflow:hidden;">
 </main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand-name serif">강지애 · Kang Ji-ae</div>
+        <p class="foot-brand-sub">제주 기반 디지털 강사 · 에듀테크 컨설턴트<br>사람과 기술을 연결하고, 배움의 즐거움을 설계합니다.</p>
+      </div>
+      <div class="foot-col">
+        <h5>NAVIGATE</h5>
+        <ul>
+          <li><a href="index.html#about">소개</a></li>
+          <li><a href="index.html#competency">핵심 역량</a></li>
+          <li><a href="index.html#certificates">자격 · 연수</a></li>
+          <li><a href="index.html#experience">강의 경력</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>APPS &amp; LIVE</h5>
+        <ul>
+          <li><a href="all.html">수업 앱 모음</a></li>
+          <li><a href="edu.html">실시간 모니터링</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>CONTACT</h5>
+        <ul>
+          <li><a href="mailto:loveria2@nate.com">loveria2@nate.com</a></li>
+          <li><a href="#">강의 의뢰 / 컨설팅</a></li>
+          <li><a href="#">제주 기반 · 도내 전역 출강</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Kang Ji-ae. All rights reserved.</span>
+      <span class="claude-made">Made with Claude · v 1.0 · Schedule</span>
+    </div>
+  </div>
+</footer>
 
 <!-- ADD/EDIT MODAL -->
 <div class="overlay" id="addOverlay" onclick="overlayClick(event,'addOverlay')">
@@ -686,6 +882,156 @@ function buildPrintHtml(pages) {
 
 loadData();
 setupCompanyAc();
+
+// ── PIN LOCK ──
+;(async function() {
+  const overlay = document.getElementById('pinLock');
+  if (!overlay) return;
+
+  // 이미 인증된 세션이면 즉시 숨김
+  if (sessionStorage.getItem('kja_sch_v1') === '1') {
+    overlay.style.display = 'none'; return;
+  }
+
+  /* ──────────────────────────────────────────
+     PIN 보안 처리
+     · PIN은 XOR 인코딩으로 소스에 평문 비노출
+     · 비교는 SubtleCrypto SHA-256으로 수행
+  ────────────────────────────────────────── */
+  const _k = [42, 17, 93, 58, 12, 77];        // XOR 키
+  const _e = [26, 38, 109, 8, 60, 116];       // XOR 인코딩된 PIN 바이트
+  const _rp = () => _e.map((b,i) => String.fromCharCode(b ^ _k[i])).join('');
+
+  async function sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  const SALT = 'kja-sch-2026';
+  const _expected = await sha256(SALT + _rp()); // 페이지 로드 시 1회 계산
+
+  async function verify(input) {
+    const h = await sha256(SALT + input);
+    return h === _expected;
+  }
+
+  /* ──────────────────────────────────────────
+     시도 횟수 제한 (Rate Limiting)
+     · 5회 실패 시 5분 잠금 (localStorage 저장)
+  ────────────────────────────────────────── */
+  const RL_KEY = 'kja_sch_rl_v1';
+  const MAX_TRY = 5, LOCK_MIN = 5;
+  const getRL  = () => JSON.parse(localStorage.getItem(RL_KEY) || '{"n":0,"until":0}');
+  const setRL  = o  => localStorage.setItem(RL_KEY, JSON.stringify(o));
+
+  const inp     = document.getElementById('pinInp');
+  const errEl   = document.getElementById('pinErr');
+  const lockEl  = document.getElementById('pinLockout');
+  const btn     = document.getElementById('pinSubmit');
+  const dots    = document.querySelectorAll('#pinDots .pd');
+
+  let cdId; // countdown interval
+  function startCountdown() {
+    if (cdId) return;
+    cdId = setInterval(() => {
+      const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(cdId); cdId = null;
+        setRL({n:0, until:0});
+        inp.disabled = false; btn.disabled = false;
+        lockEl.style.display = 'none'; errEl.textContent = '';
+      } else {
+        const m = String(Math.floor(rem/60)).padStart(2,'0');
+        const s = String(rem % 60).padStart(2,'0');
+        lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+      }
+    }, 1000);
+  }
+
+  function checkLockout() {
+    const rl = getRL();
+    if (rl.until <= Date.now()) return false;
+    const rem = Math.ceil((rl.until - Date.now()) / 1000);
+    const m = String(Math.floor(rem/60)).padStart(2,'0');
+    const s = String(rem % 60).padStart(2,'0');
+    inp.disabled = true; btn.disabled = true;
+    lockEl.style.display = ''; lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+    startCountdown(); return true;
+  }
+
+  // 초기 잠금 상태 확인
+  checkLockout();
+
+  // 입력 업데이트 (도트 표시)
+  inp.addEventListener('input', () => {
+    const v = inp.value.replace(/\D/g,'').slice(0,6);
+    inp.value = v;
+    dots.forEach((d,i) => {
+      d.classList.toggle('filled', i < v.length);
+      d.classList.remove('err');
+    });
+    errEl.textContent = '';
+    inp.classList.remove('err-state');
+    if (v.length === 6) attemptUnlock(v);
+  });
+
+  async function attemptUnlock(val) {
+    if (checkLockout()) return;
+    val = val ?? inp.value.trim();
+    if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
+
+    btn.disabled = true;
+    const ok = await verify(val);
+
+    if (ok) {
+      // 인증 성공 → 세션에 저장 후 오버레이 페이드아웃
+      sessionStorage.setItem('kja_sch_v1', '1');
+      setRL({n:0, until:0});
+      overlay.style.transition = 'opacity .35s';
+      overlay.style.opacity = '0';
+      setTimeout(() => { overlay.style.display = 'none'; }, 370);
+    } else {
+      // 인증 실패
+      const rl = getRL();
+      rl.n++;
+      if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
+      setRL(rl);
+
+      dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
+      inp.classList.add('err-state', 'do-shake');
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), {once:true});
+      inp.value = '';
+
+      if (rl.until > Date.now()) {
+        checkLockout();
+      } else {
+        const left = MAX_TRY - rl.n;
+        errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${left}회)`;
+        btn.disabled = false;
+      }
+    }
+  }
+
+  btn.addEventListener('click',  () => attemptUnlock(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
+})();
+
+// Mobile nav toggle
+const navToggle = document.getElementById('navToggle');
+const navMobile = document.getElementById('navMobile');
+if (navToggle && navMobile) {
+  navToggle.addEventListener('click', () => {
+    navToggle.classList.toggle('open');
+    navMobile.classList.toggle('open');
+    navToggle.setAttribute('aria-label', navMobile.classList.contains('open') ? '메뉴 닫기' : '메뉴 열기');
+  });
+  navMobile.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      navToggle.classList.remove('open');
+      navMobile.classList.remove('open');
+    });
+  });
+}
 </script>
 </body>
 </html>
