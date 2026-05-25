@@ -617,7 +617,7 @@ footer {
   /* 좌우 여백 보정: .section / .hero 의 padding 단축형이 좌우를 0으로 덮어쓰는 현상 수정 */
   .section.wrap { padding-left: 20px; padding-right: 20px; }
   .hero.wrap    { padding-left: 20px; padding-right: 20px; }
-  .hero { padding: 36px 0 56px; }
+  .hero { padding: 36px 0 130px; }
   .hero h1 { font-size: 40px; letter-spacing: -0.04em; word-break: keep-all; }
   .hero-quote { font-size: 16px; margin-top: 20px; word-break: keep-all; }
   .hero-actions { flex-direction: column; gap: 10px; }
