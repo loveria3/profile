@@ -15,7 +15,8 @@
 
 /* 페이지 히어로 */
 .apps-hero {
-  padding: 72px 0 56px;
+  padding-top: 72px;
+  padding-bottom: 56px;
   border-bottom: 1px solid var(--line-soft);
 }
 .apps-hero-inner {
@@ -96,7 +97,7 @@
 
 /* 앱 카드 그리드 */
 .apps-section {
-  padding: 0 0 96px;
+  padding-bottom: 96px;
 }
 .apps-grid {
   display: grid;
@@ -447,7 +448,7 @@
   .apps-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
-  .apps-hero { padding: 48px 0 40px; }
+  .apps-hero { padding-top: 48px; padding-bottom: 40px; }
   .apps-hero h1 { font-size: 34px; }
   .apps-hero-desc { font-size: 16px; }
   .apps-grid { grid-template-columns: 1fr; gap: 16px; }
