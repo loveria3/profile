@@ -1,0 +1,151 @@
+// ============================================================
+//  강지애 프로필 — 수업 앱 갤러리용 Google Apps Script
+//  이 파일의 내용을 Google Apps Script 편집기에 붙여넣으세요
+// ============================================================
+//
+//  [ 구글 스프레드시트 준비 ]
+//  1. 새 구글 스프레드시트를 만들거나 기존 시트를 엽니다.
+//  2. 시트 탭 이름을 정확히 "앱목록" 으로 바꿉니다.
+//  3. 1행에 아래 헤더를 입력합니다 (순서 그대로):
+//     A1: 앱이름   B1: 설명   C1: URL   D1: 카테고리   E1: 등록일
+//
+//  [ 카테고리 선택지 ]
+//  퀴즈 / 시뮬레이션 / 게임 / 도구  (중 하나를 입력)
+//
+//  [ 예시 데이터 (2행부터 입력) ]
+//  A2: 고교학점제 실습앱
+//  B2: 고교학점제 과목 선택과 이수 흐름을 직접 체험하는 실습 앱
+//  C2: https://your-app-url.com
+//  D2: 시뮬레이션
+//  E2: 2026-05-25
+//
+// ============================================================
+//
+//  [ Apps Script 배포 방법 ]
+//  1. 스프레드시트 상단 메뉴 > 확장 프로그램 > Apps Script
+//  2. 편집기에서 기존 내용 전체 삭제 후 아래 코드 붙여넣기
+//  3. 저장 (Ctrl+S)
+//  4. 상단 > 배포 > 새 배포
+//     - 유형: 웹 앱
+//     - 다음 사용자로 실행: 나 (본인 계정)
+//     - 액세스 권한: 모든 사용자 (익명 포함)
+//  5. 배포 클릭 > 권한 승인
+//  6. 생성된 웹 앱 URL 복사
+//     (https://script.google.com/macros/s/.../exec 형태)
+//  7. all.html 의 APPS_API_URL 변수에 붙여넣기
+//
+//  [ 앱 추가 방법 ]
+//  이후로는 스프레드시트에 행만 추가하면 자동 반영됩니다.
+//  별도 재배포 불필요.
+//
+// ============================================================
+
+var SHEET_NAME = "앱목록";
+
+// ──────────────────────────────────────────────────────────
+//  doGet — 웹앱 진입점
+// ──────────────────────────────────────────────────────────
+function doGet(e) {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_NAME);
+
+    if (!sheet) {
+      return errorOutput('"' + SHEET_NAME + '" 시트를 찾을 수 없습니다. 시트 탭 이름을 확인하세요.');
+    }
+
+    var apps = readApps(sheet);
+    return jsonOutput(apps);
+
+  } catch (err) {
+    return errorOutput(err.toString());
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+//  시트 데이터 읽기
+//  헤더: 앱이름(A) | 설명(B) | URL(C) | 카테고리(D) | 등록일(E)
+// ──────────────────────────────────────────────────────────
+function readApps(sheet) {
+  var data = sheet.getDataRange().getValues();
+  var apps = [];
+
+  // 1행은 헤더이므로 2행(index 1)부터 읽음
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var name = String(row[0] || '').trim();
+    if (!name) continue;   // 앱이름 없으면 건너뜀
+
+    var dateRaw = row[4];
+    var dateStr = '';
+    if (dateRaw instanceof Date) {
+      // Date 객체인 경우 YYYY-MM-DD 형식으로 변환
+      dateStr = Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    } else {
+      dateStr = String(dateRaw || '').trim();
+    }
+
+    apps.push({
+      name:        name,
+      description: String(row[1] || '').trim(),
+      url:         String(row[2] || '').trim(),
+      category:    String(row[3] || '').trim(),
+      date:        dateStr
+    });
+  }
+
+  return apps;
+}
+
+// ──────────────────────────────────────────────────────────
+//  doPost — 앱 추가 (POST 요청 처리)
+//  all.html 의 "앱 추가" 폼에서 호출됩니다.
+// ──────────────────────────────────────────────────────────
+function doPost(e) {
+  try {
+    var ss    = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(SHEET_NAME);
+
+    if (!sheet) {
+      return errorOutput('"' + SHEET_NAME + '" 시트를 찾을 수 없습니다.');
+    }
+
+    var data = JSON.parse(e.postData.contents);
+    var name = String(data.name || '').trim();
+    var url  = String(data.url  || '').trim();
+
+    if (!name || !url) {
+      return errorOutput('앱 이름과 URL은 필수입니다.');
+    }
+
+    var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+
+    sheet.appendRow([
+      name,
+      String(data.description || '').trim(),
+      url,
+      String(data.category    || '기타').trim(),
+      today
+    ]);
+
+    return jsonOutput({ success: true });
+
+  } catch (err) {
+    return errorOutput(err.toString());
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+//  JSON 응답 헬퍼
+// ──────────────────────────────────────────────────────────
+function jsonOutput(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function errorOutput(msg) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ error: true, message: msg }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
