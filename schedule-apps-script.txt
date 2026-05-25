@@ -118,9 +118,17 @@ function getScheduleData_() {
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
     if (!r[0] && !r[1]) continue;
+    // 날짜 셀이 Date 객체인 경우 yyyy-MM-dd 형식으로 변환
+    var dateRaw = r[1];
+    var dateStr = '';
+    if (dateRaw instanceof Date) {
+      dateStr = Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    } else {
+      dateStr = String(dateRaw || '').trim();
+    }
     result.push({
       id:      String(r[0] || '').trim(),
-      date:    String(r[1] || '').trim(),
+      date:    dateStr,
       type:    String(r[2] || '').trim(),
       company: String(r[3] || '').trim(),
       mode:    String(r[4] || '').trim(),

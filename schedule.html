@@ -414,11 +414,12 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
 const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
 const PRESET_COMPANIES = {
-  '에듀인플랫폼': '#1a7a6e',
-  '제주대학교':   '#2a4d8a',
-  '재미에듀':     '#7a3a6e',
-  '대정중학교':   '#3a7a45',
-  '남원중학교':   '#b3753a',
+  '대정중학교':       '#1e56c8',  // 파랑
+  '에듀인플랫폼':     '#8c2dbd',  // 보라
+  '남원중학교':       '#d4561c',  // 주황
+  '에듀인플랫폼(핑퐁)': '#1a9870', // 청록 — 에듀인플랫폼 핑퐁 프로그램
+  '제주대학교':       '#2a4d8a',  // 진파랑
+  '재미에듀':         '#7a3a6e',  // 자주
 };
 const AUTO_PALETTE = [
   '#c04a3a','#5a3a8a','#6b8a2a','#8a4a2a',
@@ -459,6 +460,11 @@ const pad        = n  => String(n).padStart(2,'0');
 const trunc      = (s,n) => s && s.length > n ? s.slice(0,n)+'…' : (s||'');
 const mStr       = (y,m) => `${y}-${pad(m+1)}`;
 
+function fmtTimeShort(time) {
+  if (!time) return '';
+  const m = time.match(/^(\d{1,2}):\d{2}-(\d{1,2}):\d{2}$/);
+  return m ? `${parseInt(m[1])} to ${parseInt(m[2])}` : time;
+}
 function hexToRgba(hex, a) {
   const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
   return `rgba(${r},${g},${b},${a})`;
@@ -566,7 +572,8 @@ function renderList() {
     const c=getCompanyColor(s.company), dd=s.date.slice(5).replace('-','.');
     const hoursCell=s.hours?`${s.hours}시수`:'';
     const typeLbl = s.type==='교육수강'&&s.mode ? `<span class="type-lbl">${s.type}</span> <span class="type-lbl" style="color:var(--accent-warm);border-color:rgba(179,117,58,.3)">${s.mode}</span>` : `<span class="type-lbl">${s.type||''}</span>`;
-    html+=`<tr><td class="date-col">${dd}</td><td><span class="co-chip" style="background:${c.bg};color:${c.color};border-color:${c.border}99"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span></td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
+    const tShort  = s.time ? `<span style="font-size:0.68rem;color:var(--muted);white-space:nowrap;margin-left:4px">(${fmtTimeShort(s.time)})</span>` : '';
+    html+=`<tr><td class="date-col">${dd}</td><td><span class="co-chip" style="background:${c.bg};color:${c.color};border-color:${c.border}99"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span>${tShort}</td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
   });
   html+='</tbody></table></div>'; w.innerHTML=html;
 }
