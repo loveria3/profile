@@ -466,12 +466,12 @@
     <div class="pw-input-wrap">
       <input type="password" id="pwInput" class="pw-input"
         placeholder="비밀번호 입력" autocomplete="off" />
-      <button class="pw-eye" id="pwEye" aria-label="비밀번호 표시/숨기기">
+      <button type="button" class="pw-eye" id="pwEye" aria-label="비밀번호 표시/숨기기">
         <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
     <div class="pw-error" id="pwError"></div>
-    <button class="pw-btn" id="pwBtn">입장하기</button>
+    <button type="button" class="pw-btn" id="pwBtn">입장하기</button>
     <div class="pw-back"><a href="index.html">← 프로필 홈으로 돌아가기</a></div>
   </div>
 </div>
@@ -623,7 +623,7 @@
     </div>
     <div class="foot-bottom">
       <span>© 2026 Kang Ji-ae. All rights reserved.</span>
-      <span class="mono">v 1.0 · Apps Gallery</span>
+      <span class="mono">Made with Claude · v 1.0 · Apps Gallery</span>
     </div>
   </div>
 </footer>
@@ -858,14 +858,12 @@ if (sessionStorage.getItem('allAuth') === '1') {
 }
 
 function unlockPage() {
-  pwOverlay.classList.add('hide');
-  setTimeout(() => pwOverlay.style.display = 'none', 300);
-  // 앱 추가 버튼 표시
+  pwOverlay.style.display = 'none';
   document.getElementById('addAppWrap').style.display = 'flex';
 }
 
 function tryPassword() {
-  if (pwInput.value === PASSWORD) {
+  if (pwInput.value.trim() === PASSWORD) {
     sessionStorage.setItem('allAuth', '1');
     pwError.textContent = '';
     unlockPage();
