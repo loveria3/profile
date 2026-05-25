@@ -61,6 +61,7 @@ a { color:inherit; text-decoration:none; }
 .nav { display:flex; align-items:center; gap:6px; }
 .nav a { font-size:14px; color:var(--ink-soft); padding:10px 16px; border-radius:999px; transition:background .15s, color .15s; }
 .nav a:hover { background:var(--bg-deep); color:var(--ink); }
+.nav a[aria-current="page"] { font-size:15px; font-weight:600; color:var(--ink); }
 .nav a.cta { background:var(--accent); color:var(--paper); display:inline-flex; align-items:center; gap:8px; }
 .nav a.cta:hover { background:#14201a; color:var(--paper); }
 .nav a.cta.alt { background:var(--paper); color:var(--ink); border:1px solid var(--line); }
@@ -96,20 +97,19 @@ footer { background:#1b1a18; color:#c9bfae; padding:64px 0 32px; }
 .claude-made::before { content:'✦'; font-size:10px; color:var(--accent-warm); }
 
 /* ── MAIN ── */
-main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
+main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
 /* ── STATS (업체별) ── */
 .stats-row {
   display:flex; gap:10px; flex-wrap:wrap; margin-bottom:2rem;
 }
 .stat-card {
-  background:var(--paper); border:1px solid var(--line);
-  border-radius:var(--r); padding:14px 16px;
-  border-left-width:3px; min-width:120px;
+  border-radius:var(--r); padding:14px 18px;
+  min-width:120px; position:relative;
 }
-.stat-label { font-size:0.63rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
-.stat-val   { font-family:'Noto Serif KR',serif; font-size:1.5rem; font-weight:600; line-height:1; }
-.stat-sub   { font-size:0.6rem; color:var(--muted); margin-top:3px; }
+.stat-label { font-size:0.62rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; margin-bottom:6px; }
+.stat-val   { font-family:'Noto Serif KR',serif; font-size:1.65rem; font-weight:600; line-height:1; }
+.stat-sub   { font-size:0.6rem; margin-top:5px; display:flex; align-items:center; gap:3px; opacity:.7; }
 
 /* ── CAL HEADER ── */
 .cal-header {
@@ -176,11 +176,14 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
 .cal-cell.is-sun .dnum { color:#c04a3a; }
 .cal-cell.is-sat .dnum { color:#2a4d8a; }
 .ev-badge {
-  display:block; font-size:0.6rem; font-weight:600;
-  padding:2px 5px; border-radius:3px; margin-bottom:2px;
-  cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  max-width:100%; line-height:1.5; border-left:2px solid;
+  display:flex; align-items:center; gap:3px;
+  font-size:0.6rem; font-weight:600;
+  padding:2px 5px; border-radius:4px; margin-bottom:2px;
+  cursor:pointer; overflow:hidden;
+  max-width:100%; line-height:1.5;
 }
+.ev-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; display:inline-block; }
+.ev-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
 .ev-more { font-size:0.6rem; color:var(--muted); padding-left:3px; }
 
 /* ── LIST ── */
@@ -196,27 +199,30 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
   border:1px solid var(--line); border-radius:var(--r); overflow:hidden;
 }
 .sch-table th {
-  padding:10px 14px; font-size:0.68rem; font-weight:700;
-  letter-spacing:0.06em; color:var(--muted); background:var(--bg-deep);
-  border-bottom:1px solid var(--line); text-align:left; white-space:nowrap;
+  padding:10px 14px; font-size:0.66rem; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
+  border-bottom:1.5px solid var(--line); text-align:left; white-space:nowrap;
 }
 .sch-table td {
   padding:10px 14px; font-size:0.8rem; color:var(--ink-soft);
-  border-bottom:1px solid var(--line-soft); vertical-align:top;
+  border-bottom:1px solid var(--line-soft); vertical-align:middle;
 }
 .sch-table tr:last-child td { border-bottom:none; }
-.sch-table tr:hover td { background:var(--bg); }
-.sch-table td.date-col { color:var(--ink); font-weight:600; white-space:nowrap; }
+.sch-table tr:hover td { background:rgba(42,59,46,.025); }
+.sch-table td.date-col {
+  color:var(--ink); font-weight:600; white-space:nowrap;
+  font-family:'JetBrains Mono',monospace; font-size:0.78rem;
+}
 .co-chip {
   display:inline-flex; align-items:center; gap:5px;
-  padding:2px 9px; border-radius:999px; font-size:0.73rem; font-weight:600;
-  border:1px solid; white-space:nowrap;
+  padding:3px 9px; border-radius:5px; font-size:0.73rem; font-weight:700;
+  white-space:nowrap;
 }
-.co-chip-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.co-chip-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
 .type-lbl {
-  font-size:0.72rem; color:var(--muted);
-  background:var(--bg-deep); border:1px solid var(--line);
-  padding:2px 8px; border-radius:999px; white-space:nowrap;
+  font-size:0.68rem; color:var(--accent); font-weight:700; letter-spacing:0.05em;
+  background:rgba(42,59,46,.08);
+  padding:3px 8px; border-radius:4px; white-space:nowrap;
 }
 .act-btns { display:flex; gap:4px; }
 .btn-xs {
@@ -470,8 +476,12 @@ main { max-width:1200px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
   <div id="listWrap"></div>
 
-  <img src="assets/flower-bar.png" alt="" style="width:100%;height:72px;object-fit:cover;display:block;margin-top:2.5rem;border-radius:var(--r);overflow:hidden;">
 </main>
+
+<!-- 플라워 바 -->
+<div style="width:100%;overflow:hidden;line-height:0">
+  <img src="assets/flower-bar.png" alt="제주의 봄" style="width:100%;height:150px;object-fit:cover;display:block;">
+</div>
 
 <!-- FOOTER -->
 <footer>
@@ -740,8 +750,8 @@ function makeCell(day,year,month,other,isToday=false) {
     evs.slice(0,2).forEach(ev=>{
       const c=getCompanyColor(ev.company), b=document.createElement('div');
       b.className='ev-badge';
-      b.style.cssText=`background:${c.bg};color:${c.color};border-color:${c.dot}`;
-      b.textContent=trunc(ev.company,6);
+      b.style.cssText=`background:${hexToRgba(c.dot,.1)};color:${c.color}`;
+      b.innerHTML=`<span class="ev-dot" style="background:${c.dot}"></span><span class="ev-txt">${trunc(ev.company,6)}</span>`;
       b.title=`[${ev.type}] ${ev.company}${ev.school?' · '+ev.school:''}${ev.time?' '+ev.time:''}`;
       b.onclick=e=>{e.stopPropagation();openEditModal(ev.id);}; cell.appendChild(b);
     });
@@ -763,13 +773,13 @@ function renderList() {
   document.getElementById('listBadge').textContent=`${items.length}건`;
   const w=document.getElementById('listWrap');
   if (!items.length){w.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><p>이달의 강의가 없습니다.<br><span>+ 강의 추가</span> 버튼으로 등록해보세요.</p></div>`;return;}
-  let html=`<div style="overflow-x:auto"><table class="sch-table"><thead><tr><th>일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th><th></th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th><th></th></tr></thead><tbody>`;
   items.forEach(s=>{
     const c=getCompanyColor(s.company), dd=s.date.slice(5).replace('-','.');
     const hoursCell=s.hours?`${s.hours}시수`:'';
     const typeLbl = s.type==='교육수강'&&s.mode ? `<span class="type-lbl">${s.type}</span> <span class="type-lbl" style="color:var(--accent-warm);border-color:rgba(179,117,58,.3)">${s.mode}</span>` : `<span class="type-lbl">${s.type||''}</span>`;
     const tShort  = s.time ? `<span style="font-size:0.68rem;color:var(--muted);white-space:nowrap;margin-left:4px">(${fmtTimeShort(s.time)})</span>` : '';
-    html+=`<tr><td class="date-col">${dd}</td><td><span class="co-chip" style="background:${c.bg};color:${c.color};border-color:${c.border}99"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span>${tShort}</td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
+    html+=`<tr><td class="date-col" style="border-left:3px solid ${c.dot};padding-left:11px">${dd}</td><td><span class="co-chip" style="background:${hexToRgba(c.dot,.09)};color:${c.color}"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span>${tShort}</td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
   });
   html+='</tbody></table></div>'; w.innerHTML=html;
 }
@@ -780,8 +790,19 @@ function renderStats() {
   items.forEach(s=>{const co=s.company||'미지정';counts[co]=(counts[co]||0)+1;});
   const presets=Object.keys(PRESET_COMPANIES), others=Object.keys(counts).filter(k=>!presets.includes(k));
   const ordered=[...presets.filter(k=>counts[k]),...others];
-  let html=ordered.map(co=>{const c=getCompanyColor(co);return`<div class="stat-card" style="border-left-color:${c.dot}"><div class="stat-label" style="color:${c.color}">${co}</div><div class="stat-val" style="color:${c.color}">${counts[co]||0}</div><div class="stat-sub">이번 달</div></div>`;}).join('');
-  html+=`<div class="stat-card" style="border-left-color:var(--gold)"><div class="stat-label">합 계</div><div class="stat-val" style="color:var(--accent)">${items.length}</div><div class="stat-sub">이번 달 전체</div></div>`;
+  let html=ordered.map(co=>{
+    const c=getCompanyColor(co);
+    return`<div class="stat-card" style="background:${hexToRgba(c.dot,.08)}">
+      <div class="stat-label" style="color:${c.color}">${co}</div>
+      <div class="stat-val" style="color:${c.color}">${counts[co]||0}</div>
+      <div class="stat-sub" style="color:${c.color}">📅 이번 달</div>
+    </div>`;
+  }).join('');
+  html+=`<div class="stat-card" style="background:rgba(201,163,91,.12)">
+    <div class="stat-label" style="color:var(--gold)">합 계</div>
+    <div class="stat-val" style="color:var(--accent)">${items.length}</div>
+    <div class="stat-sub" style="color:var(--gold)">📊 이번 달 전체</div>
+  </div>`;
   document.getElementById('statsRow').innerHTML=html;
 }
 
