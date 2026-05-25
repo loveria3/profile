@@ -1,0 +1,377 @@
+// ============================================================
+//  강지애 프로필 — 경력서 + 강의스케쥴 통합 Google Apps Script
+//  기존 경력서 코드에 강의 스케쥴 기능을 합친 버전입니다.
+//  기존 코드 전체를 이 코드로 교체하세요.
+// ============================================================
+//
+//  [ 업데이트 방법 — 기존 배포가 있는 경우 ]
+//  1. 경력사항 구글 스프레드시트 열기
+//  2. 확장 프로그램 > Apps Script
+//  3. 편집기 기존 내용 전체 삭제 후 이 코드 전체 붙여넣기
+//  4. 저장 (Ctrl+S)
+//  5. 상단 > 배포 > 배포 관리
+//  6. 기존 배포 항목 옆 ✏️(수정) 클릭
+//     → 버전: "새 버전" 선택
+//     → 저장 클릭
+//  ✅ URL이 바뀌지 않으므로 index.html 경력서도 그대로 동작합니다.
+//  ✅ 이 URL을 schedule.html 의 SCHEDULE_API_URL 에도 사용하면 됩니다.
+//
+// ============================================================
+
+// ── 카카오 설정 (기존 설정값 그대로 유지하세요) ──────────────
+var KAKAO_REST_KEY     = '';
+var KAKAO_REDIRECT_URI = 'https://example.com';
+var EDU_PAGE_URL       = '';
+
+// ── 기본 인적사항 ────────────────────────────────────────────
+var BASIC_INFO = {
+  name:  "강지애",
+  title: "디지털 강사 / AI 교육 전문가",
+  email: "loveria5655@gmail.com",
+  intro: "AI·디지털 교육 전문 강사 | 정보처리기사 | 사회복지사 1급"
+};
+
+// ── 시트 이름 ─────────────────────────────────────────────────
+var SHEET_EDU      = "학력사항";
+var SHEET_CAREER   = "경력사항";
+var SHEET_CERT     = "자격증현황";
+var SHEET_SCHEDULE = "강의스케쥴";   // ← 새로 추가
+
+// ============================================================
+//  doGet — GET 요청 처리
+//  ?type=schedule  → 강의 스케쥴 데이터 반환
+//  (파라미터 없음)  → 기존 경력서 데이터 반환
+// ============================================================
+function doGet(e) {
+  try {
+    // 강의 스케쥴 요청인 경우
+    if (e && e.parameter && e.parameter.type === 'schedule') {
+      return getScheduleData_();
+    }
+
+    // 기존 경력서 요청 (변경 없음)
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var result = {
+      basicInfo:    BASIC_INFO,
+      education:    readEducation(ss),
+      career:       readCareer(ss),
+      certificates: readCertificates(ss)
+    };
+    return jsonOutput(result);
+
+  } catch (err) {
+    return jsonOutput({ error: err.toString() });
+  }
+}
+
+// ============================================================
+//  doPost — POST 요청 처리
+//  action: 'add'/'update'/'delete'  → 강의 스케쥴 처리 (새로 추가)
+//  sheet: '알림요청'                 → 카카오 알림 (기존)
+//  그 외                             → 시트 데이터 저장 (기존)
+// ============================================================
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss   = SpreadsheetApp.getActiveSpreadsheet();
+
+    // 강의 스케쥴 처리 (action 키가 있는 경우)
+    if (data.action === 'add' || data.action === 'update' || data.action === 'delete') {
+      return handleSchedule_(ss, data);
+    }
+
+    // 기존: 카카오 알림 요청
+    if (data.sheet === '알림요청') {
+      sendDailyKakaoNotification();
+      return jsonOutput({ success: true, action: 'kakao_sent' });
+    }
+
+    // 기존: 그 외 시트 데이터 저장
+    if (data.data && data.data.length > 0) {
+      var sheet = ss.getSheetByName(data.sheet) || ss.insertSheet(data.sheet);
+      sheet.clearContents();
+      sheet.getRange(1, 1, data.data.length, data.data[0].length).setValues(data.data);
+    }
+    return jsonOutput({ success: true });
+
+  } catch (err) {
+    return jsonOutput({ error: err.toString() });
+  }
+}
+
+// ============================================================
+//  강의 스케쥴 — 읽기
+//  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고
+// ============================================================
+function getScheduleData_() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_SCHEDULE);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고']);
+    return jsonOutput([]);
+  }
+
+  var rows   = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[1]) continue;
+    result.push({
+      id:      String(r[0] || '').trim(),
+      date:    String(r[1] || '').trim(),
+      type:    String(r[2] || '').trim(),
+      company: String(r[3] || '').trim(),
+      mode:    String(r[4] || '').trim(),
+      school:  String(r[5] || '').trim(),
+      time:    String(r[6] || '').trim(),
+      hours:   String(r[7] || '').trim(),
+      topic:   String(r[8] || '').trim(),
+      note:    String(r[9] || '').trim()
+    });
+  }
+  return jsonOutput(result);
+}
+
+// ============================================================
+//  강의 스케쥴 — 추가 / 수정 / 삭제
+// ============================================================
+function handleSchedule_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_SCHEDULE);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고']);
+  }
+
+  // 추가
+  if (data.action === 'add') {
+    var newId = generateId_();
+    sheet.appendRow([
+      newId,
+      String(data.date    || '').trim(),
+      String(data.type    || '').trim(),
+      String(data.company || '').trim(),
+      String(data.mode    || '').trim(),
+      String(data.school  || '').trim(),
+      String(data.time    || '').trim(),
+      String(data.hours   || '').trim(),
+      String(data.topic   || '').trim(),
+      String(data.note    || '').trim()
+    ]);
+    return jsonOutput({ success: true, id: newId });
+  }
+
+  // 수정
+  if (data.action === 'update') {
+    var rowIdx = findRowById_(sheet, data.id);
+    if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
+    sheet.getRange(rowIdx, 1, 1, 10).setValues([[
+      data.id,
+      String(data.date    || '').trim(),
+      String(data.type    || '').trim(),
+      String(data.company || '').trim(),
+      String(data.mode    || '').trim(),
+      String(data.school  || '').trim(),
+      String(data.time    || '').trim(),
+      String(data.hours   || '').trim(),
+      String(data.topic   || '').trim(),
+      String(data.note    || '').trim()
+    ]]);
+    return jsonOutput({ success: true });
+  }
+
+  // 삭제
+  if (data.action === 'delete') {
+    var rowIdx = findRowById_(sheet, data.id);
+    if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
+    sheet.deleteRow(rowIdx);
+    return jsonOutput({ success: true });
+  }
+
+  return errorOutput('알 수 없는 action: ' + data.action);
+}
+
+// ============================================================
+//  기존 경력서 읽기 함수 (변경 없음)
+// ============================================================
+function readEducation(ss) {
+  var sheet = ss.getSheetByName(SHEET_EDU);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[1]) continue;
+    result.push({
+      period: String(r[0] || "").trim(),
+      school: String(r[1] || "").trim(),
+      major:  String(r[2] || "").trim(),
+      degree: String(r[3] || "").trim(),
+      note:   String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+function readCareer(ss) {
+  var sheet = ss.getSheetByName(SHEET_CAREER);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[1]) continue;
+    result.push({
+      period:   String(r[0] || "").trim(),
+      org:      String(r[1] || "").trim(),
+      position: String(r[2] || "").trim(),
+      work:     String(r[3] || "").trim(),
+      note:     String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+function readCertificates(ss) {
+  var sheet = ss.getSheetByName(SHEET_CERT);
+  if (!sheet) return [];
+  var rows = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[1]) continue;
+    result.push({
+      category: String(r[0] || "").trim(),
+      name:     String(r[1] || "").trim(),
+      date:     String(r[2] || "").trim(),
+      issuer:   String(r[3] || "").trim(),
+      note:     String(r[4] || "").trim()
+    });
+  }
+  return result;
+}
+
+// ============================================================
+//  내부 헬퍼
+// ============================================================
+function findRowById_(sheet, id) {
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(id).trim()) return i + 1;
+  }
+  return -1;
+}
+
+function generateId_() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function jsonOutput(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function errorOutput(msg) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ error: true, message: msg }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+//  카카오 관련 함수 (기존 그대로 유지)
+// ============================================================
+function refreshKakaoToken_() {
+  var props = PropertiesService.getScriptProperties();
+  var rt    = props.getProperty('kakao_refresh_token');
+  if (!rt) { Logger.log('리프레시 토큰 없음'); return false; }
+  var res  = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
+    method: 'post',
+    payload: { grant_type: 'refresh_token', client_id: KAKAO_REST_KEY, refresh_token: rt }
+  });
+  var json = JSON.parse(res.getContentText());
+  if (json.error) { Logger.log('갱신 오류: ' + json.error_description); return false; }
+  PropertiesService.getScriptProperties().setProperty('kakao_access_token', json.access_token);
+  if (json.refresh_token) PropertiesService.getScriptProperties().setProperty('kakao_refresh_token', json.refresh_token);
+  return true;
+}
+
+function sendKakaoMessage_(text) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty('kakao_access_token');
+  if (!token) { Logger.log('액세스 토큰 없음'); return false; }
+  function doRequest_(t) {
+    return UrlFetchApp.fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
+      method: 'post',
+      headers: { 'Authorization': 'Bearer ' + t },
+      payload: { template_object: JSON.stringify({ object_type: 'text', text: text, link: { web_url: EDU_PAGE_URL || 'https://www.kakaocorp.com' } }) },
+      muteHttpExceptions: true
+    });
+  }
+  var res = doRequest_(token);
+  var result = JSON.parse(res.getContentText());
+  if (result.result_code === 0) return true;
+  if (result.code === -401 && refreshKakaoToken_()) {
+    token = PropertiesService.getScriptProperties().getProperty('kakao_access_token');
+    res = doRequest_(token);
+    result = JSON.parse(res.getContentText());
+    return result.result_code === 0;
+  }
+  Logger.log('카카오 전송 실패: ' + JSON.stringify(result));
+  return false;
+}
+
+function buildKakaoSummary_() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('공고목록');
+  var today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy.MM.dd');
+  if (!sheet) return '📋 교육 모니터링 [' + today + ']\n공고 시트를 찾을 수 없습니다.';
+  var rows    = sheet.getDataRange().getValues().slice(1).filter(function(r) { return r[0]; });
+  var total   = rows.length;
+  var urgents = rows.filter(function(r) { return r[8] === '마감임박'; });
+  var msg = '📋 교육 모니터링 [' + today + ']\n\n';
+  msg    += '📌 전체 공고: ' + total + '건\n';
+  if (urgents.length > 0) {
+    msg += '🔥 마감임박: ' + urgents.length + '건\n\n';
+    urgents.slice(0, 3).forEach(function(r) { msg += '⚠ ' + r[1] + ' (' + r[4] + ')\n'; });
+  }
+  if (EDU_PAGE_URL) msg += '\n👉 ' + EDU_PAGE_URL;
+  return msg;
+}
+
+function sendDailyKakaoNotification() {
+  var msg = buildKakaoSummary_();
+  var ok  = sendKakaoMessage_(msg);
+  Logger.log(ok ? '✅ 카카오 전송 성공' : '❌ 카카오 전송 실패');
+}
+
+function getKakaoAuthUrl() {
+  var url = 'https://kauth.kakao.com/oauth/authorize'
+    + '?client_id='    + KAKAO_REST_KEY
+    + '&redirect_uri=' + encodeURIComponent(KAKAO_REDIRECT_URI)
+    + '&response_type=code&scope=talk_message';
+  Logger.log('▶ 아래 URL을 브라우저에서 열어 로그인하세요:\n' + url);
+}
+
+function setKakaoToken(authCode) {
+  var res  = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
+    method: 'post',
+    payload: { grant_type: 'authorization_code', client_id: KAKAO_REST_KEY, redirect_uri: KAKAO_REDIRECT_URI, code: authCode }
+  });
+  var json = JSON.parse(res.getContentText());
+  if (json.error) { Logger.log('❌ 오류: ' + json.error_description); return; }
+  PropertiesService.getScriptProperties().setProperties({
+    'kakao_access_token':  json.access_token,
+    'kakao_refresh_token': json.refresh_token
+  });
+  Logger.log('✅ 카카오 토큰 저장 완료!');
+}
+
+function setupDailyTrigger() {
+  ScriptApp.getProjectTriggers()
+    .filter(function(t) { return t.getHandlerFunction() === 'sendDailyKakaoNotification'; })
+    .forEach(function(t) { ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('sendDailyKakaoNotification').timeBased().atHour(9).everyDays(1).inTimezone('Asia/Seoul').create();
+  Logger.log('✅ 매일 오전 9시 트리거 등록 완료!');
+}
