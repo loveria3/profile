@@ -146,9 +146,11 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 .lg-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
 /* ── CALENDAR ── */
+.cal-scroll { overflow-x:auto; }
 .calendar {
   background:var(--paper); border:1px solid var(--line);
   border-radius:var(--r); overflow:hidden; margin-bottom:2.5rem;
+  min-width:560px;
 }
 .cal-weekdays {
   display:grid; grid-template-columns:repeat(7,1fr);
@@ -393,7 +395,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
     </div>
     <input type="password" id="pinInp" class="pin-inp"
            maxlength="6" inputmode="numeric" pattern="[0-9]*"
-           autocomplete="off" placeholder="● ● ● ● ● ●" autofocus>
+           autocomplete="off" autofocus>
     <div class="pin-err"     id="pinErr"></div>
     <div class="pin-lockout" id="pinLockout"></div>
     <button class="pin-submit" id="pinSubmit">입장</button>
@@ -462,12 +464,14 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
   <div class="legend" id="legend"></div>
 
-  <div class="calendar">
-    <div class="cal-weekdays">
-      <div class="wday">일</div><div class="wday">월</div><div class="wday">화</div>
-      <div class="wday">수</div><div class="wday">목</div><div class="wday">금</div><div class="wday">토</div>
+  <div class="cal-scroll">
+    <div class="calendar">
+      <div class="cal-weekdays">
+        <div class="wday">일</div><div class="wday">월</div><div class="wday">화</div>
+        <div class="wday">수</div><div class="wday">목</div><div class="wday">금</div><div class="wday">토</div>
+      </div>
+      <div class="cal-days" id="calDays"></div>
     </div>
-    <div class="cal-days" id="calDays"></div>
   </div>
 
   <div class="list-hd">
@@ -605,7 +609,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
     </div>
 
     <div style="background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:1.1rem;font-size:0.72rem;color:var(--muted);line-height:1.7">
-      📄 문서 한 장에 2개월씩 출력됩니다.<br>
+      📅 달력 형태로 출력됩니다. 한 장에 2개월씩 배치됩니다.<br>
       생성 후 인쇄 창에서 <strong style="color:var(--ink-soft)">대상 → PDF로 저장</strong>을 선택해주세요.
     </div>
 
@@ -882,23 +886,41 @@ function generatePdf() {
 }
 
 function buildPrintHtml(pages) {
-  function monthBlock(y,m) {
-    const ms=`${y}-${pad(m)}`;
-    const items=data.filter(s=>s.date.startsWith(ms)).sort((a,b)=>a.date.localeCompare(b.date));
-    let rows=items.map(s=>{
-      const c=getCompanyColor(s.company);
-      const rx=parseInt(c.dot.slice(1,3),16),gx=parseInt(c.dot.slice(3,5),16),bx=parseInt(c.dot.slice(5,7),16);
-      const hrsCell=s.hours?`${s.hours}시수`:'';
-      return`<tr><td>${s.date.slice(5).replace('-','.')}</td><td><span class="co" style="background:rgba(${rx},${gx},${bx},.1);color:${c.dot};border:1px solid rgba(${rx},${gx},${bx},.3)">${s.company||''}</span></td><td><span class="tp">${s.type||''}</span></td><td>${s.school||''}</td><td>${s.time||''}</td><td style="text-align:center">${hrsCell}</td><td>${s.topic||''}</td><td>${s.note||''}</td></tr>`;
+  function monthCal(y, m) {
+    const ms = `${y}-${pad(m)}`;
+    const items = data.filter(s => s.date.startsWith(ms));
+    const evMap = {};
+    items.forEach(s => { (evMap[s.date] = evMap[s.date] || []).push(s); });
+    const firstDay = new Date(y, m-1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const grid = [];
+    let week = Array(firstDay).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dStr = `${y}-${pad(m)}-${pad(d)}`;
+      week.push({ d, dStr, evs: evMap[dStr] || [] });
+      if (week.length === 7) { grid.push(week); week = []; }
+    }
+    if (week.length) { while (week.length < 7) week.push(null); grid.push(week); }
+    const rows = grid.map(row => {
+      const tds = row.map((cell, col) => {
+        if (!cell) return `<td class="ec"></td>`;
+        const evHtml = cell.evs.map(ev => {
+          const c = getCompanyColor(ev.company);
+          const rx=parseInt(c.dot.slice(1,3),16), gx=parseInt(c.dot.slice(3,5),16), bx=parseInt(c.dot.slice(5,7),16);
+          return `<div class="ev" style="background:rgba(${rx},${gx},${bx},.12);color:${c.dot};border-left:2px solid ${c.dot}">${trunc(ev.company||'',8)}</div>`;
+        }).join('');
+        const cls = `dc${col===0?' sun':col===6?' sat':''}`;
+        return `<td class="${cls}"><div class="dn">${cell.d}</div>${evHtml}</td>`;
+      }).join('');
+      return `<tr>${tds}</tr>`;
     }).join('');
-    if(!rows) rows=`<tr><td colspan="8" style="text-align:center;color:#aaa;padding:14px">강의 내역 없음</td></tr>`;
-    return`<div class="mblock"><div class="hd"><div><div class="title">${y}년 ${MN[m-1]}</div><div class="sub">강지애 · 디지털 강사 · 강의 스케쥴</div></div><div class="meta">총 ${items.length}건</div></div><table><thead><tr><th>일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return `<div class="mb"><div class="hd"><span class="ttl">${y}년 ${MN[m-1]}</span><span class="sub">강지애 · 디지털 강사 · 총 ${items.length}건</span></div><table class="ct"><thead><tr><th class="wh s">일</th><th class="wh">월</th><th class="wh">화</th><th class="wh">수</th><th class="wh">목</th><th class="wh">금</th><th class="wh t">토</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
-  let body='';
-  pages.forEach((pg,pi)=>{
-    body+=`${pi>0?'<div class="pb"></div>':''}<div class="page">${pg.map(({y,m})=>monthBlock(y,m)).join('<div class="divider"></div>')}${pi===pages.length-1?`<div class="foot">출력일: ${new Date().toLocaleDateString('ko-KR')}</div>`:''}</div>`;
+  let body = '';
+  pages.forEach((pg, pi) => {
+    body += `${pi>0?'<div class="pb"></div>':''}<div class="page">${pg.map(({y,m})=>monthCal(y,m)).join('<div class="dv"></div>')}${pi===pages.length-1?`<div class="ft">출력일: ${new Date().toLocaleDateString('ko-KR')}</div>`:''}</div>`;
   });
-  return`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>강의 스케쥴 · 강지애</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Noto Sans KR',sans-serif;color:#1b1a18;background:#fff;font-size:9.5pt}.page{padding:16px 18px}.pb{page-break-before:always}.mblock{margin-bottom:8px}.hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #2a3b2e}.title{font-family:'Noto Serif KR',serif;font-size:15pt;font-weight:600;color:#1b1a18}.sub{font-size:8pt;color:#7a716a;margin-top:2px}.meta{font-size:8.5pt;color:#aaa}table{width:100%;border-collapse:collapse;margin-bottom:4px}th{background:#f4ede2;color:#7a716a;padding:6px 8px;font-size:7.5pt;font-weight:700;border:1px solid #d9cfbe;text-align:left;white-space:nowrap}td{padding:5px 8px;font-size:8.5pt;border:1px solid #e6ddcc;vertical-align:top}tr:nth-child(even) td{background:#fbf6ec}.co{display:inline-block;padding:1px 7px;border-radius:999px;font-size:7.5pt;font-weight:700}.tp{font-size:7.5pt;color:#7a716a;background:#ebe1d0;padding:1px 6px;border-radius:999px;border:1px solid #d9cfbe}.divider{height:1px;background:#d9cfbe;margin:12px 0}.foot{text-align:right;font-size:7.5pt;color:#aaa;margin-top:10px;padding-top:8px;border-top:1px solid #e6ddcc}@media print{@page{size:A4;margin:10mm}body{font-size:8.5pt}}</style></head><body>${body}</body></html>`;
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>강의 스케쥴 · 강지애</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Noto Sans KR',sans-serif;color:#1b1a18;background:#fff;font-size:9pt}.page{padding:14px 18px}.pb{page-break-before:always}.mb{margin-bottom:8px}.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #2a3b2e}.ttl{font-family:'Noto Serif KR',serif;font-size:13pt;font-weight:600}.sub{font-size:7.5pt;color:#7a716a}.ct{width:100%;border-collapse:collapse;table-layout:fixed}.wh{padding:5px 4px;font-size:7pt;font-weight:700;text-align:center;background:#ebe1d0;color:#7a716a;border:1px solid #d9cfbe}.wh.s{color:#c04a3a}.wh.t{color:#2a4d8a}.dc{vertical-align:top;padding:4px 5px 3px;border:1px solid #e6ddcc;height:70px;width:14.285%}.ec{border:1px solid #f0e8d8;background:#faf7f2;width:14.285%;height:70px}.dc.sun{background:rgba(192,74,58,.025)}.dc.sat{background:rgba(42,77,138,.025)}.dn{font-size:8.5pt;font-weight:600;color:#3d3a36;margin-bottom:3px;line-height:1}.dc.sun .dn{color:#c04a3a}.dc.sat .dn{color:#2a4d8a}.ev{font-size:6.5pt;font-weight:600;padding:1px 4px 1px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}.dv{height:1px;background:#d9cfbe;margin:10px 0}.ft{text-align:right;font-size:7pt;color:#aaa;margin-top:8px;padding-top:6px;border-top:1px solid #e6ddcc}@media print{@page{size:A4;margin:8mm}body{font-size:8.5pt}}</style></head><body>${body}</body></html>`;
 }
 
 loadData();
