@@ -766,9 +766,6 @@ function makeCell(day,year,month,other,isToday=false) {
   if(dow===6) cell.classList.add('is-sat');
   const dn=document.createElement('div'); dn.className='dnum'; dn.textContent=day; cell.appendChild(dn);
   if (!other) {
-    const today0=new Date(); today0.setHours(0,0,0,0);
-    const cellDate=new Date(dt); cellDate.setHours(0,0,0,0);
-    const isPast = cellDate < today0;
     const evs=data.filter(s=>s.date===dStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     evs.slice(0,2).forEach(ev=>{
       const c=getCompanyColor(ev.company), b=document.createElement('div');
@@ -777,8 +774,8 @@ function makeCell(day,year,month,other,isToday=false) {
       b.innerHTML=`<span class="ev-dot" style="background:${c.dot}"></span><span class="ev-txt">${trunc(ev.company,6)}</span>`;
       b.title=`[${ev.type}] ${ev.company}${ev.school?' · '+ev.school:''}${ev.time?' '+ev.time:''}`;
       b.onclick=e=>{e.stopPropagation();openEditModal(ev.id);}; cell.appendChild(b);
-      // 지난 날짜 강의: 경력 등록 버튼 또는 완료 뱃지 표시
-      if (isPast) {
+      // 수업 종료 시간 기준으로 경력 등록 버튼 / 완료 뱃지 표시
+      if (isEventPast(ev, dt)) {
         if (ev.completed === 'Y') {
           const done=document.createElement('div');
           done.className='ev-done'; done.textContent='✓ 경력등록됨';
@@ -891,6 +888,25 @@ async function saveSchedule() {
   } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
 }
 async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); }catch(e){ alert('삭제에 실패했습니다.'); } }
+
+// ── 이벤트 종료 시간 초과 여부 판단 ─────────────────────────
+// time 필드가 "HH:MM-HH:MM" 형식이면 종료 시각 기준,
+// time 없으면 해당 날짜 익일 0시 기준으로 판단한다.
+function isEventPast(ev, cellDate) {
+  if (ev.time) {
+    const m = ev.time.match(/-(\d{1,2}):(\d{2})/);
+    if (m) {
+      const endDt = new Date(cellDate);
+      endDt.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+      return new Date() > endDt;
+    }
+  }
+  // time 미입력: 익일 0시 기준
+  const nextDay = new Date(cellDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+  nextDay.setHours(0, 0, 0, 0);
+  return new Date() > nextDay;
+}
 
 // ── 경력 등록 완료 처리 ──────────────────────────────────────
 async function markComplete(id) {
