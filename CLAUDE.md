@@ -177,6 +177,70 @@ profile/
 
 ---
 
+## 페이지별 기술 명세
+
+### index.html — 메인 프로필 페이지
+- **공개 여부**: 공개
+- **외부 의존**: `style.css`, `resume-download.js`, `stats.json`
+- **API 없음**: index.html 자체는 API 호출 없음. 경력 데이터는 resume-download.js에서 처리.
+- **stats.json**: 강의 통계 수치를 로드해 섹션 상단 카운터에 표시. 직접 편집 가능.
+- **주요 버튼**: 명함 다운로드 (html2canvas 캡처), 경력서 다운로드 (resume-download.js 호출)
+
+### resume-download.js — 경력서 PDF 생성 스크립트
+- **RESUME_API_URL**: `https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec`
+- ⚠️ **schedule.html의 SCHEDULE_API_URL과 완전히 동일한 URL** — 같은 Apps Script 웹앱 사용
+- 연결 시트: `학력사항`, `경력사항`, `자격증현황`
+- PDF 출력 순서: 학력사항 → 경력사항 → 자격증현황 → 연수 및 교육
+
+### all.html — 수업활용앱 모음
+- **공개 여부**: 비밀번호 보호 (평문 비밀번호 방식)
+- **비밀번호**: `kang2026` — 파일 내 `const PASSWORD = 'kang2026'` 한 줄만 수정하면 변경 가능
+- **세션 인증**: `sessionStorage.getItem('allAuth') === '1'` — 같은 탭에서는 재입력 불필요
+- **APPS_API_URL**: `https://script.google.com/macros/s/AKfycbw0vDZEh7uVvHFq8Y_H60VIoyi6exVjkMYZ9PSMHI3foTLlol9PLyl7BroQPDx8i6lKfA/exec`
+- **Apps Script 파일**: `apps-gallery-script.txt`
+- **연결 시트**: `앱목록` (컬럼: 앱이름A | 설명B | URL C | 카테고리D | 등록일E)
+- URL이 비어 있으면 `DEFAULT_APPS` 하드코딩 데이터로 폴백 표시
+
+### edu.html — 실시간 교육 모니터링
+- **공개 여부**: 공개 (PIN 없음)
+- **APPS_SCRIPT_URL**: `https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec`
+- ⚠️ **schedule/resume URL과 다른 별도 Apps Script 배포**
+- **연결 시트**: `수집기관` (GET `?sheet=수집기관`), `공고목록` (GET `?sheet=공고목록`)
+- **카카오 알림**: `data.sheet === '알림요청'` POST 액션으로 처리 (스크립트 내장)
+- **로컬 캐시**: `localStorage` 사용 (수집기관 목록, 공고 데이터 보존)
+- 기관 추가/공고 수동 등록 기능 포함
+
+### schedule.html — 강의 스케쥴 관리
+- **공개 여부**: PIN 보호 (XOR 인코딩 + SHA-256 + 5회 실패 시 잠금)
+- **SCHEDULE_API_URL**: `https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec`
+- ⚠️ **resume-download.js의 RESUME_API_URL과 완전히 동일** — 하나의 Apps Script로 통합 관리
+- **Apps Script 파일**: `schedule-apps-script.txt` (resume + schedule + 카카오 통합)
+- **연결 시트**: `강의스케쥴` (11컬럼), `경력사항` (경력등록 기능)
+- **시간 형식**: `HH:MM-HH:MM` 또는 `HH:MM~HH:MM` 둘 다 허용 (정규식 `/[~\-]/`)
+- **회사 색상**: `PRESET_COMPANIES` 객체에 하드코딩 + `AUTO_PALETTE` 자동 배정, `localStorage`에 저장
+
+### high.html — 고교학점제 진로설계 실습 앱
+- **공개 여부**: 공개 (수업용 독립 페이지)
+- **외부 API 없음**: 모든 과목 데이터가 JS 내 하드코딩
+- **PIN/비밀번호 없음**: 완전 공개
+- **기능**: 진로 유형별 과목 추천, 이수 계획 시뮬레이션, PDF 출력
+
+---
+
+## Apps Script 웹앱 URL 정리
+
+| 파일 | 변수명 | 용도 |
+|---|---|---|
+| `schedule-apps-script.txt` | `SCHEDULE_API_URL` / `RESUME_API_URL` | schedule.html + resume-download.js **공용** |
+| `apps-gallery-script.txt` | `APPS_API_URL` | all.html 전용 |
+| (별도 스크립트) | `APPS_SCRIPT_URL` | edu.html 전용 |
+
+> ⚠️ schedule.html과 index.html(경력서)은 같은 Apps Script URL을 공유한다.  
+> Apps Script를 재배포하면 두 기능 모두 새 URL로 업데이트해야 한다.  
+> 업데이트 위치: `schedule.html` 상단 `SCHEDULE_API_URL`, `resume-download.js` 상단 `RESUME_API_URL`
+
+---
+
 ## 경력 데이터 관리 방식
 
 ### 데이터 흐름
