@@ -234,6 +234,22 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 }
 .btn-xs:hover { border-color:var(--accent); color:var(--accent); background:var(--paper); }
 .btn-xs.del:hover { border-color:#c04a3a; color:#c04a3a; }
+
+/* ── 경력 등록 버튼 (달력 셀 내 지난 강의) ── */
+.btn-complete {
+  font-size:0.5rem; padding:1px 5px; border-radius:3px; margin-top:1px;
+  background:rgba(201,163,91,.14); color:var(--gold);
+  border:1px solid rgba(201,163,91,.38);
+  cursor:pointer; font-family:inherit; font-weight:700;
+  display:block; width:100%; text-align:left;
+  transition:background .13s, color .13s; line-height:1.5;
+}
+.btn-complete:hover { background:var(--gold); color:var(--paper); }
+.ev-done {
+  font-size:0.5rem; padding:1px 5px; margin-top:1px; display:block;
+  color:var(--accent); background:rgba(42,59,46,.09);
+  border-radius:3px; font-weight:700; line-height:1.5;
+}
 .empty {
   text-align:center; padding:4rem 1rem;
   background:var(--paper); border:1px solid var(--line); border-radius:var(--r);
@@ -750,6 +766,9 @@ function makeCell(day,year,month,other,isToday=false) {
   if(dow===6) cell.classList.add('is-sat');
   const dn=document.createElement('div'); dn.className='dnum'; dn.textContent=day; cell.appendChild(dn);
   if (!other) {
+    const today0=new Date(); today0.setHours(0,0,0,0);
+    const cellDate=new Date(dt); cellDate.setHours(0,0,0,0);
+    const isPast = cellDate < today0;
     const evs=data.filter(s=>s.date===dStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     evs.slice(0,2).forEach(ev=>{
       const c=getCompanyColor(ev.company), b=document.createElement('div');
@@ -758,6 +777,19 @@ function makeCell(day,year,month,other,isToday=false) {
       b.innerHTML=`<span class="ev-dot" style="background:${c.dot}"></span><span class="ev-txt">${trunc(ev.company,6)}</span>`;
       b.title=`[${ev.type}] ${ev.company}${ev.school?' · '+ev.school:''}${ev.time?' '+ev.time:''}`;
       b.onclick=e=>{e.stopPropagation();openEditModal(ev.id);}; cell.appendChild(b);
+      // 지난 날짜 강의: 경력 등록 버튼 또는 완료 뱃지 표시
+      if (isPast) {
+        if (ev.completed === 'Y') {
+          const done=document.createElement('div');
+          done.className='ev-done'; done.textContent='✓ 경력등록됨';
+          cell.appendChild(done);
+        } else {
+          const cbtn=document.createElement('button');
+          cbtn.className='btn-complete'; cbtn.textContent='경력등록';
+          cbtn.title='경력사항 시트에 자동 등록';
+          cbtn.onclick=e=>{e.stopPropagation();markComplete(ev.id);}; cell.appendChild(cbtn);
+        }
+      }
     });
     if (evs.length>2){const m=document.createElement('div');m.className='ev-more';m.textContent=`+${evs.length-2}`;cell.appendChild(m);}
   }
@@ -849,7 +881,8 @@ async function saveSchedule() {
   try {
     if(editId){
       await apiPost({action:'update',id:editId,...entry});
-      const i=data.findIndex(s=>s.id===editId); if(i>=0) data[i]={id:editId,...entry};
+      const i=data.findIndex(s=>s.id===editId);
+      if(i>=0) data[i]={...data[i], id:editId, ...entry}; // completed 필드 보존
     } else {
       const res=await apiPost({action:'add',...entry});
       data.push({id:res.id,...entry});
@@ -858,6 +891,45 @@ async function saveSchedule() {
   } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
 }
 async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); }catch(e){ alert('삭제에 실패했습니다.'); } }
+
+// ── 경력 등록 완료 처리 ──────────────────────────────────────
+async function markComplete(id) {
+  const s = data.find(x => x.id === id);
+  if (!s) return;
+
+  // 근무기간: "2026-05-26" → "2026.05.26"
+  const period = s.date.replace(/-/g, '.');
+
+  // 직위/역할 변환
+  const position = s.type === '교육수강' ? '수강'
+                 : s.type === '디지털튜터' ? '디지털튜터'
+                 : '강사';
+
+  // 주요업무 구성
+  let work = '';
+  if (s.school) {
+    work = s.school + (s.hours ? ' (' + s.hours + 'h)' : '') + ' — ' + (s.topic || s.type + ' 강의');
+  } else {
+    work = (s.topic || s.type + ' 강의') + (s.hours ? ' (' + s.hours + 'h)' : '');
+  }
+
+  const confirmMsg = '경력사항에 등록하시겠습니까?\n\n'
+    + '기간: ' + period + '\n'
+    + '기관: ' + s.company + '\n'
+    + '직위: ' + position + '\n'
+    + '주요업무: ' + work;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    await apiPost({ action:'complete', id, period, org:s.company, position, work, note:'완료' });
+    const i = data.findIndex(x => x.id === id);
+    if (i >= 0) data[i] = { ...data[i], completed: 'Y' };
+    render();
+  } catch(e) {
+    alert('경력 등록에 실패했습니다. 다시 시도해주세요.');
+  }
+}
 
 function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
 function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
