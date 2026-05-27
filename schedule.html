@@ -237,19 +237,50 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
 /* ── 경력 등록 버튼 (달력 셀 내 지난 강의) ── */
 .btn-complete {
-  font-size:0.5rem; padding:1px 5px; border-radius:3px; margin-top:1px;
-  background:rgba(201,163,91,.14); color:var(--gold);
-  border:1px solid rgba(201,163,91,.38);
-  cursor:pointer; font-family:inherit; font-weight:700;
-  display:block; width:100%; text-align:left;
-  transition:background .13s, color .13s; line-height:1.5;
+  font-size: 0.64rem;
+  padding: 2px 0;
+  border-radius: 999px;
+  margin-top: 4px;
+  background: rgba(201,163,91,.13);
+  color: #9a7830;
+  border: 1px solid rgba(201,163,91,.45);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  letter-spacing: 0.04em;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+  line-height: 1.6;
 }
-.btn-complete:hover { background:var(--gold); color:var(--paper); }
+.btn-complete::before { content: '✦'; font-size: 0.52rem; opacity: .75; }
+.btn-complete:hover {
+  background: var(--gold);
+  color: var(--paper);
+  border-color: var(--gold);
+  box-shadow: 0 2px 8px rgba(201,163,91,.35);
+}
 .ev-done {
-  font-size:0.5rem; padding:1px 5px; margin-top:1px; display:block;
-  color:var(--accent); background:rgba(42,59,46,.09);
-  border-radius:3px; font-weight:700; line-height:1.5;
+  font-size: 0.64rem;
+  padding: 2px 0;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--accent);
+  background: rgba(42,59,46,.09);
+  border: 1px solid rgba(42,59,46,.18);
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  width: 100%;
 }
+.ev-done::before { content: '✓'; font-size: 0.6rem; }
 .empty {
   text-align:center; padding:4rem 1rem;
   background:var(--paper); border:1px solid var(--line); border-radius:var(--r);
@@ -778,11 +809,11 @@ function makeCell(day,year,month,other,isToday=false) {
       if (isEventPast(ev, dt)) {
         if (ev.completed === 'Y') {
           const done=document.createElement('div');
-          done.className='ev-done'; done.textContent='✓ 경력등록됨';
+          done.className='ev-done'; done.textContent='등록됨';
           cell.appendChild(done);
         } else {
           const cbtn=document.createElement('button');
-          cbtn.className='btn-complete'; cbtn.textContent='경력등록';
+          cbtn.className='btn-complete'; cbtn.textContent='등록';
           cbtn.title='경력사항 시트에 자동 등록';
           cbtn.onclick=e=>{e.stopPropagation();markComplete(ev.id);}; cell.appendChild(cbtn);
         }
