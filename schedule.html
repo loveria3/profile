@@ -39,7 +39,7 @@ html { scroll-behavior:smooth; }
 body {
   font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
   background:var(--bg); color:var(--ink);
-  font-size:15px; line-height:1.6;
+  font-size:16px; line-height:1.65;
   -webkit-font-smoothing:antialiased; letter-spacing:-0.01em;
 }
 a { color:inherit; text-decoration:none; }
@@ -109,7 +109,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 }
 .stat-label { font-size:0.62rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; margin-bottom:6px; }
 .stat-val   { font-family:'Noto Serif KR',serif; font-size:1.65rem; font-weight:600; line-height:1; }
-.stat-sub   { font-size:0.6rem; margin-top:5px; display:flex; align-items:center; gap:3px; opacity:.7; }
+.stat-sub   { font-size:0.72rem; margin-top:6px; display:flex; align-items:center; gap:4px; font-weight:500; letter-spacing:0.04em; opacity:.8; }
 
 /* ── CAL HEADER ── */
 .cal-header {
@@ -156,7 +156,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   display:grid; grid-template-columns:repeat(7,1fr);
   background:var(--bg-deep); border-bottom:1px solid var(--line);
 }
-.wday { padding:10px 4px; text-align:center; font-size:0.68rem; font-weight:700; letter-spacing:0.08em; color:var(--muted); }
+.wday { padding:10px 4px; text-align:center; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:var(--muted); }
 .wday:first-child { color:#c04a3a; }
 .wday:last-child  { color:#2a4d8a; }
 .cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
@@ -171,7 +171,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 .cal-cell.today  { background:rgba(42,59,46,.04); }
 .dnum {
   width:24px; height:24px; display:flex; align-items:center; justify-content:center;
-  font-size:0.75rem; font-weight:600; color:var(--ink-soft);
+  font-size:0.8rem; font-weight:600; color:var(--ink-soft);
   margin-bottom:3px; border-radius:50%;
 }
 .cal-cell.today .dnum { background:var(--accent); color:var(--paper); }
@@ -179,14 +179,14 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 .cal-cell.is-sat .dnum { color:#2a4d8a; }
 .ev-badge {
   display:flex; align-items:center; gap:3px;
-  font-size:0.6rem; font-weight:600;
+  font-size:0.66rem; font-weight:600;
   padding:2px 5px; border-radius:4px; margin-bottom:2px;
   cursor:pointer; overflow:hidden;
   max-width:100%; line-height:1.5;
 }
 .ev-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; display:inline-block; }
 .ev-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
-.ev-more { font-size:0.6rem; color:var(--muted); padding-left:3px; }
+.ev-more { font-size:0.66rem; color:var(--muted); padding-left:3px; }
 
 /* ── LIST ── */
 .list-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
@@ -201,12 +201,12 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   border:1px solid var(--line); border-radius:var(--r); overflow:hidden;
 }
 .sch-table th {
-  padding:10px 14px; font-size:0.66rem; font-weight:700;
+  padding:11px 14px; font-size:0.7rem; font-weight:700;
   letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
   border-bottom:1.5px solid var(--line); text-align:left; white-space:nowrap;
 }
 .sch-table td {
-  padding:10px 14px; font-size:0.8rem; color:var(--ink-soft);
+  padding:11px 14px; font-size:0.85rem; color:var(--ink-soft);
   border-bottom:1px solid var(--line-soft); vertical-align:middle;
 }
 .sch-table tr:last-child td { border-bottom:none; }
@@ -449,8 +449,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 <nav class="nav-mobile" id="navMobile">
   <a href="index.html#about">소개</a>
   <div class="nav-mobile-divider"></div>
-  <a href="index.html#competency">핵심
-    역량</a>
+  <a href="index.html#competency">핵심역량</a>
   <div class="nav-mobile-divider"></div>
   <a href="index.html#certificates">자격·연수</a>
   <div class="nav-mobile-divider"></div>
@@ -829,13 +828,13 @@ function renderStats() {
     return`<div class="stat-card" style="background:${hexToRgba(c.dot,.08)}">
       <div class="stat-label" style="color:${c.color}">${co}</div>
       <div class="stat-val" style="color:${c.color}">${counts[co]||0}</div>
-      <div class="stat-sub" style="color:${c.color}">📅 이번 달</div>
+      <div class="stat-sub" style="color:${c.color}">이번 달</div>
     </div>`;
   }).join('');
   html+=`<div class="stat-card" style="background:rgba(201,163,91,.12)">
     <div class="stat-label" style="color:var(--gold)">합 계</div>
     <div class="stat-val" style="color:var(--accent)">${items.length}</div>
-    <div class="stat-sub" style="color:var(--gold)">📊 이번 달 전체</div>
+    <div class="stat-sub" style="color:var(--gold)">이번 달 전체</div>
   </div>`;
   document.getElementById('statsRow').innerHTML=html;
 }

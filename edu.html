@@ -187,7 +187,7 @@
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-family: 'Pretendard', sans-serif;
   color: var(--ink);
   outline: none;
@@ -201,7 +201,7 @@
   color: var(--paper);
   border: none;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s;
@@ -275,6 +275,55 @@
 }
 .source-link:hover { color: var(--accent); }
 .source-del:hover { color: #c0392b; }
+
+/* 에듀모닝 카카오 알림 카드 */
+.kakao-alert-card {
+  background: #fef9ee;
+  border: 1px solid #e8d9a0;
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+.kakao-alert-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b2e00;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.kakao-alert-card p {
+  font-size: 13px;
+  color: #7a6a40;
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+.btn-kakao-send {
+  width: 100%;
+  padding: 11px;
+  background: #f9e000;
+  color: #3b2e00;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  font-family: 'Pretendard', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-kakao-send:hover { background: #f0d900; transform: translateY(-1px); }
+.btn-kakao-send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.kakao-status {
+  font-size: 12px;
+  text-align: center;
+  margin-top: 8px;
+  min-height: 16px;
+  color: var(--muted);
+}
 
 /* 프로그램 등록 배너 */
 .register-banner {
@@ -492,7 +541,7 @@
   color: var(--paper);
   border: none;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   text-align: center;
   cursor: pointer;
@@ -1011,6 +1060,18 @@ footer {
         <div class="source-list" id="monitoredListContainer"></div>
       </div>
 
+      <!-- 카카오 에듀모닝 알림 -->
+      <div class="kakao-alert-card">
+        <h4>
+          <span>💬</span> 카카오 에듀모닝
+        </h4>
+        <p>오늘의 교육 공고 현황을 카카오톡으로 수동 발송합니다. (자동 알림이 오지 않았을 때 사용)</p>
+        <button class="btn-kakao-send" id="kakaoSendBtn" onclick="sendEduMorningAlert()">
+          📨 지금 나에게 알림 보내기
+        </button>
+        <div class="kakao-status" id="kakaoStatus"></div>
+      </div>
+
       <!-- 프로그램 직접 등록 -->
       <div class="register-banner">
         <h4>지인이 알려준 공고가 있나요?</h4>
@@ -1279,6 +1340,41 @@ function savePrograms() {
   saveToSheets('공고목록',
     ['id', '제목', '대상', '필터', '일시', '장소', '주요내용', '신청링크', '상태'],
     programData.map(p => [p.id, p.제목, p.대상, p.필터, p.일시, p.장소, p.주요내용, p.신청링크, p.상태]));
+}
+
+// ══════════════════════════════════════════════════════════
+//  💬 카카오 에듀모닝 수동 발송
+// ══════════════════════════════════════════════════════════
+async function sendEduMorningAlert() {
+  const btn    = document.getElementById('kakaoSendBtn');
+  const status = document.getElementById('kakaoStatus');
+  if (!isConfigured()) {
+    status.textContent = '⚠️ Apps Script URL이 설정되지 않았습니다.';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ 발송 중…';
+  status.textContent = '';
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode:   'no-cors',
+      body:   JSON.stringify({ sheet: '알림요청' })
+    });
+    status.textContent = '✅ 알림 요청 완료! 잠시 후 카카오톡을 확인해 주세요.';
+    btn.textContent = '✅ 발송 완료';
+    // 3초 후 버튼 복구
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = '📨 지금 나에게 알림 보내기';
+      status.textContent = '';
+    }, 5000);
+  } catch (e) {
+    status.textContent = '❌ 요청 실패. 네트워크 또는 Apps Script 설정을 확인해 주세요.';
+    btn.disabled = false;
+    btn.innerHTML = '📨 지금 나에게 알림 보내기';
+  }
 }
 
 // ══════════════════════════════════════════════════════════

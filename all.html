@@ -10,7 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="style.css" />
+<script>
+/* 이미 인증된 세션이면 PIN 화면 플래시 방지 */
+if (sessionStorage.getItem('kja_all_v1') === '1') {
+  document.documentElement.classList.add('all-authed');
+}
+</script>
 <style>
+.all-authed #pinLock { display:none !important; }
 /* ── 앱 갤러리 전용 스타일 ── */
 
 /* 페이지 히어로 */
@@ -143,9 +150,9 @@
   gap: 5px;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   background: rgba(42, 59, 46, 0.08);
   color: var(--accent);
@@ -166,9 +173,9 @@
   color: var(--ink);
 }
 .app-desc {
-  font-size: 15px;
+  font-size: 15.5px;
   color: var(--ink-soft);
-  line-height: 1.7;
+  line-height: 1.75;
   margin-top: 10px;
   flex: 1;
 }
@@ -182,7 +189,7 @@
 }
 .app-date {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   letter-spacing: 0.06em;
 }
@@ -296,67 +303,71 @@
   padding-left: 16px;
 }
 
-/* ── 비밀번호 오버레이 ── */
-#pw-overlay {
+/* ── PIN LOCK ── */
+#pinLock {
   position: fixed; inset: 0; z-index: 9999;
   background: var(--bg);
   display: flex; align-items: center; justify-content: center;
-  flex-direction: column;
-  transition: opacity .3s;
+  padding: 1.5rem;
 }
-#pw-overlay.hide {
-  opacity: 0;
-  pointer-events: none;
+.pin-card {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 12px; padding: 2.8rem 2rem 2rem;
+  width: 100%; max-width: 320px; text-align: center;
+  box-shadow: 0 24px 60px -16px rgba(27,26,24,.18);
 }
-.pw-box {
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 48px 40px 36px;
-  width: 100%; max-width: 400px;
-  text-align: center;
-  box-shadow: 0 8px 40px rgba(42,59,46,.08);
+.pin-logo { margin-bottom: 1rem; }
+.pin-ttl {
+  font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 600;
+  color: var(--ink); margin-bottom: .3rem;
 }
-.pw-icon { font-size: 34px; margin-bottom: 18px; }
-.pw-title {
-  font-family: 'Noto Serif KR', serif;
-  font-size: 21px; font-weight: 600; margin-bottom: 6px;
+.pin-desc {
+  font-size: .68rem; color: var(--muted);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.8rem;
 }
-.pw-sub { font-size: 13px; color: var(--muted); margin-bottom: 26px; line-height: 1.6; }
-.pw-input-wrap { position: relative; margin-bottom: 10px; }
-.pw-input {
-  width: 100%; padding: 13px 46px 13px 16px;
-  border: 1.5px solid var(--line); border-radius: 8px;
-  background: var(--bg); color: var(--ink);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 15px; letter-spacing: .12em; outline: none;
-  transition: border-color .18s;
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 1.2rem; }
+.pd {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--line); background: transparent;
+  transition: background .18s, border-color .18s, transform .18s;
 }
-.pw-input:focus { border-color: var(--accent); }
-.pw-eye {
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; color: var(--muted);
-  padding: 4px; line-height: 0; transition: color .15s;
+.pd.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+.pd.err    { background: #c04a3a; border-color: #c04a3a; transform: scale(1.1); }
+.pin-inp {
+  width: 100%; background: var(--bg); border: 1px solid var(--line);
+  color: transparent; caret-color: var(--accent);
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 1.5rem; text-align: center; letter-spacing: .5em;
+  font-family: inherit; outline: none;
+  transition: border-color .15s;
 }
-.pw-eye:hover { color: var(--accent); }
-.pw-error { font-size: 12px; color: #d9503f; min-height: 18px; margin-bottom: 12px; }
-.pw-btn {
-  width: 100%; padding: 13px;
+.pin-inp:focus { border-color: var(--accent); background: var(--paper); }
+.pin-inp.err-state { border-color: #c04a3a; }
+.pin-err { font-size: .73rem; color: #c04a3a; margin-top: .7rem; min-height: 1.1em; line-height: 1.4; }
+.pin-lockout {
+  font-size: .72rem; color: var(--muted);
+  background: var(--bg-deep); border: 1px solid var(--line);
+  padding: .55rem 1rem; border-radius: 8px;
+  margin-top: .8rem; display: none;
+}
+.pin-submit {
+  margin-top: 1.2rem; width: 100%;
   background: var(--accent); color: var(--paper);
-  border: none; border-radius: 8px;
-  font-family: 'Pretendard', sans-serif;
-  font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: background .18s;
+  border: none; border-radius: 999px; padding: 12px;
+  font-size: .85rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .15s, opacity .15s;
+  letter-spacing: .04em;
 }
-.pw-btn:hover { background: #14201a; }
-.pw-back { margin-top: 18px; font-size: 13px; color: var(--muted); }
-.pw-back a { color: var(--accent-warm); text-decoration: underline; }
+.pin-submit:hover { background: #14201a; }
+.pin-submit:disabled { opacity: .35; cursor: not-allowed; }
 @keyframes shake {
   0%,100% { transform: translateX(0); }
-  20%,60% { transform: translateX(-6px); }
-  40%,80% { transform: translateX(6px); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(5px); }
 }
-.shake { animation: shake .38s ease; }
+.do-shake { animation: shake .38s ease; }
 
 /* ── 앱 추가 버튼 ── */
 .add-app-wrap { display: flex; justify-content: center; margin-top: 40px; }
@@ -459,22 +470,24 @@
 </head>
 <body data-screen-label="03 Apps Gallery">
 
-<!-- ──────────────── 비밀번호 오버레이 ──────────────── -->
-<div id="pw-overlay" role="dialog" aria-modal="true" aria-label="비밀번호 입력">
-  <div class="pw-box">
-    <div class="pw-icon">🔐</div>
-    <div class="pw-title">수업활용앱 모음</div>
-    <div class="pw-sub">이 페이지는 교사 전용입니다.<br/>비밀번호를 입력해 주세요.</div>
-    <div class="pw-input-wrap">
-      <input type="password" id="pwInput" class="pw-input"
-        placeholder="비밀번호 입력" autocomplete="off" />
-      <button type="button" class="pw-eye" id="pwEye" aria-label="비밀번호 표시/숨기기">
-        <svg id="eyeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
+<!-- ──────────────── PIN LOCK ──────────────── -->
+<div id="pinLock" role="dialog" aria-modal="true" aria-label="PIN 입력">
+  <div class="pin-card">
+    <div class="pin-logo">
+      <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
     </div>
-    <div class="pw-error" id="pwError"></div>
-    <button type="button" class="pw-btn" id="pwBtn">입장하기</button>
-    <div class="pw-back"><a href="index.html">← 프로필 홈으로 돌아가기</a></div>
+    <div class="pin-ttl">수업활용앱 모음</div>
+    <div class="pin-desc">Teacher Only · Kang Ji-ae</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <input type="password" id="pinInp" class="pin-inp"
+           maxlength="6" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" autofocus>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-lockout" id="pinLockout"></div>
+    <button class="pin-submit" id="pinSubmit">입장</button>
   </div>
 </div>
 
@@ -846,52 +859,139 @@ async function loadApps() {
 loadApps();
 
 // ══════════════════════════════════════════════════════════
-//  비밀번호 처리
+//  PIN LOCK
 // ══════════════════════════════════════════════════════════
-const PASSWORD   = 'kang2026';   // ← 비밀번호 변경 시 여기만 수정
-const pwOverlay  = document.getElementById('pw-overlay');
-const pwInput    = document.getElementById('pwInput');
-const pwBtn      = document.getElementById('pwBtn');
-const pwError    = document.getElementById('pwError');
-const pwEye      = document.getElementById('pwEye');
+;(async function() {
+  const overlay = document.getElementById('pinLock');
+  if (!overlay) return;
 
-// 세션 유지: 같은 탭에서는 비밀번호 재입력 불필요
-if (sessionStorage.getItem('allAuth') === '1') {
-  unlockPage();
-} else {
-  setTimeout(() => pwInput.focus(), 120);
-}
-
-function unlockPage() {
-  pwOverlay.style.display = 'none';
-  document.getElementById('addAppWrap').style.display = 'flex';
-}
-
-function tryPassword() {
-  if (pwInput.value.trim() === PASSWORD) {
-    sessionStorage.setItem('allAuth', '1');
-    pwError.textContent = '';
-    unlockPage();
-  } else {
-    pwError.textContent = '비밀번호가 맞지 않습니다.';
-    pwInput.value = '';
-    pwInput.focus();
-    pwInput.classList.add('shake');
-    setTimeout(() => pwInput.classList.remove('shake'), 400);
+  function showAddBtn() {
+    const w = document.getElementById('addAppWrap');
+    if (w) w.style.display = 'flex';
   }
-}
 
-pwBtn.addEventListener('click', tryPassword);
-pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryPassword(); });
+  // 이미 인증된 세션이면 즉시 숨김
+  if (sessionStorage.getItem('kja_all_v1') === '1') {
+    overlay.style.display = 'none';
+    showAddBtn(); return;
+  }
 
-// 비밀번호 표시 토글
-pwEye.addEventListener('click', () => {
-  const show = pwInput.type === 'password';
-  pwInput.type = show ? 'text' : 'password';
-  document.getElementById('eyeIcon').innerHTML = show
-    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
-    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-});
+  /* ──────────────────────────────────────────
+     PIN 보안 처리 (schedule.html과 동일한 PIN)
+     · XOR 인코딩으로 소스에 평문 비노출
+     · SubtleCrypto SHA-256으로 비교
+  ────────────────────────────────────────── */
+  const _k = [42, 17, 93, 58, 12, 77];
+  const _e = [26, 38, 109, 8, 60, 116];
+  const _rp = () => _e.map((b,i) => String.fromCharCode(b ^ _k[i])).join('');
+
+  async function sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  const SALT = 'kja-all-2026';
+  const _expected = await sha256(SALT + _rp());
+
+  async function verify(input) {
+    return (await sha256(SALT + input)) === _expected;
+  }
+
+  /* 시도 횟수 제한: 5회 실패 → 5분 잠금 */
+  const RL_KEY = 'kja_all_rl_v1';
+  const MAX_TRY = 5, LOCK_MIN = 5;
+  const getRL = () => JSON.parse(localStorage.getItem(RL_KEY) || '{"n":0,"until":0}');
+  const setRL = o  => localStorage.setItem(RL_KEY, JSON.stringify(o));
+
+  const inp    = document.getElementById('pinInp');
+  const errEl  = document.getElementById('pinErr');
+  const lockEl = document.getElementById('pinLockout');
+  const btn    = document.getElementById('pinSubmit');
+  const dots   = document.querySelectorAll('#pinDots .pd');
+
+  let cdId;
+  function startCountdown() {
+    if (cdId) return;
+    cdId = setInterval(() => {
+      const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(cdId); cdId = null;
+        setRL({n:0, until:0});
+        inp.disabled = false; btn.disabled = false;
+        lockEl.style.display = 'none'; errEl.textContent = '';
+      } else {
+        const m = String(Math.floor(rem/60)).padStart(2,'0');
+        const s = String(rem % 60).padStart(2,'0');
+        lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+      }
+    }, 1000);
+  }
+
+  function checkLockout() {
+    const rl = getRL();
+    if (rl.until <= Date.now()) return false;
+    const rem = Math.ceil((rl.until - Date.now()) / 1000);
+    const m = String(Math.floor(rem/60)).padStart(2,'0');
+    const s = String(rem % 60).padStart(2,'0');
+    inp.disabled = true; btn.disabled = true;
+    lockEl.style.display = ''; lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+    startCountdown(); return true;
+  }
+
+  checkLockout();
+  setTimeout(() => { if (!inp.disabled) inp.focus(); }, 120);
+
+  inp.addEventListener('input', () => {
+    const v = inp.value.replace(/\D/g,'').slice(0,6);
+    inp.value = v;
+    dots.forEach((d,i) => {
+      d.classList.toggle('filled', i < v.length);
+      d.classList.remove('err');
+    });
+    errEl.textContent = '';
+    inp.classList.remove('err-state');
+    if (v.length === 6) attemptUnlock(v);
+  });
+
+  async function attemptUnlock(val) {
+    if (checkLockout()) return;
+    val = val ?? inp.value.trim();
+    if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
+
+    btn.disabled = true;
+    const ok = await verify(val);
+
+    if (ok) {
+      sessionStorage.setItem('kja_all_v1', '1');
+      setRL({n:0, until:0});
+      showAddBtn();
+      overlay.style.transition = 'opacity .35s';
+      overlay.style.opacity = '0';
+      setTimeout(() => { overlay.style.display = 'none'; }, 370);
+    } else {
+      const rl = getRL();
+      rl.n++;
+      if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
+      setRL(rl);
+
+      dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
+      inp.classList.add('err-state', 'do-shake');
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), {once:true});
+      inp.value = '';
+
+      if (rl.until > Date.now()) {
+        checkLockout();
+      } else {
+        const left = MAX_TRY - rl.n;
+        errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${left}회)`;
+        btn.disabled = false;
+      }
+    }
+  }
+
+  btn.addEventListener('click',   () => attemptUnlock(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
+})();
 
 // ══════════════════════════════════════════════════════════
 //  앱 추가 모달
