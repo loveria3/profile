@@ -61,7 +61,7 @@ a { color:inherit; text-decoration:none; }
 .nav { display:flex; align-items:center; gap:6px; }
 .nav a { font-size:14px; color:var(--ink-soft); padding:10px 16px; border-radius:999px; transition:background .15s, color .15s; }
 .nav a:hover { background:var(--bg-deep); color:var(--ink); }
-.nav a[aria-current="page"] { font-size:15px; font-weight:600; color:var(--ink); }
+.nav a[aria-current="page"] { font-size:14px; font-weight:600; color:var(--ink); }
 .nav a.cta { background:var(--accent); color:var(--paper); display:inline-flex; align-items:center; gap:8px; }
 .nav a.cta:hover { background:#14201a; color:var(--paper); }
 .nav a.cta.alt { background:var(--paper); color:var(--ink); border:1px solid var(--line); }
@@ -84,6 +84,11 @@ a { color:inherit; text-decoration:none; }
 .nav-mobile-divider { width:40px; height:1px; background:var(--line); }
 /* Wrap & Footer */
 .wrap { max-width:1280px; margin:0 auto; padding:0 40px; }
+/* ── 플라워 바 ── */
+.flower-bar-wrap { width:100%; overflow:hidden; line-height:0; }
+.flower-bar { width:100%; height:150px; object-fit:cover; display:block;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 25%); }
 footer { background:#1b1a18; color:#c9bfae; padding:64px 0 32px; }
 .foot-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:48px; border-bottom:1px solid #2e2a25; }
 .foot-brand-name { font-family:'Noto Serif KR',serif; font-size:24px; color:var(--paper); }
@@ -530,8 +535,8 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 </main>
 
 <!-- 플라워 바 -->
-<div style="width:100%;overflow:hidden;line-height:0">
-  <img src="assets/flower-bar.png" alt="제주의 봄" style="width:100%;height:150px;object-fit:cover;display:block;">
+<div class="flower-bar-wrap">
+  <img src="assets/flower-bar.png" alt="제주의 봄" class="flower-bar">
 </div>
 
 <!-- FOOTER -->
