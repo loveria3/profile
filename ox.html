@@ -17,6 +17,52 @@
     --dark: #1b263b;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ───── 인트로 화면 ───── */
+  #intro-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  #intro-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  #skip-btn {
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.45);
+    border-radius: 30px;
+    padding: 10px 28px;
+    font-family: 'Jua', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background .2s;
+    z-index: 10000;
+  }
+  #skip-btn:hover { background: rgba(255,255,255,0.35); }
+
+  /* 인트로→퀴즈 페이드 전환 */
+  #intro-screen.fade-out {
+    animation: fadeOut .8s forwards;
+  }
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to   { opacity: 0; pointer-events: none; }
+  }
+
+  /* ───── 퀴즈 본체 (원본 그대로) ───── */
   body {
     font-family: 'Nanum Gothic', sans-serif;
     background: linear-gradient(160deg, #caf0f8 0%, #90e0ef 35%, #00b4d8 70%, #0077b6 100%);
@@ -141,11 +187,25 @@
     .quiz-card{padding:22px 14px;}
     .ox-btn{font-size:2.6rem;padding:14px 6px;}
     .quiz-illustration{height:160px;}
+    #skip-btn{bottom:20px;right:16px;padding:8px 20px;font-size:.9rem;}
   }
 </style>
 </head>
 <body>
 
+<!-- ══════════════ 인트로 영상 화면 ══════════════ -->
+<div id="intro-screen">
+  <video id="intro-video"
+    src="assets/sea_web.mp4"
+    autoplay
+    muted
+    playsinline
+    preload="auto"
+  ></video>
+  <button id="skip-btn" onclick="endIntro()">건너뛰기 ▶</button>
+</div>
+
+<!-- ══════════════ 퀴즈 본체 ══════════════ -->
 <div class="fish">🐟</div>
 <div class="fish">🐠</div>
 <div class="fish">🐡</div>
@@ -201,9 +261,23 @@
 </div>
 
 <script>
-const svgs = [
+/* ── 인트로 제어 ── */
+const introScreen = document.getElementById('intro-screen');
+const introVideo  = document.getElementById('intro-video');
 
-// 1. 플라스틱 쓰레기
+function endIntro() {
+  introScreen.classList.add('fade-out');
+  introVideo.pause();
+  setTimeout(() => { introScreen.style.display = 'none'; }, 800);
+}
+
+introVideo.addEventListener('ended', endIntro);
+
+// 영상 로드 실패 시에도 건너뜀
+introVideo.addEventListener('error', endIntro);
+
+/* ── 퀴즈 데이터 ── */
+const svgs = [
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g1a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#caf0f8"/><stop offset="100%" stop-color="#90e0ef"/></linearGradient>
@@ -227,28 +301,17 @@ const svgs = [
   <rect x="295" y="128" width="14" height="22" rx="4" fill="#ade8f4" stroke="#0096c7" stroke-width="1.5"/>
   <text x="350" y="190" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">🚫 플라스틱 쓰레기가 제주 바다를 가득 채우고 있어요!</text>
 </svg>`,
-
-// 2. 낚시 봉돌
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0096c7"/><stop offset="100%" stop-color="#03045e"/></linearGradient>
-  </defs>
+  <defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0096c7"/><stop offset="100%" stop-color="#03045e"/></linearGradient></defs>
   <rect width="700" height="200" fill="url(#g2)"/>
-  <circle cx="100" cy="80" r="6" fill="rgba(255,255,255,0.2)"/>
-  <circle cx="200" cy="150" r="4" fill="rgba(255,255,255,0.2)"/>
-  <circle cx="500" cy="60" r="8" fill="rgba(255,255,255,0.2)"/>
-  <circle cx="600" cy="130" r="5" fill="rgba(255,255,255,0.2)"/>
-  <circle cx="350" cy="100" r="4" fill="rgba(255,255,255,0.15)"/>
-  <circle cx="430" cy="70" r="3" fill="rgba(255,255,255,0.15)"/>
+  <circle cx="100" cy="80" r="6" fill="rgba(255,255,255,0.2)"/><circle cx="200" cy="150" r="4" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="500" cy="60" r="8" fill="rgba(255,255,255,0.2)"/><circle cx="600" cy="130" r="5" fill="rgba(255,255,255,0.2)"/>
   <line x1="320" y1="0" x2="295" y2="135" stroke="#ddd" stroke-width="1.8"/>
   <line x1="400" y1="0" x2="445" y2="115" stroke="#ddd" stroke-width="1.8"/>
   <line x1="500" y1="0" x2="510" y2="120" stroke="#ddd" stroke-width="1.8"/>
-  <ellipse cx="290" cy="152" rx="30" ry="13" fill="#555"/>
-  <ellipse cx="308" cy="163" rx="24" ry="11" fill="#444"/>
-  <ellipse cx="272" cy="164" rx="20" ry="10" fill="#666"/>
-  <ellipse cx="258" cy="157" rx="15" ry="7" fill="#555"/>
-  <ellipse cx="448" cy="142" rx="22" ry="10" fill="#555"/>
-  <ellipse cx="460" cy="152" rx="18" ry="9" fill="#444"/>
+  <ellipse cx="290" cy="152" rx="30" ry="13" fill="#555"/><ellipse cx="308" cy="163" rx="24" ry="11" fill="#444"/>
+  <ellipse cx="272" cy="164" rx="20" ry="10" fill="#666"/><ellipse cx="258" cy="157" rx="15" ry="7" fill="#555"/>
+  <ellipse cx="448" cy="142" rx="22" ry="10" fill="#555"/><ellipse cx="460" cy="152" rx="18" ry="9" fill="#444"/>
   <ellipse cx="510" cy="138" rx="16" ry="8" fill="#555"/>
   <circle cx="290" cy="122" r="13" fill="#ffd166" opacity=".9"/>
   <text x="290" y="127" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="bold" fill="#c00">☠</text>
@@ -261,8 +324,6 @@ const svgs = [
   <path d="M588,105 Q600,98 592,115Z" fill="#ffa040"/>
   <text x="350" y="192" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">⚠️ 봉돌의 납 성분이 바다를 오염시켜요!</text>
 </svg>`,
-
-// 3. 미세플라스틱
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#48cae4"/><stop offset="100%" stop-color="#023e8a"/></linearGradient>
@@ -270,7 +331,6 @@ const svgs = [
   </defs>
   <rect width="700" height="200" fill="url(#g3)"/>
   <circle cx="350" cy="-20" r="60" fill="#ffd166" opacity=".55"/>
-  <line x1="350" y1="44" x2="350" y2="68" stroke="#ffd166" stroke-width="3" opacity=".55"/>
   <rect x="80" y="48" width="42" height="68" rx="9" fill="#90e0ef" stroke="#0077b6" stroke-width="2.5"/>
   <rect x="83" y="40" width="36" height="12" rx="4" fill="#0096c7"/>
   <text x="101" y="87" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#023e8a">PET</text>
@@ -290,50 +350,35 @@ const svgs = [
   <path d="M380,82 L430,82" stroke="white" stroke-width="3" marker-end="url(#arr3)"/>
   <text x="340" y="55" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#ffd166">미세플라스틱!</text>
   <ellipse cx="530" cy="100" rx="52" ry="24" fill="#ff9a3c" opacity=".9"/>
-  <circle cx="562" cy="91" r="7" fill="#200"/>
-  <circle cx="560" cy="89" r="2.5" fill="white"/>
+  <circle cx="562" cy="91" r="7" fill="#200"/><circle cx="560" cy="89" r="2.5" fill="white"/>
   <path d="M578,100 Q600,87 580,115Z" fill="#ff9a3c"/>
   <circle cx="483" cy="96" r="3.5" fill="#90e0ef" stroke="#0077b6"/>
   <circle cx="476" cy="105" r="2.5" fill="#ade8f4" stroke="#0077b6"/>
-  <path d="M486,97 Q503,99 503,99" stroke="white" stroke-width="1.5" stroke-dasharray="3,2"/>
   <ellipse cx="530" cy="140" rx="38" ry="16" fill="#f4a261" opacity=".75"/>
   <circle cx="555" cy="133" r="5" fill="#200"/>
   <path d="M563,140 Q578,132 566,151Z" fill="#f4a261"/>
   <text x="350" y="192" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">⚠️ 플라스틱은 사라지지 않고 미세플라스틱이 돼요!</text>
 </svg>`,
-
-// 4. 제주 해녀
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g4a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b3e5fc"/><stop offset="100%" stop-color="#0096c7"/></linearGradient>
-  </defs>
+  <defs><linearGradient id="g4a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b3e5fc"/><stop offset="100%" stop-color="#0096c7"/></linearGradient></defs>
   <rect width="700" height="200" fill="url(#g4a)"/>
   <path d="M0,90 Q175,72 350,90 Q525,108 700,90 L700,200 L0,200Z" fill="#0077b6" opacity=".5"/>
   <circle cx="80" cy="38" r="30" fill="#ffd166" opacity=".88"/>
   <ellipse cx="250" cy="28" rx="48" ry="18" fill="white" opacity=".7"/>
-  <ellipse cx="278" cy="23" rx="34" ry="15" fill="white" opacity=".7"/>
-  <ellipse cx="220" cy="26" rx="28" ry="13" fill="white" opacity=".7"/>
   <ellipse cx="350" cy="100" rx="28" ry="40" fill="#1a535c"/>
   <circle cx="350" cy="67" r="20" fill="#fec89a"/>
   <ellipse cx="343" cy="65" rx="9" ry="7" fill="white" stroke="#333" stroke-width="2"/>
   <ellipse cx="357" cy="65" rx="9" ry="7" fill="white" stroke="#333" stroke-width="2"/>
-  <line x1="352" y1="65" x2="348" y2="65" stroke="#333" stroke-width="2"/>
-  <circle cx="343" cy="65" r="4" fill="#0096c7"/>
-  <circle cx="357" cy="65" r="4" fill="#0096c7"/>
+  <circle cx="343" cy="65" r="4" fill="#0096c7"/><circle cx="357" cy="65" r="4" fill="#0096c7"/>
   <path d="M330,57 Q350,41 370,57 Q370,49 350,47 Q330,49 330,57Z" fill="#fff"/>
   <path d="M322,108 Q300,130 290,148" stroke="#1a535c" stroke-width="12" stroke-linecap="round" fill="none"/>
   <path d="M378,108 Q400,130 420,148" stroke="#1a535c" stroke-width="12" stroke-linecap="round" fill="none"/>
-  <path d="M420,148 Q440,158 430,178 Q415,188 400,178 Q395,162 410,150Z" fill="#8d8741"/>
-  <rect x="195" y="138" width="16" height="28" rx="4" fill="#90e0ef" stroke="#0077b6" stroke-width="1.5" opacity=".85"/>
-  <rect x="465" y="145" width="24" height="10" rx="3" fill="white" stroke="#ccc" stroke-width="1.5" opacity=".85"/>
   <rect x="418" y="28" width="240" height="56" rx="14" fill="white" opacity=".93"/>
   <path d="M428,84 L418,100 L446,84Z" fill="white" opacity=".93"/>
   <text x="538" y="51" text-anchor="middle" font-family="'Nanum Gothic',sans-serif" font-size="13" font-weight="bold" fill="#023e8a">바닷속에 쓰레기가</text>
   <text x="538" y="69" text-anchor="middle" font-family="'Nanum Gothic',sans-serif" font-size="13" font-weight="bold" fill="#023e8a">너무 많아요! 😢</text>
   <text x="350" y="194" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">🤿 제주 해녀들은 바다 오염을 가장 잘 아는 분들이에요!</text>
 </svg>`,
-
-// 5. 바다 쓰레기 해류 이동
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#caf0f8"/><stop offset="100%" stop-color="#0096c7"/></linearGradient>
@@ -343,8 +388,6 @@ const svgs = [
   <rect width="700" height="200" fill="url(#g5)"/>
   <ellipse cx="490" cy="82" rx="70" ry="45" fill="#2d6a4f" opacity=".55"/>
   <ellipse cx="200" cy="88" rx="55" ry="50" fill="#2d6a4f" opacity=".55"/>
-  <ellipse cx="80" cy="92" rx="38" ry="48" fill="#2d6a4f" opacity=".55"/>
-  <ellipse cx="350" cy="75" rx="30" ry="20" fill="#2d6a4f" opacity=".4"/>
   <circle cx="505" cy="88" r="8" fill="#ffd166" stroke="#e63946" stroke-width="2.5"/>
   <text x="505" y="75" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#e63946">제주</text>
   <path d="M135,98 Q250,58 365,95 Q435,122 492,106" stroke="#e63946" stroke-width="2.5" fill="none" stroke-dasharray="8,4" marker-end="url(#arr5a)"/>
@@ -352,38 +395,24 @@ const svgs = [
   <text x="295" y="85" font-size="16">🍶</text>
   <text x="415" y="110" font-size="14">🛢️</text>
   <path d="M492,118 Q395,162 278,142 Q180,130 105,142" stroke="#0077b6" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arr5b)"/>
-  <text x="300" y="162" font-size="14">🥤</text>
-  <text x="185" y="152" font-size="14">🧴</text>
   <rect x="18" y="160" width="210" height="32" rx="8" fill="rgba(255,255,255,0.85)"/>
   <text x="28" y="180" font-family="sans-serif" font-size="11" fill="#333">🌍→🇰🇷 외국 쓰레기도 제주로!</text>
   <text x="350" y="195" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#023e8a" font-weight="bold">🌊 바다 쓰레기는 해류를 타고 전 세계를 떠돌아요!</text>
 </svg>`,
-
-// 6. 제주 돌고래
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#90e0ef"/><stop offset="100%" stop-color="#023e8a"/></linearGradient>
-  </defs>
+  <defs><linearGradient id="g6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#90e0ef"/><stop offset="100%" stop-color="#023e8a"/></linearGradient></defs>
   <rect width="700" height="200" fill="url(#g6)"/>
   <path d="M0,120 Q90,100 180,120 Q270,140 360,120 Q450,100 540,120 Q630,140 700,120 L700,200 L0,200Z" fill="#0077b6" opacity=".4"/>
-  <path d="M560,82 Q608,22 658,82 L678,102 L540,102Z" fill="#2d6a4f" opacity=".45"/>
-  <path d="M540,102 Q560,62 580,102" fill="#4a7c59" opacity=".4"/>
   <path d="M185,96 Q248,56 335,76 Q376,87 354,118 Q316,138 256,128 Q206,117 185,96Z" fill="#4fc3f7"/>
   <path d="M335,76 Q366,61 386,87 Q373,92 357,87Z" fill="#4fc3f7"/>
   <path d="M185,96 Q162,106 152,128 Q178,123 187,112Z" fill="#4fc3f7"/>
-  <circle cx="280" cy="82" r="6" fill="#023e8a"/>
-  <circle cx="278" cy="80" r="2" fill="white"/>
+  <circle cx="280" cy="82" r="6" fill="#023e8a"/><circle cx="278" cy="80" r="2" fill="white"/>
   <path d="M274,97 Q289,104 304,97" stroke="#023e8a" stroke-width="2" fill="none"/>
-  <path d="M245,86 Q255,70 265,86" stroke="white" stroke-width="2" fill="none"/>
-  <circle cx="255" cy="67" r="3" fill="white" opacity=".8"/>
   <path d="M440,130 Q492,104 545,117 Q566,127 554,148 Q524,158 486,150 Q446,142 440,130Z" fill="#81d4fa"/>
   <path d="M545,117 Q566,107 578,123 Q568,128 554,122Z" fill="#81d4fa"/>
-  <circle cx="491" cy="121" r="5" fill="#023e8a"/>
-  <circle cx="489" cy="119" r="2" fill="white"/>
+  <circle cx="491" cy="121" r="5" fill="#023e8a"/><circle cx="489" cy="119" r="2" fill="white"/>
   <text x="350" y="192" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">🐬 제주 남방큰돌고래를 바다쓰레기로부터 지켜요!</text>
 </svg>`,
-
-// 7. 비치코밍
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g7a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff9c4"/><stop offset="100%" stop-color="#caf0f8"/></linearGradient>
@@ -391,7 +420,6 @@ const svgs = [
   </defs>
   <rect width="700" height="200" fill="url(#g7a)"/>
   <rect x="0" y="112" width="700" height="88" fill="#0096c7"/>
-  <path d="M0,112 Q90,97 180,112 Q270,127 360,112 Q450,97 540,112 Q630,127 700,112" stroke="#00b4d8" stroke-width="3" fill="none"/>
   <path d="M0,148 Q350,122 700,148 L700,200 L0,200Z" fill="url(#g7b)"/>
   <circle cx="598" cy="34" r="28" fill="#ffd166"/>
   <circle cx="195" cy="112" r="13" fill="#fec89a"/>
@@ -399,26 +427,19 @@ const svgs = [
   <line x1="195" y1="151" x2="188" y2="170" stroke="#fec89a" stroke-width="5"/>
   <line x1="195" y1="151" x2="202" y2="170" stroke="#fec89a" stroke-width="5"/>
   <line x1="202" y1="132" x2="228" y2="152" stroke="#fec89a" stroke-width="5"/>
-  <circle cx="231" cy="154" r="6" fill="#fec89a"/>
-  <path d="M182" y1="112" Q195,98 208,112" fill="#5c3d11"/>
   <circle cx="380" cy="123" r="12" fill="#fec89a"/>
   <rect x="373" y="135" width="14" height="24" rx="5" fill="#4fc3f7"/>
   <line x1="380" y1="159" x2="374" y2="177" stroke="#fec89a" stroke-width="5"/>
   <line x1="380" y1="159" x2="386" y2="177" stroke="#fec89a" stroke-width="5"/>
-  <line x1="387" y1="140" x2="408" y2="155" stroke="#fec89a" stroke-width="5"/>
-  <path d="M367,123 Q380,110 393,123" fill="#a0522d"/>
   <path d="M415,153 Q430,146 440,163 Q435,183 420,181 Q408,176 415,153Z" fill="#fff176" stroke="#aaa" stroke-width="1.5"/>
   <rect x="128" y="160" width="12" height="20" rx="3" fill="#90e0ef" stroke="#0077b6" stroke-width="1"/>
   <rect x="300" y="165" width="20" height="8" rx="3" fill="white" stroke="#ccc" stroke-width="1"/>
-  <circle cx="450" cy="168" r="5" fill="#ade8f4" stroke="#ccc" stroke-width="1"/>
   <rect x="412" y="78" width="258" height="50" rx="12" fill="white" opacity=".95"/>
   <path d="M422,128 L412,146 L440,128Z" fill="white" opacity=".95"/>
   <text x="541" y="100" text-anchor="middle" font-family="'Nanum Gothic',sans-serif" font-size="13" font-weight="bold" fill="#023e8a">우리도 바다를 지킬</text>
   <text x="541" y="118" text-anchor="middle" font-family="'Nanum Gothic',sans-serif" font-size="13" font-weight="bold" fill="#023e8a">수 있어요! 💪</text>
   <text x="350" y="196" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5c3d11" font-weight="bold">🏖️ 비치코밍은 어린이도 함께 할 수 있어요!</text>
 </svg>`,
-
-// 8. 스티로폼 부표 → 미세플라스틱
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g8" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#caf0f8"/><stop offset="100%" stop-color="#0096c7"/></linearGradient>
@@ -426,35 +447,20 @@ const svgs = [
   </defs>
   <rect width="700" height="200" fill="url(#g8)"/>
   <path d="M0,82 Q100,62 200,82 Q300,102 400,82 Q500,62 600,82 Q650,92 700,82 L700,200 L0,200Z" fill="#0077b6" opacity=".35"/>
-  <path d="M75,85 L198,85 L208,96 L66,96Z" fill="#5c3d11"/>
-  <rect x="105" y="60" width="42" height="28" rx="3" fill="#795548"/>
-  <rect x="113" y="50" width="6" height="14" fill="#888"/>
   <ellipse cx="298" cy="100" rx="40" ry="22" fill="white" stroke="#ccc" stroke-width="2"/>
   <text x="298" y="97" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#aaa">스티로폼</text>
   <text x="298" y="111" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#aaa">부표</text>
   <path d="M343,100 L390,100" stroke="#e63946" stroke-width="2.5" marker-end="url(#arr8)"/>
   <text x="366" y="88" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#e63946">파도!</text>
-  <rect x="403" y="80" width="26" height="19" rx="3" fill="white" stroke="#ccc" stroke-width="1.5" transform="rotate(-14,416,89)"/>
-  <rect x="442" y="95" width="19" height="13" rx="3" fill="white" stroke="#ccc" stroke-width="1.5" transform="rotate(11,451,101)"/>
-  <rect x="428" y="78" width="15" height="10" rx="2" fill="white" stroke="#ccc" stroke-width="1"/>
   <circle cx="487" cy="84" r="4.5" fill="white" stroke="#ccc"/>
   <circle cx="504" cy="97" r="3.5" fill="white" stroke="#ccc"/>
   <circle cx="514" cy="79" r="4" fill="white" stroke="#ccc"/>
   <circle cx="496" cy="108" r="2.5" fill="white" stroke="#ccc"/>
-  <circle cx="525" cy="93" r="2" fill="white" stroke="#ccc"/>
-  <circle cx="533" cy="80" r="3" fill="white" stroke="#ccc"/>
-  <circle cx="538" cy="106" r="2.5" fill="white" stroke="#ccc"/>
-  <circle cx="548" cy="88" r="2" fill="white" stroke="#ccc"/>
   <ellipse cx="612" cy="118" rx="42" ry="21" fill="#ff9a3c" opacity=".88"/>
-  <circle cx="642" cy="111" r="5.5" fill="#200"/>
-  <circle cx="640" cy="109" r="2" fill="white"/>
+  <circle cx="642" cy="111" r="5.5" fill="#200"/><circle cx="640" cy="109" r="2" fill="white"/>
   <path d="M654,118 Q672,108 654,133Z" fill="#ff9a3c"/>
-  <circle cx="570" cy="114" r="3.5" fill="white" stroke="#ccc"/>
-  <circle cx="562" cy="122" r="2.5" fill="white" stroke="#ccc"/>
   <text x="350" y="192" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">⚠️ 스티로폼→미세플라스틱→물고기 뱃속까지!</text>
 </svg>`,
-
-// 9. 제주 현무암 해안
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="g9a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b3e5fc"/><stop offset="100%" stop-color="#e1f5fe"/></linearGradient>
@@ -462,58 +468,28 @@ const svgs = [
   </defs>
   <rect width="700" height="200" fill="url(#g9a)"/>
   <rect x="0" y="130" width="700" height="70" fill="url(#g9b)"/>
-  <path d="M0,130 Q90,115 180,130 Q270,145 360,130 Q450,115 540,130 Q630,145 700,130" stroke="#00b4d8" stroke-width="3" fill="none"/>
   <path d="M150,130 Q280,22 420,130" fill="#3d7a5c" opacity=".68"/>
-  <path d="M200,130 Q280,52 360,130" fill="#2d6a4f" opacity=".5"/>
   <ellipse cx="95" cy="138" rx="46" ry="20" fill="#333"/>
-  <ellipse cx="75" cy="143" rx="30" ry="16" fill="#222"/>
-  <ellipse cx="118" cy="140" rx="28" ry="14" fill="#3a3a3a"/>
-  <ellipse cx="55" cy="140" rx="22" ry="12" fill="#2d2d2d"/>
-  <ellipse cx="195" cy="145" rx="35" ry="16" fill="#2d2d2d"/>
   <ellipse cx="555" cy="140" rx="40" ry="18" fill="#333"/>
-  <ellipse cx="588" cy="143" rx="28" ry="14" fill="#222"/>
-  <ellipse cx="628" cy="138" rx="32" ry="15" fill="#3a3a3a"/>
-  <ellipse cx="645" cy="144" rx="20" ry="11" fill="#2d2d2d"/>
-  <ellipse cx="368" cy="148" rx="125" ry="18" fill="#48cae4" opacity=".6"/>
-  <path d="M298,50 Q308,40 318,50" stroke="#555" stroke-width="2" fill="none"/>
-  <path d="M338,40 Q348,30 358,40" stroke="#555" stroke-width="2" fill="none"/>
-  <path d="M378,55 Q388,45 398,55" stroke="#555" stroke-width="2" fill="none"/>
   <circle cx="580" cy="54" r="29" fill="#003580" opacity=".92"/>
   <text x="580" y="49" text-anchor="middle" font-family="sans-serif" font-size="9" fill="white" font-weight="bold">UNESCO</text>
   <text x="580" y="62" text-anchor="middle" font-family="sans-serif" font-size="8" fill="#ffd166">세계자연유산</text>
-  <text x="580" y="78" text-anchor="middle" font-size="10">⭐</text>
   <rect x="14" y="14" width="228" height="52" rx="10" fill="rgba(255,255,255,0.9)"/>
   <text x="128" y="35" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="#023e8a">🏝 제주 현무암 해안</text>
-  <text x="128" y="52" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#444">화산 용암이 굳어 만들어진</text>
-  <text x="128" y="63" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#023e8a" font-weight="bold">제주만의 특별한 자연!</text>
+  <text x="128" y="52" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#023e8a" font-weight="bold">제주만의 특별한 자연!</text>
   <text x="350" y="194" text-anchor="middle" font-family="sans-serif" font-size="13" fill="white" font-weight="bold">🌋 검은 현무암 해안은 제주의 소중한 보물이에요!</text>
 </svg>`,
-
-// 10. 어린이도 바다를 지킬 수 있어요
 `<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="g10" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#caf0f8"/><stop offset="100%" stop-color="#90e0ef"/></linearGradient>
-  </defs>
+  <defs><linearGradient id="g10" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#caf0f8"/><stop offset="100%" stop-color="#90e0ef"/></linearGradient></defs>
   <rect width="700" height="200" fill="url(#g10)"/>
   <path d="M0,142 Q175,122 350,142 Q525,162 700,142 L700,200 L0,200Z" fill="#0096c7" opacity=".6"/>
   <circle cx="350" cy="92" r="62" fill="#1a6896" opacity=".9"/>
-  <path d="M298,57 Q318,47 338,62 Q348,72 328,82 Q308,90 298,77Z" fill="#2d6a4f"/>
-  <path d="M353,52 Q373,44 388,57 Q398,72 383,87 Q363,97 348,84 Q343,67 353,52Z" fill="#2d6a4f"/>
-  <path d="M298,102 Q308,110 328,114 Q348,117 358,107 Q368,117 388,112 Q398,102 396,90 Q378,97 363,90 Q353,84 343,92 Q323,98 308,90Z" fill="#2d6a4f"/>
   <circle cx="282" cy="40" r="11" fill="#fec89a"/>
   <rect x="275" y="51" width="14" height="22" rx="4" fill="#ff6b6b"/>
-  <path d="M275,51 Q260,60 254,70" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
-  <path d="M289,51 Q296,60 302,68" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
   <circle cx="350" cy="28" r="11" fill="#fec89a"/>
   <rect x="343" y="39" width="14" height="22" rx="4" fill="#4fc3f7"/>
-  <path d="M343,39 Q328,48 322,58" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
-  <path d="M357,39 Q364,48 370,58" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
   <circle cx="418" cy="40" r="11" fill="#fec89a"/>
   <rect x="411" y="51" width="14" height="22" rx="4" fill="#a5d6a7"/>
-  <path d="M411,51 Q396,60 390,70" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
-  <path d="M425,51 Q432,60 438,70" stroke="#fec89a" stroke-width="5" stroke-linecap="round"/>
-  <path d="M302,68 Q318,76 322,58" stroke="#fec89a" stroke-width="4" fill="none"/>
-  <path d="M376,58 Q393,73 390,70" stroke="#fec89a" stroke-width="4" fill="none"/>
   <rect x="28" y="28" width="142" height="82" rx="12" fill="rgba(255,255,255,0.9)"/>
   <text x="99" y="55" text-anchor="middle" font-size="17">♻️</text>
   <text x="99" y="74" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="bold" fill="#023e8a">분리수거</text>
