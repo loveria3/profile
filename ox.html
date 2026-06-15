@@ -197,12 +197,34 @@
 <div id="intro-screen">
   <video id="intro-video"
     src="assets/sea_web.mp4"
-    autoplay
-    muted
     playsinline
     preload="auto"
   ></video>
-  <button id="skip-btn" onclick="endIntro()">건너뛰기 ▶</button>
+
+  <!-- 클릭 전: 시작 안내 오버레이 -->
+  <div id="start-overlay" onclick="startWithSound()" style="
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.45);
+    cursor:pointer; z-index:10001;
+  ">
+    <div style="
+      background:rgba(255,255,255,0.18);
+      border:3px solid rgba(255,255,255,0.7);
+      border-radius:50%; width:90px; height:90px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2.8rem; margin-bottom:18px;
+      backdrop-filter:blur(4px);
+    ">▶</div>
+    <p style="
+      color:#fff; font-family:'Jua',sans-serif;
+      font-size:1.2rem; letter-spacing:2px;
+      text-shadow:0 2px 8px rgba(0,0,0,0.5);
+    ">터치해서 시작하기 🌊</p>
+  </div>
+
+  <button id="skip-btn" onclick="endIntro()" style="display:none;">건너뛰기 ▶</button>
 </div>
 
 <!-- ══════════════ 퀴즈 본체 ══════════════ -->
@@ -262,8 +284,16 @@
 
 <script>
 /* ── 인트로 제어 ── */
-const introScreen = document.getElementById('intro-screen');
-const introVideo  = document.getElementById('intro-video');
+const introScreen  = document.getElementById('intro-screen');
+const introVideo   = document.getElementById('intro-video');
+const startOverlay = document.getElementById('start-overlay');
+const skipBtn      = document.getElementById('skip-btn');
+
+function startWithSound() {
+  startOverlay.style.display = 'none';
+  skipBtn.style.display = 'block';
+  introVideo.play().catch(endIntro);
+}
 
 function endIntro() {
   introScreen.classList.add('fade-out');
@@ -272,8 +302,6 @@ function endIntro() {
 }
 
 introVideo.addEventListener('ended', endIntro);
-
-// 영상 로드 실패 시에도 건너뜀
 introVideo.addEventListener('error', endIntro);
 
 /* ── 퀴즈 데이터 ── */
