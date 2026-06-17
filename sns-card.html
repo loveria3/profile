@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>강지애 디지털 강사 프로필 · Made with Claude Cowork</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4ede2;
+    --paper: #fbf6ec;
+    --ink: #1b1a18;
+    --accent: #2a3b2e;
+    --accent-warm: #b3753a;
+    --gold: #c9a35b;
+    --border: rgba(42,59,46,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #e5dcd0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 48px 20px;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+  }
+
+  .wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+  /* ─── 카드 ─── */
+  .card {
+    width: 700px;
+    background: var(--bg);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 2px 0 rgba(255,255,255,0.6) inset,
+      0 24px 64px rgba(0,0,0,0.16),
+      0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  /* ─── 헤더 ─── */
+  .card-header {
+    background: var(--accent);
+    padding: 15px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: var(--bg);
+    padding: 3px;
+  }
+  .header-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .header-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .header-dots span {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(201,163,91,0.5);
+  }
+  .header-dots span:last-child { background: var(--gold); }
+
+  /* ─── 히어로 ─── */
+  .hero {
+    padding: 28px 32px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-img-wrap {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+  }
+  .hero-text { flex: 1; }
+  .hero-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: var(--accent-warm);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .hero-name {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+  .hero-url {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-warm);
+    background: rgba(179,117,58,0.1);
+    padding: 4px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(179,117,58,0.3);
+    letter-spacing: 0.03em;
+    text-decoration: none;
+  }
+  .hero-url::before { content: '↗'; font-size: 10px; }
+
+  /* ─── 통계 ─── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-item {
+    padding: 14px 8px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 9.5px;
+    color: #7a7570;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+
+  /* ─── 섹션 라벨 ─── */
+  .section-label {
+    padding: 18px 32px 10px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.7;
+  }
+
+  /* ─── 기능 카드 그리드 ─── */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 0 32px 24px;
+  }
+  .feat-card {
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .feat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--gold) 100%);
+  }
+  .feat-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(42,59,46,0.07);
+    border: 1px solid rgba(42,59,46,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .feat-icon svg {
+    width: 18px; height: 18px;
+    stroke: var(--accent);
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+  .feat-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .feat-desc {
+    font-size: 10.5px;
+    color: #6a6560;
+    line-height: 1.55;
+  }
+
+  /* ─── 기술 스택 ─── */
+  .tech-section {
+    padding: 0 32px 26px;
+  }
+  .tech-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .chip-green {
+    background: rgba(42,59,46,0.09);
+    color: var(--accent);
+    border: 1px solid rgba(42,59,46,0.18);
+  }
+  .chip-gold {
+    background: rgba(201,163,91,0.12);
+    color: #8a6a20;
+    border: 1px solid rgba(201,163,91,0.28);
+  }
+  .chip-warm {
+    background: rgba(179,117,58,0.09);
+    color: var(--accent-warm);
+    border: 1px solid rgba(179,117,58,0.22);
+  }
+
+  /* ─── 히어로 플라워 박스 ─── */
+  .hero-flower-wrap {
+    flex-shrink: 0;
+    position: relative;
+    width: 138px;
+    height: 90px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+  }
+  .hero-flower-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hero-flower-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 5px 8px;
+    background: rgba(42,59,46,0.62);
+    backdrop-filter: blur(4px);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    color: #f4ede2;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+  }
+
+  /* ─── 푸터 ─── */
+  .card-footer {
+    background: var(--accent);
+    padding: 13px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left {
+    font-size: 10.5px;
+    color: rgba(251,246,236,0.55);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+  .footer-right {
+    font-size: 10.5px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─── 스크린샷 힌트 ─── */
+  .screenshot-hint {
+    font-size: 11.5px;
+    color: #8a8480;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .screenshot-hint span {
+    background: var(--paper);
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .card { box-shadow: none; border-radius: 0; width: 100%; }
+    .screenshot-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="card">
+
+    <!-- 헤더 -->
+    <div class="card-header">
+      <div class="header-left">
+        <img class="header-logo" src="assets/daisy.png" alt="데이지 로고">
+        <span class="header-badge">Made with Claude Cowork · 2026</span>
+      </div>
+      <div class="header-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <!-- 히어로 -->
+    <div class="hero">
+      <div class="hero-img-wrap">
+        <img class="hero-img" src="assets/daisy.png" alt="강지애 로고">
+      </div>
+      <div class="hero-text">
+        <div class="hero-eyebrow">Digital Instructor · AI Education</div>
+        <div class="hero-name">강지애</div>
+        <div class="hero-title">디지털 강사 · AI 활용 교육 전문가</div>
+        <span class="hero-url">loveria3.github.io/profile</span>
+      </div>
+      <div class="hero-flower-wrap">
+        <picture>
+          <source srcset="assets/flower-bar.webp" type="image/webp">
+          <img src="assets/flower-bar.png" alt="꽃 데코" class="hero-flower-img">
+        </picture>
+        <span class="hero-flower-caption">데이지꽃 컨셉</span>
+      </div>
+    </div>
+
+    <!-- 통계 바 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-num">5+</div>
+        <div class="stat-label">구성 페이지</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">6</div>
+        <div class="stat-label">핵심 기능</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">7</div>
+        <div class="stat-label">기술 스택</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Claude Cowork</div>
+      </div>
+    </div>
+
+    <!-- 기능 카드 -->
+    <div class="section-label">주요 기능</div>
+    <div class="features">
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- Calendar -->
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="feat-title">강의 스케쥴 관리</div>
+        <div class="feat-desc">PIN 보안 + 월별 달력, 강의 추가·수정·삭제, PDF 출력</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- File text -->
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        </div>
+        <div class="feat-title">경력서 자동 생성</div>
+        <div class="feat-desc">구글 시트 연동 → 클릭 한 번으로 A4 PDF 즉시 출력</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- Radio/signal tower -->
+          <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div class="feat-title">교육 모니터링</div>
+        <div class="feat-desc">공고 자동 수집 + 카카오톡 알림, 기관별 필터링</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- Monitor/Display -->
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="feat-title">수업활용앱 갤러리</div>
+        <div class="feat-desc">구글 시트 연동 앱 목록, 카테고리 필터, PIN 보호</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- Smartphone -->
+          <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </div>
+        <div class="feat-title">모바일 최적화</div>
+        <div class="feat-desc">반응형 3단계 레이아웃 + 아이폰 홈 화면 PWA 지원</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <!-- Users/Shield -->
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="feat-title">보안 인증 시스템</div>
+        <div class="feat-desc">XOR + SHA-256 암호화, 5회 실패 시 자동 잠금</div>
+      </div>
+
+    </div>
+
+    <!-- 기술 스택 -->
+    <div class="section-label">기술 스택</div>
+    <div class="tech-section">
+      <div class="tech-chips">
+        <span class="chip chip-green">HTML · CSS · JS</span>
+        <span class="chip chip-green">Google Sheets API</span>
+        <span class="chip chip-green">Google Apps Script</span>
+        <span class="chip chip-gold">GitHub Pages</span>
+        <span class="chip chip-gold">Kakao API</span>
+        <span class="chip chip-warm">jsPDF · html2canvas</span>
+        <span class="chip chip-warm">SHA-256 암호화</span>
+      </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="card-footer">
+      <span class="footer-left">loveria5655@gmail.com · 2026</span>
+      <span class="footer-right">Claude Cowork · Anthropic ✦</span>
+    </div>
+
+  </div>
+
+  <div class="screenshot-hint">
+    <span>💡 브라우저에서 이 페이지를 스크린샷 찍어 SNS에 공유하세요</span>
+  </div>
+</div>
+
+</body>
+</html>
