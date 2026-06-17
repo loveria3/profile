@@ -4,6 +4,19 @@
 
 const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
+/* ── 통합 계약 설정 ────────────────────────────────────────
+   여러 일정이 등록돼도 경력서에서는 "시작일 ~ 종료일" 한 줄로 통합.
+   시작일 = 등록된 가장 이른 강의일(자동), 종료일/주요업무 = 아래 값 고정.
+   계약 갱신 시 end · work 값만 수정하면 됩니다.                */
+const MERGE_CONTRACTS = {
+  '대정중학교': { end: '2026.12.31', work: '디지털튜터 정규 계약 출강' },
+  '남원중학교': { end: '2026.11.30', work: '방과후학교 디지털 강의 정규 계약' },
+};
+
+/* ── 별도 블럭으로 묶을 기관 (접두사 매칭) ──────────────────
+   경력사항 하단에 소제목을 달고 따로 정리합니다.                */
+const GROUP_BLOCK = { prefix: '에듀인플랫폼', label: '에듀인플랫폼 출강 내역', en: 'EduInPlatform' };
+
 /* ── 디자인 토큰 (웹사이트와 동일한 팔레트, 인쇄 친화적) ──
    --ink    : #1b1a18   주 텍스트
    --accent : #2a3b2e   딥 그린 (선·텍스트 전용, 배경 없음)
@@ -123,6 +136,59 @@ async function generatePDF(data) {
 }
 
 /* ══════════════════════════════════════════════════════════
+   경력 데이터 가공 — 통합 · 정렬(최신순) · 그룹 분리
+   ══════════════════════════════════════════════════════════ */
+/* 날짜 문자열 → 비교용 숫자(YYYYMMDD). 첫 번째 날짜만 사용. */
+function parseDateKey(str) {
+  if (!str) return 0;
+  const m = String(str).match(/(\d{4})[.\-\/\s]\s*(\d{1,2})(?:[.\-\/\s]\s*(\d{1,2}))?/);
+  if (!m) return 0;
+  const y = +m[1], mo = +m[2], d = m[3] ? +m[3] : 1;
+  return y * 10000 + mo * 100 + d;
+}
+/* 비교용 숫자 → "YYYY.MM.DD" */
+function fmtDateKey(n) {
+  const y = Math.floor(n / 10000), mo = Math.floor((n % 10000) / 100), d = n % 100;
+  return `${y}.${String(mo).padStart(2, '0')}.${String(d).padStart(2, '0')}`;
+}
+const careerSortKey = r => (r._sortKey != null ? r._sortKey : parseDateKey(r.period));
+
+function processCareer(career) {
+  const rows = (career || []).slice();
+  const mainRows  = [];
+  const groupRows = [];
+  const buckets   = {};   // org → [rows]  (통합 대상)
+
+  rows.forEach(r => {
+    const org = (r.org || '').trim();
+    if (GROUP_BLOCK.prefix && org.startsWith(GROUP_BLOCK.prefix)) { groupRows.push(r); return; }
+    if (MERGE_CONTRACTS[org]) { (buckets[org] = buckets[org] || []).push(r); return; }
+    mainRows.push(r);
+  });
+
+  /* 통합 대상 → 한 줄로 압축 */
+  Object.keys(buckets).forEach(org => {
+    const bucket = buckets[org], cfg = MERGE_CONTRACTS[org];
+    const startKey = bucket.map(r => parseDateKey(r.period)).filter(Boolean).sort((a, b) => a - b)[0] || 0;
+    const startStr = startKey ? fmtDateKey(startKey) : '';
+    mainRows.push({
+      period:   startStr ? `${startStr} ~ ${cfg.end}` : cfg.end,
+      org,
+      position: bucket[0].position || '',
+      work:     cfg.work,
+      note:     bucket.find(r => r.note)?.note || '',
+      _sortKey: parseDateKey(cfg.end) || startKey,   // 진행 중 계약이 위로 오도록 종료일 기준
+    });
+  });
+
+  /* 최신순(내림차순) 정렬 */
+  mainRows.sort((a, b)  => careerSortKey(b) - careerSortKey(a));
+  groupRows.sort((a, b) => careerSortKey(b) - careerSortKey(a));
+
+  return { mainRows, groupRows };
+}
+
+/* ══════════════════════════════════════════════════════════
    블록 생성
    ══════════════════════════════════════════════════════════ */
 function buildBlocks(bi, education, career, certs, training) {
@@ -192,9 +258,25 @@ function buildBlocks(bi, education, career, certs, training) {
     ['재학기간', '학교명', '전공', '학위'], [26, 26, 26, 22],
     education, e => [e.period, e.school, e.major, e.degree]);
 
-  addSection('경력사항', 'Career',
-    ['근무기간', '기관/직장명', '직위·역할', '주요업무', '비고'], [20, 22, 13, 33, 12],
-    career, c => [c.period, c.org, c.position, c.work, c.note]);
+  /* 경력사항 — 통합(대정·남원) + 최신순 정렬 + 에듀인플랫폼 별도 그룹 */
+  const careerHeaders = ['근무기간', '기관/직장명', '직위·역할', '주요업무', '비고'];
+  const careerWidths  = [20, 22, 13, 33, 12];
+  const { mainRows, groupRows } = processCareer(career);
+
+  addSection('경력사항', 'Career', careerHeaders, careerWidths,
+    mainRows, c => [c.period, c.org, c.position, c.work, c.note]);
+
+  /* 에듀인플랫폼 출강 내역 — 같은 섹션 안 하단에 소제목 달고 묶음 */
+  if (groupRows.length) {
+    list.push({ type: 'trow', ko: '경력사항',
+      html: htmlSubhead(GROUP_BLOCK.label, GROUP_BLOCK.en) });
+    list.push({ type: 'thead', ko: '경력사항', headers: careerHeaders, widths: careerWidths,
+      html: htmlThead(careerHeaders, careerWidths) });
+    groupRows.forEach((c, i) => {
+      list.push({ type: 'trow', ko: '경력사항',
+        html: htmlTrow([c.period, c.org, c.position, c.work, c.note], careerWidths, i % 2 === 0) });
+    });
+  }
 
   addSection('자격증', 'Certificates',
     ['취득일', '자격명', '발급기관'], [18, 46, 36],
@@ -304,6 +386,19 @@ function htmlSection(ko, en) {
     </div>`;
 }
 
+/* 섹션 내 소제목(서브 그룹) — 좌측 카퍼 바 + 연한 배경 */
+function htmlSubhead(label, en) {
+  return `
+    <div style="display:flex;align-items:center;gap:8px;
+                margin-top:14px;padding:6px 10px;
+                background:#f4f7f4;border:1px solid #ccd5cc;
+                border-left:3px solid #b3753a;border-radius:3px;">
+      <span style="font-size:11.5px;font-weight:700;color:#2a3b2e;letter-spacing:.02em;">▸ ${esc(label)}</span>
+      <span style="font-size:9.5px;color:#b3753a;
+                   font-family:'JetBrains Mono',monospace;letter-spacing:.12em;">${esc(en)}</span>
+    </div>`;
+}
+
 /* 테이블 헤더 — 연한 그린 배경, 진한 그린 텍스트 (인쇄 OK) */
 function htmlThead(headers, widths) {
   const total = widths.reduce((a, b) => a + b, 0);
@@ -370,3 +465,4 @@ function setLoading(btn, isLoading) {
     btn.innerHTML = btn.dataset.origText || '경력서 다운로드';
   }
 }
+/* end of resume-download.js */
