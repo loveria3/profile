@@ -670,3 +670,62 @@ footer {
   .hero h1 { font-size: 36px; letter-spacing: -0.05em; }
   .section-title { font-size: 24px; letter-spacing: -0.03em; }
 }
+
+/* ── Skip Link (접근성) ── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top .15s;
+}
+.skip-link:focus { top: 0; }
+
+/* ── Active Nav (스크롤스파이) ── */
+.nav a[aria-current="true"] {
+  background: var(--bg-deep);
+  color: var(--ink);
+  font-weight: 600;
+}
+.nav-mobile a[aria-current="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── Stats Skeleton ── */
+.stat-skeleton {
+  background: var(--paper);
+  border-radius: 8px;
+  padding: 32px 24px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.stat-skeleton .sk-line {
+  background: var(--line);
+  border-radius: 4px;
+}
+.stat-skeleton .sk-num  { height: 44px; width: 70%; margin-bottom: 10px; }
+.stat-skeleton .sk-label { height: 12px; width: 55%; margin-bottom: 8px; }
+.stat-skeleton .sk-desc { height: 12px; width: 80%; }
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .45; }
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .live-dot { animation: none; }
+  .cert-panel.active { animation: none; }
+  .stat-skeleton { animation: none; opacity: 0.6; }
+}

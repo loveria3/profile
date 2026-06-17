@@ -50,8 +50,11 @@ function doGet(e) {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_NAME);
 
+    // 시트가 없으면 자동으로 생성
     if (!sheet) {
-      return errorOutput('"' + SHEET_NAME + '" 시트를 찾을 수 없습니다. 시트 탭 이름을 확인하세요.');
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow(['앱이름', '설명', 'URL', '카테고리', '등록일']);
+      return jsonOutput([]);
     }
 
     var apps = readApps(sheet);
@@ -71,6 +74,7 @@ function readApps(sheet) {
   var apps = [];
 
   // 1행은 헤더이므로 2행(index 1)부터 읽음
+  // 컬럼: 앱이름(A) | 설명(B) | URL(C) | 카테고리(D) | 등록일(E) | ID(F)
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
     var name = String(row[0] || '').trim();
@@ -85,12 +89,17 @@ function readApps(sheet) {
       dateStr = String(dateRaw || '').trim();
     }
 
+    // ID 백필 (기존 행에 ID가 없으면 생성해 저장 — 수정 기능에 필요)
+    var id = String(row[5] || '').trim();
+    if (!id) { id = genId_(); try { sheet.getRange(i + 1, 6).setValue(id); } catch (e) {} }
+
     apps.push({
       name:        name,
       description: String(row[1] || '').trim(),
       url:         String(row[2] || '').trim(),
       category:    String(row[3] || '').trim(),
-      date:        dateStr
+      date:        dateStr,
+      id:          id
     });
   }
 
@@ -106,9 +115,12 @@ function doPost(e) {
     var ss    = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_NAME);
 
+    // 시트가 없으면 자동으로 생성
     if (!sheet) {
-      return errorOutput('"' + SHEET_NAME + '" 시트를 찾을 수 없습니다.');
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow(['앱이름', '설명', 'URL', '카테고리', '등록일', 'ID']);
     }
+    ensureIdHeader_(sheet);
 
     var data = JSON.parse(e.postData.contents);
     var name = String(data.name || '').trim();
@@ -118,21 +130,56 @@ function doPost(e) {
       return errorOutput('앱 이름과 URL은 필수입니다.');
     }
 
-    var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    // 수정 (제목·설명·URL·카테고리 변경, 등록일·ID 유지)
+    if (data.action === 'update') {
+      var rowIdx = findRowByColId_(sheet, 6, data.id);
+      if (rowIdx < 0) return errorOutput('해당 앱을 찾을 수 없습니다: ' + data.id);
+      sheet.getRange(rowIdx, 1, 1, 4).setValues([[
+        name,
+        String(data.description || '').trim(),
+        url,
+        String(data.category || '기타').trim()
+      ]]);
+      return jsonOutput({ success: true });
+    }
 
+    // 추가 (기본)
+    var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    var newId = genId_();
     sheet.appendRow([
       name,
       String(data.description || '').trim(),
       url,
       String(data.category    || '기타').trim(),
-      today
+      today,
+      newId
     ]);
 
-    return jsonOutput({ success: true });
+    return jsonOutput({ success: true, id: newId });
 
   } catch (err) {
     return errorOutput(err.toString());
   }
+}
+
+// ──────────────────────────────────────────────────────────
+//  내부 헬퍼
+// ──────────────────────────────────────────────────────────
+function genId_() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function findRowByColId_(sheet, col, id) {
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][col - 1]).trim() === String(id).trim()) return i + 1;
+  }
+  return -1;
+}
+
+// 헤더에 ID 컬럼(F)이 없으면 보강
+function ensureIdHeader_(sheet) {
+  if (sheet.getLastColumn() < 6) sheet.getRange(1, 6).setValue('ID');
 }
 
 // ──────────────────────────────────────────────────────────

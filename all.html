@@ -5,19 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>강지애 · 수업 앱 모음</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌼</text></svg>">
+<meta name="description" content="강지애 디지털 강사가 수업에 활용하는 에듀테크 앱 모음. 퀴즈, 시뮬레이션, 게임, 수업 도구 등 카테고리별 정리.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="강지애 · 수업 앱 모음">
+<meta property="og:description" content="디지털 강사 강지애가 수업에 활용하는 에듀테크 앱 모음. 퀴즈·시뮬레이션·게임·수업 도구 등.">
+<meta property="og:image" content="https://loveria3.github.io/profile/assets/portrait.png">
+<meta property="og:url" content="https://loveria3.github.io/profile/all.html">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="강지애 · 수업 앱 모음">
+<meta name="twitter:image" content="https://loveria3.github.io/profile/assets/portrait.png">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="style.css" />
-<script>
-/* 이미 인증된 세션이면 PIN 화면 플래시 방지 */
-if (sessionStorage.getItem('kja_all_v1') === '1') {
-  document.documentElement.classList.add('all-authed');
-}
-</script>
 <style>
-.all-authed #pinLock { display:none !important; }
+#pinLock.hidden { display:none !important; }
 /* ── 앱 갤러리 전용 스타일 ── */
 
 /* 페이지 히어로 */
@@ -136,6 +140,7 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
 .app-card-top.cat-sim     { background: var(--accent); }
 .app-card-top.cat-game    { background: var(--gold); }
 .app-card-top.cat-tool    { background: #6b7f9e; }
+.app-card-top.cat-class   { background: #5a8f7b; }
 .app-card-top.cat-default { background: var(--muted); }
 
 .app-card-body {
@@ -162,6 +167,7 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
 .app-category.cat-sim   { background: rgba(42, 59, 46, 0.09);   color: var(--accent); }
 .app-category.cat-game  { background: rgba(201, 163, 91, 0.15); color: #9a7b30; }
 .app-category.cat-tool  { background: rgba(107, 127, 158, 0.12); color: #4a5f7a; }
+.app-category.cat-class { background: rgba(90, 143, 123, 0.13); color: #3f6f5e; }
 .app-category.cat-default { background: rgba(122, 113, 106, 0.1); color: var(--muted); }
 
 .app-name {
@@ -187,6 +193,14 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
   border-top: 1px solid var(--line-soft);
   gap: 12px;
 }
+.app-foot-actions { display: flex; align-items: center; gap: 8px; }
+.app-edit-btn {
+  background: none; border: 1px solid var(--line);
+  color: var(--muted); font-size: 12px; font-family: inherit;
+  padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  transition: border-color .15s, color .15s; white-space: nowrap;
+}
+.app-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
 .app-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
@@ -471,7 +485,7 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
 <body data-screen-label="03 Apps Gallery">
 
 <!-- ──────────────── PIN LOCK ──────────────── -->
-<div id="pinLock" role="dialog" aria-modal="true" aria-label="PIN 입력">
+<div id="pinLock" class="hidden" role="dialog" aria-modal="true" aria-label="PIN 입력">
   <div class="pin-card">
     <div class="pin-logo">
       <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
@@ -560,6 +574,7 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
     <button class="filter-btn" data-filter="시뮬레이션">시뮬레이션</button>
     <button class="filter-btn" data-filter="게임">게임</button>
     <button class="filter-btn" data-filter="도구">도구</button>
+    <button class="filter-btn" data-filter="수업">수업</button>
   </div>
 </section>
 
@@ -595,8 +610,8 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
       </div>
     </div>
 
-    <!-- 앱 추가 버튼 (로그인 후 표시) -->
-    <div class="add-app-wrap" id="addAppWrap" style="display:none">
+    <!-- 앱 추가 버튼 (공개 · 클릭 시 PIN 인증) -->
+    <div class="add-app-wrap" id="addAppWrap" style="display:flex">
       <button id="addAppBtn" aria-label="새 앱 추가">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         앱 추가하기
@@ -676,6 +691,7 @@ if (sessionStorage.getItem('kja_all_v1') === '1') {
             <option value="게임">게임</option>
             <option value="시뮬레이션">시뮬레이션</option>
             <option value="도구">도구</option>
+            <option value="수업">수업</option>
           </select>
         </div>
         <div></div>
@@ -701,7 +717,7 @@ const APPS_API_URL = 'https://script.google.com/macros/s/AKfycbw0vDZEh7uVvHFq8Y_
 // ──────────────────────────────────────────────────────────
 function catClass(cat) {
   if (!cat) return 'default';
-  const map = { '퀴즈': 'quiz', '시뮬레이션': 'sim', '게임': 'game', '도구': 'tool' };
+  const map = { '퀴즈': 'quiz', '시뮬레이션': 'sim', '게임': 'game', '도구': 'tool', '수업': 'class' };
   return map[cat.trim()] || 'default';
 }
 
@@ -732,12 +748,15 @@ function buildCard(app) {
       </div>
       <div class="app-card-footer">
         <span class="app-date mono">${fmtDate(app.date)}</span>
-        <a class="app-open-btn" href="${url}" target="_blank" rel="noopener"${disabled}>
-          앱 열기
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-          </svg>
-        </a>
+        <div class="app-foot-actions">
+          <button class="app-edit-btn" type="button" data-id="${app.id || ''}">수정</button>
+          <a class="app-open-btn" href="${url}" target="_blank" rel="noopener"${disabled}>
+            앱 열기
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+            </svg>
+          </a>
+        </div>
       </div>
     </article>`;
 }
@@ -859,97 +878,70 @@ async function loadApps() {
 loadApps();
 
 // ══════════════════════════════════════════════════════════
-//  PIN LOCK
+//  PIN 게이트 — 페이지는 공개, "앱 추가" 시에만 인증
 // ══════════════════════════════════════════════════════════
-;(async function() {
+const _allPin = (function () {
   const overlay = document.getElementById('pinLock');
-  if (!overlay) return;
+  if (!overlay) return { open() {}, isAuthed: () => false };
 
-  function showAddBtn() {
-    const w = document.getElementById('addAppWrap');
-    if (w) w.style.display = 'flex';
-  }
-
-  // 이미 인증된 세션이면 즉시 숨김
-  if (sessionStorage.getItem('kja_all_v1') === '1') {
-    overlay.style.display = 'none';
-    showAddBtn(); return;
-  }
-
-  /* ──────────────────────────────────────────
-     PIN 보안 처리 (schedule.html과 동일한 PIN)
-     · XOR 인코딩으로 소스에 평문 비노출
-     · SubtleCrypto SHA-256으로 비교
-  ────────────────────────────────────────── */
   const _k = [42, 17, 93, 58, 12, 77];
   const _e = [26, 38, 109, 8, 60, 116];
-  const _rp = () => _e.map((b,i) => String.fromCharCode(b ^ _k[i])).join('');
-
+  const _rp = () => _e.map((b, i) => String.fromCharCode(b ^ _k[i])).join('');
   async function sha256(s) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
-
   const SALT = 'kja-all-2026';
-  const _expected = await sha256(SALT + _rp());
-
+  let _expected = null;
   async function verify(input) {
+    if (_expected === null) _expected = await sha256(SALT + _rp());
     return (await sha256(SALT + input)) === _expected;
   }
 
-  /* 시도 횟수 제한: 5회 실패 → 5분 잠금 */
   const RL_KEY = 'kja_all_rl_v1';
   const MAX_TRY = 5, LOCK_MIN = 5;
   const getRL = () => JSON.parse(localStorage.getItem(RL_KEY) || '{"n":0,"until":0}');
-  const setRL = o  => localStorage.setItem(RL_KEY, JSON.stringify(o));
+  const setRL = o => localStorage.setItem(RL_KEY, JSON.stringify(o));
 
   const inp    = document.getElementById('pinInp');
   const errEl  = document.getElementById('pinErr');
   const lockEl = document.getElementById('pinLockout');
   const btn    = document.getElementById('pinSubmit');
   const dots   = document.querySelectorAll('#pinDots .pd');
+  let onOk = null, cdId;
 
-  let cdId;
   function startCountdown() {
     if (cdId) return;
     cdId = setInterval(() => {
       const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
       if (rem <= 0) {
         clearInterval(cdId); cdId = null;
-        setRL({n:0, until:0});
+        setRL({ n: 0, until: 0 });
         inp.disabled = false; btn.disabled = false;
         lockEl.style.display = 'none'; errEl.textContent = '';
       } else {
-        const m = String(Math.floor(rem/60)).padStart(2,'0');
-        const s = String(rem % 60).padStart(2,'0');
+        const m = String(Math.floor(rem / 60)).padStart(2, '0');
+        const s = String(rem % 60).padStart(2, '0');
         lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
       }
     }, 1000);
   }
-
   function checkLockout() {
     const rl = getRL();
     if (rl.until <= Date.now()) return false;
     const rem = Math.ceil((rl.until - Date.now()) / 1000);
-    const m = String(Math.floor(rem/60)).padStart(2,'0');
-    const s = String(rem % 60).padStart(2,'0');
+    const m = String(Math.floor(rem / 60)).padStart(2, '0');
+    const s = String(rem % 60).padStart(2, '0');
     inp.disabled = true; btn.disabled = true;
     lockEl.style.display = ''; lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
     startCountdown(); return true;
   }
 
-  checkLockout();
-  setTimeout(() => { if (!inp.disabled) inp.focus(); }, 120);
-
   inp.addEventListener('input', () => {
-    const v = inp.value.replace(/\D/g,'').slice(0,6);
+    const v = inp.value.replace(/\D/g, '').slice(0, 6);
     inp.value = v;
-    dots.forEach((d,i) => {
-      d.classList.toggle('filled', i < v.length);
-      d.classList.remove('err');
-    });
-    errEl.textContent = '';
-    inp.classList.remove('err-state');
+    dots.forEach((d, i) => { d.classList.toggle('filled', i < v.length); d.classList.remove('err'); });
+    errEl.textContent = ''; inp.classList.remove('err-state');
     if (v.length === 6) attemptUnlock(v);
   });
 
@@ -957,40 +949,43 @@ loadApps();
     if (checkLockout()) return;
     val = val ?? inp.value.trim();
     if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
-
     btn.disabled = true;
     const ok = await verify(val);
-
     if (ok) {
       sessionStorage.setItem('kja_all_v1', '1');
-      setRL({n:0, until:0});
-      showAddBtn();
-      overlay.style.transition = 'opacity .35s';
-      overlay.style.opacity = '0';
-      setTimeout(() => { overlay.style.display = 'none'; }, 370);
+      setRL({ n: 0, until: 0 });
+      close();
+      const f = onOk; onOk = null;
+      if (f) f();
     } else {
-      const rl = getRL();
-      rl.n++;
+      const rl = getRL(); rl.n++;
       if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
       setRL(rl);
-
       dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
       inp.classList.add('err-state', 'do-shake');
-      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), {once:true});
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), { once: true });
       inp.value = '';
-
-      if (rl.until > Date.now()) {
-        checkLockout();
-      } else {
-        const left = MAX_TRY - rl.n;
-        errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${left}회)`;
-        btn.disabled = false;
-      }
+      if (rl.until > Date.now()) { checkLockout(); }
+      else { errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${MAX_TRY - rl.n}회)`; btn.disabled = false; }
     }
   }
 
-  btn.addEventListener('click',   () => attemptUnlock(inp.value));
+  function open(onSuccess) {
+    onOk = onSuccess || null;
+    overlay.classList.remove('hidden');
+    errEl.textContent = ''; inp.value = '';
+    dots.forEach(d => d.classList.remove('filled', 'err'));
+    inp.disabled = false; btn.disabled = false;
+    checkLockout();
+    setTimeout(() => { if (!inp.disabled) inp.focus(); }, 120);
+  }
+  function close() { overlay.classList.add('hidden'); }
+
+  btn.addEventListener('click', () => attemptUnlock(inp.value));
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  return { open: open, isAuthed: () => sessionStorage.getItem('kja_all_v1') === '1' };
 })();
 
 // ══════════════════════════════════════════════════════════
@@ -1003,18 +998,59 @@ const addAppForm    = document.getElementById('addAppForm');
 const addSubmitBtn  = document.getElementById('addSubmitBtn');
 const formFeedback  = document.getElementById('formFeedback');
 
+let editingId = null;
+
+function openAddModal() {
+  editingId = null;
+  addAppForm.reset();
+  document.getElementById('addModalTitle').textContent = '새 앱 추가';
+  addSubmitBtn.textContent = '시트에 저장';
+  formFeedback.textContent = ''; formFeedback.className = 'form-feedback';
+  addSubmitBtn.disabled = false;
+  addModal.classList.remove('hidden');
+  document.getElementById('fName').focus();
+}
+
+function openEditModal(app) {
+  editingId = app.id;
+  document.getElementById('fName').value = app.name || '';
+  document.getElementById('fDesc').value = app.description || '';
+  document.getElementById('fUrl').value  = app.url || '';
+  document.getElementById('fCat').value  = app.category || '퀴즈';
+  document.getElementById('addModalTitle').textContent = '앱 수정';
+  addSubmitBtn.textContent = '수정 저장';
+  formFeedback.textContent = ''; formFeedback.className = 'form-feedback';
+  addSubmitBtn.disabled = false;
+  addModal.classList.remove('hidden');
+  document.getElementById('fName').focus();
+}
+
+// 카드의 "수정" 버튼 — PIN 인증 후 수정 모달 열기
+document.getElementById('appsGrid').addEventListener('click', e => {
+  const eb = e.target.closest('.app-edit-btn');
+  if (!eb) return;
+  e.preventDefault();
+  if (!APPS_API_URL) { alert('수정 기능을 사용하려면 APPS_API_URL을 설정해 주세요.'); return; }
+  const app = allApps.find(a => a.id && a.id === eb.dataset.id);
+  if (!app) { alert('이 앱은 시트에 저장된 항목이 아니라 수정할 수 없습니다.'); return; }
+  if (!_allPin.isAuthed()) { _allPin.open(() => openEditModal(app)); return; }
+  openEditModal(app);
+});
+
 document.getElementById('addAppBtn').addEventListener('click', () => {
   if (!APPS_API_URL) {
     alert('앱 추가 기능을 사용하려면\nall.html 상단의 APPS_API_URL 변수에\nApps Script URL을 입력해 주세요.\n\n(apps-gallery-script.txt 안내 참고)');
     return;
   }
-  addModal.classList.remove('hidden');
-  document.getElementById('fName').focus();
+  if (!_allPin.isAuthed()) { _allPin.open(openAddModal); return; }
+  openAddModal();
 });
 
 function closeModal() {
   addModal.classList.add('hidden');
   addAppForm.reset();
+  editingId = null;
+  document.getElementById('addModalTitle').textContent = '새 앱 추가';
   formFeedback.textContent = '';
   formFeedback.className = 'form-feedback';
   addSubmitBtn.disabled = false;
@@ -1038,36 +1074,42 @@ addAppForm.addEventListener('submit', async e => {
     return;
   }
 
+  const payload = editingId
+    ? { action: 'update', id: editingId, name, description: desc, url, category: cat }
+    : { name, description: desc, url, category: cat };
+
   addSubmitBtn.disabled = true;
   addSubmitBtn.textContent = '저장 중…';
   formFeedback.textContent = '';
 
   try {
-    const res  = await fetch(APPS_API_URL, {
-      method: 'POST',
-      body: JSON.stringify({ name, description: desc, url, category: cat })
-    });
+    const res  = await fetch(APPS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
     const data = await res.json();
 
     if (data.success) {
-      formFeedback.textContent = '✓ 저장됐습니다! 목록에 추가하는 중…';
+      if (editingId) {
+        formFeedback.textContent = '✓ 수정됐습니다!';
+        const i = allApps.findIndex(a => a.id === editingId);
+        if (i >= 0) allApps[i] = { ...allApps[i], name, description: desc, url, category: cat };
+      } else {
+        formFeedback.textContent = '✓ 저장됐습니다! 목록에 추가하는 중…';
+        const today = new Date().toISOString().slice(0, 10);
+        allApps.push({ name, description: desc, url, category: cat, date: today, id: data.id });
+      }
       formFeedback.className = 'form-feedback ok';
-      // 목록에 즉시 반영
-      const today = new Date().toISOString().slice(0, 10);
-      allApps.push({ name, description: desc, url, category: cat, date: today });
       render(allApps);
       setTimeout(closeModal, 1000);
     } else {
       formFeedback.textContent = data.message || '저장 중 오류가 발생했습니다.';
       formFeedback.className = 'form-feedback err';
       addSubmitBtn.disabled = false;
-      addSubmitBtn.textContent = '시트에 저장';
+      addSubmitBtn.textContent = editingId ? '수정 저장' : '시트에 저장';
     }
   } catch {
     formFeedback.textContent = '네트워크 오류입니다. 잠시 후 다시 시도해 주세요.';
     formFeedback.className = 'form-feedback err';
     addSubmitBtn.disabled = false;
-    addSubmitBtn.textContent = '시트에 저장';
+    addSubmitBtn.textContent = editingId ? '수정 저장' : '시트에 저장';
   }
 });
 
