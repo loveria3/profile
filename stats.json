@@ -13,14 +13,16 @@
       "plus": true,
       "unit": "개소",
       "label": "Field Verified",
-      "desc": "초·중·고교 및 공공기관 출강"
+      "desc": "초·중·고교 및 공공기관 출강",
+      "source": "schools"
     },
     {
       "num": "10",
       "plus": true,
       "unit": "종",
       "label": "Digital Core License",
-      "desc": "에듀테크·SW·AI 전문 자격"
+      "desc": "에듀테크·SW·AI 전문 자격",
+      "source": "certs"
     },
     {
       "num": "15",

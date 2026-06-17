@@ -76,8 +76,13 @@ function doPost(e) {
     var ss   = SpreadsheetApp.getActiveSpreadsheet();
 
     // 강의 스케쥴 처리 (action 키가 있는 경우)
-    if (data.action === 'add' || data.action === 'update' || data.action === 'delete') {
+    if (data.action === 'add' || data.action === 'update' || data.action === 'delete' || data.action === 'complete') {
       return handleSchedule_(ss, data);
+    }
+
+    // 자격증 / 연수 처리
+    if (data.action === 'certAdd' || data.action === 'certUpdate' || data.action === 'certDelete') {
+      return handleCert_(ss, data);
     }
 
     // 기존: 카카오 알림 요청
@@ -101,7 +106,7 @@ function doPost(e) {
 
 // ============================================================
 //  강의 스케쥴 — 읽기
-//  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고
+//  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고 | 경력등록
 // ============================================================
 function getScheduleData_() {
   var ss    = SpreadsheetApp.getActiveSpreadsheet();
@@ -109,7 +114,7 @@ function getScheduleData_() {
 
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_SCHEDULE);
-    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고']);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록']);
     return jsonOutput([]);
   }
 
@@ -127,16 +132,17 @@ function getScheduleData_() {
       dateStr = String(dateRaw || '').trim();
     }
     result.push({
-      id:      String(r[0] || '').trim(),
-      date:    dateStr,
-      type:    String(r[2] || '').trim(),
-      company: String(r[3] || '').trim(),
-      mode:    String(r[4] || '').trim(),
-      school:  String(r[5] || '').trim(),
-      time:    String(r[6] || '').trim(),
-      hours:   String(r[7] || '').trim(),
-      topic:   String(r[8] || '').trim(),
-      note:    String(r[9] || '').trim()
+      id:        String(r[0]  || '').trim(),
+      date:      dateStr,
+      type:      String(r[2]  || '').trim(),
+      company:   String(r[3]  || '').trim(),
+      mode:      String(r[4]  || '').trim(),
+      school:    String(r[5]  || '').trim(),
+      time:      String(r[6]  || '').trim(),
+      hours:     String(r[7]  || '').trim(),
+      topic:     String(r[8]  || '').trim(),
+      note:      String(r[9]  || '').trim(),
+      completed: String(r[10] || '').trim()  // 경력등록 완료 여부 ('Y' or '')
     });
   }
   return jsonOutput(result);
@@ -149,7 +155,7 @@ function handleSchedule_(ss, data) {
   var sheet = ss.getSheetByName(SHEET_SCHEDULE);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_SCHEDULE);
-    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고']);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록']);
   }
 
   // 추가
@@ -165,7 +171,8 @@ function handleSchedule_(ss, data) {
       String(data.time    || '').trim(),
       String(data.hours   || '').trim(),
       String(data.topic   || '').trim(),
-      String(data.note    || '').trim()
+      String(data.note    || '').trim(),
+      ''  // 경력등록 (초기값 빈 문자열)
     ]);
     return jsonOutput({ success: true, id: newId });
   }
@@ -174,7 +181,10 @@ function handleSchedule_(ss, data) {
   if (data.action === 'update') {
     var rowIdx = findRowById_(sheet, data.id);
     if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
-    sheet.getRange(rowIdx, 1, 1, 10).setValues([[
+    // 기존 경력등록 완료 플래그 보존
+    var existingCompleted = '';
+    try { existingCompleted = String(sheet.getRange(rowIdx, 11).getValue() || '').trim(); } catch(e) {}
+    sheet.getRange(rowIdx, 1, 1, 11).setValues([[
       data.id,
       String(data.date    || '').trim(),
       String(data.type    || '').trim(),
@@ -184,7 +194,8 @@ function handleSchedule_(ss, data) {
       String(data.time    || '').trim(),
       String(data.hours   || '').trim(),
       String(data.topic   || '').trim(),
-      String(data.note    || '').trim()
+      String(data.note    || '').trim(),
+      existingCompleted
     ]]);
     return jsonOutput({ success: true });
   }
@@ -197,7 +208,89 @@ function handleSchedule_(ss, data) {
     return jsonOutput({ success: true });
   }
 
+  // ── 경력 등록 완료 ──────────────────────────────────────────
+  //  스케쥴 데이터를 경력사항 시트에 자동 입력하고 완료 플래그를 저장한다.
+  // ────────────────────────────────────────────────────────────
+  if (data.action === 'complete') {
+    // 1. 경력사항 시트에 행 추가
+    var careerSheet = ss.getSheetByName(SHEET_CAREER);
+    if (!careerSheet) return errorOutput('경력사항 시트를 찾을 수 없습니다.');
+    careerSheet.appendRow([
+      String(data.period   || '').trim(),  // 근무기간
+      String(data.org      || '').trim(),  // 기관/직장명
+      String(data.position || '').trim(),  // 직위/역할
+      String(data.work     || '').trim(),  // 주요업무
+      String(data.note     || '완료').trim() // 퇴직/종료사유
+    ]);
+
+    // 2. 강의스케쥴 시트에 완료 플래그('Y') 저장
+    var rowIdx = findRowById_(sheet, data.id);
+    if (rowIdx > 0) {
+      // 헤더 행에 '경력등록' 컬럼이 없으면 추가
+      var headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      if (headerRow.length < 11 || headerRow[10] === '') {
+        sheet.getRange(1, 11).setValue('경력등록');
+      }
+      sheet.getRange(rowIdx, 11).setValue('Y');
+    }
+
+    return jsonOutput({ success: true });
+  }
+
   return errorOutput('알 수 없는 action: ' + data.action);
+}
+
+// ============================================================
+//  자격증 / 연수 — 추가 / 수정 / 삭제  (자격증현황 시트)
+//  컬럼: A 카테고리 | B 명칭 | C 날짜 | D 발급/주관기관 | E 비고/결과 | F 급수/시간 | G 분류 | H ID
+// ============================================================
+function handleCert_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_CERT);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_CERT);
+    sheet.appendRow(['카테고리','명칭','날짜','발급/주관기관','비고/결과','급수/시간','분류','ID']);
+  }
+  ensureCertHeader_(sheet);
+
+  if (data.action === 'certAdd') {
+    var newId = generateId_();
+    sheet.appendRow([
+      String(data.category || '자격증').trim(),
+      String(data.name   || '').trim(),
+      String(data.date   || '').trim(),
+      String(data.issuer || '').trim(),
+      String(data.note   || '').trim(),
+      String(data.extra  || '').trim(),
+      String(data.group  || '').trim(),
+      newId
+    ]);
+    return jsonOutput({ success: true, id: newId });
+  }
+
+  if (data.action === 'certUpdate') {
+    var rowIdx = findRowByCol_(sheet, 8, data.id);
+    if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
+    sheet.getRange(rowIdx, 1, 1, 8).setValues([[
+      String(data.category || '자격증').trim(),
+      String(data.name   || '').trim(),
+      String(data.date   || '').trim(),
+      String(data.issuer || '').trim(),
+      String(data.note   || '').trim(),
+      String(data.extra  || '').trim(),
+      String(data.group  || '').trim(),
+      data.id
+    ]]);
+    return jsonOutput({ success: true });
+  }
+
+  if (data.action === 'certDelete') {
+    var rowIdx = findRowByCol_(sheet, 8, data.id);
+    if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
+    sheet.deleteRow(rowIdx);
+    return jsonOutput({ success: true });
+  }
+
+  return errorOutput('알 수 없는 cert action: ' + data.action);
 }
 
 // ============================================================
@@ -249,12 +342,18 @@ function readCertificates(ss) {
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
     if (!r[1]) continue;
+    // 컬럼: A 카테고리 | B 명칭 | C 날짜 | D 발급/주관기관 | E 비고/결과 | F 급수/시간 | G 분류 | H ID
+    var id = String(r[7] || "").trim();
+    if (!id) { id = generateId_(); try { sheet.getRange(i + 1, 8).setValue(id); } catch (e) {} }
     result.push({
       category: String(r[0] || "").trim(),
       name:     String(r[1] || "").trim(),
       date:     String(r[2] || "").trim(),
       issuer:   String(r[3] || "").trim(),
-      note:     String(r[4] || "").trim()
+      note:     String(r[4] || "").trim(),
+      extra:    String(r[5] || "").trim(),   // 자격증: 급수 / 연수: 이수시간
+      group:    String(r[6] || "").trim(),   // 자격증 탭: edtech / national
+      id:       id
     });
   }
   return result;
@@ -269,6 +368,24 @@ function findRowById_(sheet, id) {
     if (String(rows[i][0]).trim() === String(id).trim()) return i + 1;
   }
   return -1;
+}
+
+// 지정한 컬럼(1-based)에서 ID 일치 행 찾기 (자격증현황은 ID가 8번째 컬럼)
+function findRowByCol_(sheet, col, id) {
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][col - 1]).trim() === String(id).trim()) return i + 1;
+  }
+  return -1;
+}
+
+// 자격증현황 헤더에 새 컬럼(급수/시간·분류·ID)이 없으면 보강
+function ensureCertHeader_(sheet) {
+  var headers = ['카테고리','명칭','날짜','발급/주관기관','비고/결과','급수/시간','분류','ID'];
+  var lastCol = sheet.getLastColumn();
+  for (var c = lastCol; c < 8; c++) {
+    sheet.getRange(1, c + 1).setValue(headers[c]);
+  }
 }
 
 function generateId_() {

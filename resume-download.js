@@ -246,7 +246,7 @@ function buildBlocks(bi, education, career, certs, training) {
     education, e => [e.period, e.school, e.major, e.degree]);
 
   const careerHeaders = ['근무기간', '기관/직장명', '직위·역할', '주요업무', '비고'];
-  const careerWidths  = [19, 20, 14, 34, 13];
+  const careerWidths  = [24, 20, 13, 31, 12];
   const { mainRows, groupRows } = processCareer(career);
 
   addSection('경력사항', 'Career', careerHeaders, careerWidths,
@@ -393,8 +393,9 @@ function htmlTrow(cells, widths, even) {
     let style = `font-size:10.5px;line-height:1.65;padding:10px 12px;border-bottom:1px solid #ede4d4;
                  vertical-align:top;word-break:keep-all;background:${bg};`;
     if (i === 0) {
-      style += `font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#2a3b2e;
-                font-weight:600;white-space:nowrap;`;
+      style += `font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3b2e;
+                font-weight:600;white-space:nowrap;letter-spacing:-0.02em;
+                padding-left:10px;padding-right:6px;`;
     } else {
       style += `color:#34322e;`;
     }
