@@ -286,10 +286,9 @@
 .source-link:hover { color: var(--accent); }
 .source-del:hover { color: #c0392b; }
 
-/* 에듀모닝 카카오 알림 카드 */
+/* 카카오 알림 카드 — 제거됨 (placeholder) */
 .kakao-alert-card {
-  background: #fef9ee;
-  border: 1px solid #e8d9a0;
+  display: none;
   border-radius: 16px;
   padding: 20px 22px;
 }
@@ -1015,8 +1014,8 @@ footer {
     <p>제주 관내 디지털·AI 교육 공고를 한 곳에서 큐레이션하고 관리합니다.</p>
     <div class="live-badge">
       <span class="live-dot"></span>
-      모니터링 시스템 실시간 작동 중
-      <span class="mono" style="color:var(--muted); font-size:10px;">· Update: 2026.05.23</span>
+      자동 검색 시스템 작동 중
+      <span class="mono" style="color:var(--muted); font-size:10px;" id="liveBadgeDate"></span>
     </div>
   </div>
 
@@ -1041,45 +1040,17 @@ footer {
         </div>
       </div>
 
-      <!-- 수집 기관 리스트 -->
+      <!-- 자동검색 현황 -->
       <div class="edu-card">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
-          <div class="card-title">
-            수집 기관 리스트
-            <span class="card-title-count" id="sourceCount">(0)</span>
-          </div>
-          <button class="btn-add" onclick="toggleAddSourceForm(true)" title="수집 기관 추가">+</button>
+        <div class="card-title" style="margin-bottom:6px;">🔎 자동 검색 현황</div>
+        <div class="card-sub" id="autoSearchStatus">매일 오전 9시 자동 검색 실행</div>
+        <div style="margin-top:14px; display:flex; flex-wrap:wrap; gap:6px;" id="keywordTags">
+          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">IT교육</span>
+          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">AI교육</span>
+          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">디지털교육</span>
+          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">구글교육</span>
         </div>
-        <div class="card-sub">정보 원천을 직접 관리하세요.</div>
-
-        <!-- 추가 폼 -->
-        <div class="add-source-form" id="addSourceFormContainer">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:11px; font-weight:700; color:var(--accent);">새 모니터링 채널 추가</span>
-            <button class="form-close-btn" onclick="toggleAddSourceForm(false)">✕</button>
-          </div>
-          <div class="form-row">
-            <input type="text" id="sourceIcon" placeholder="🎨" class="edu-input" style="text-align:center;">
-            <input type="text" id="sourceType" placeholder="분류" class="edu-input">
-          </div>
-          <input type="text" id="sourceName" placeholder="기관/사이트명" class="edu-input">
-          <input type="url" id="sourceUrl" placeholder="https://..." class="edu-input">
-          <button class="btn-save" onclick="handleAddSourceSubmit()">수집 채널 저장</button>
-        </div>
-
-        <div class="source-list" id="monitoredListContainer"></div>
-      </div>
-
-      <!-- 카카오 에듀모닝 알림 -->
-      <div class="kakao-alert-card">
-        <h4>
-          <span>💬</span> 카카오 에듀모닝
-        </h4>
-        <p>오늘의 교육 공고 현황을 카카오톡으로 수동 발송합니다. (자동 알림이 오지 않았을 때 사용)</p>
-        <button class="btn-kakao-send" id="kakaoSendBtn" onclick="sendEduMorningAlert()">
-          📨 지금 나에게 알림 보내기
-        </button>
-        <div class="kakao-status" id="kakaoStatus"></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--muted);" class="mono" id="lastSearchedLabel"></div>
       </div>
 
       <!-- 프로그램 직접 등록 -->
@@ -1117,8 +1088,8 @@ footer {
               <input type="text" id="searchInput" oninput="handleSearch(this.value)"
                      placeholder="교육명 검색..." class="search-input">
             </div>
-            <button id="liveRefreshBtn" onclick="triggerLiveUpdate()" class="btn-refresh">
-              <span id="refreshIcon">↺</span> 실시간 수집 업데이트
+            <button id="liveRefreshBtn" onclick="loadFromJson(true)" class="btn-refresh">
+              <span id="refreshIcon">↺</span> 새로고침
             </button>
           </div>
         </div>
@@ -1129,7 +1100,7 @@ footer {
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">🍃</div>
         <h3>해당하는 교육 정보가 없습니다.</h3>
-        <p>검색어를 변경하거나 '수집 업데이트'를 눌러보세요.</p>
+        <p>검색어를 변경하거나 '새로고침'을 눌러보세요.</p>
       </div>
 
       <!-- 공고 그리드 -->
@@ -1262,11 +1233,6 @@ footer {
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  ⚙️  설정
-// ══════════════════════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
-
-// ══════════════════════════════════════════════════════════
 //  📦  localStorage 유틸
 // ══════════════════════════════════════════════════════════
 function lsGet(key, fallback) {
@@ -1278,137 +1244,37 @@ function lsSet(key, value) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  🗄️  Google Sheets 연동
+//  📂  edu-auto.json 로드 (자동 검색 결과)
 // ══════════════════════════════════════════════════════════
-const isConfigured = () => APPS_SCRIPT_URL !== 'YOUR_APPS_SCRIPT_URL_HERE';
-
-async function loadFromSheets() {
-  if (!isConfigured()) return;
-
-  // ★ 패치 전 현재 로컬 기관 목록을 백업 (시트 덮어쓰기로 누락되지 않도록)
-  const preFetchSources = [...monitoredSources];
-
+async function loadFromJson(showToastMsg) {
   try {
-    const srcRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=수집기관`);
-    const srcData = await srcRes.json();
-    if (srcData.success && srcData.data && srcData.data.length > 1) {
-      const sheetSrc = srcData.data.slice(1)
-        .filter(r => r[0])
-        .map(r => ({ id: r[0], name: r[1], url: r[2], icon: r[3], type: r[4] }));
+    const res  = await fetch('edu-auto.json?t=' + Date.now());
+    const data = await res.json();
 
-      // ★ 시트에 없는 로컬 기관 전부 보존 (userAdded 플래그 유무 무관)
-      const sheetIds   = new Set(sheetSrc.map(s => String(s.id)));
-      const localExtra = preFetchSources.filter(s => !sheetIds.has(String(s.id)));
-      monitoredSources = [...sheetSrc, ...localExtra];
-      lsSet('monitoredSources', monitoredSources);
-      // userAdded 목록도 최신화
-      lsSet('userAddedSources', localExtra);
-    }
-
-    const prgRes  = await fetch(`${APPS_SCRIPT_URL}?sheet=공고목록`);
-    const prgData = await prgRes.json();
-    if (prgData.success && prgData.data && prgData.data.length > 1) {
-      // 로컬에서 직접 등록한 공고(시트 id가 아닌 timestamp id) 보존
-      const sheetPrg    = prgData.data.slice(1)
-        .filter(r => r[0])
-        .map(r => ({
-          id: r[0], 제목: r[1], 대상: r[2], 필터: r[3],
-          일시: r[4], 장소: r[5], 주요내용: r[6], 신청링크: r[7], 상태: r[8]
-        }));
-      const sheetPrgIds = new Set(sheetPrg.map(p => String(p.id)));
-      const localPrg    = programData.filter(p => !sheetPrgIds.has(String(p.id)));
-      programData = [...sheetPrg, ...localPrg];
+    if (data && data.items) {
+      // 로컬에서 직접 등록한 항목(id가 'manual-'로 시작) 보존
+      const localPrg = programData.filter(p => String(p.id).startsWith('manual-'));
+      programData = [...data.items, ...localPrg];
       lsSet('programData', programData);
     }
+
+    // 마지막 검색 날짜 UI 업데이트
+    if (data && data.updatedAt) {
+      const d = data.updatedAt;
+      const label = document.getElementById('lastSearchedLabel');
+      if (label) label.textContent = '최근 검색: ' + d;
+      const badge = document.getElementById('liveBadgeDate');
+      if (badge) badge.textContent = '· ' + d;
+    }
+
+    if (showToastMsg) showToast('🔍 검색 결과를 불러왔습니다.');
   } catch (e) {
-    console.warn('Google Sheets 연결 실패, 로컬 데이터로 동작합니다.', e);
-    // 실패해도 preFetchSources 유지 (monitoredSources 변경 없음)
+    console.warn('edu-auto.json 로드 실패, 로컬 데이터로 동작합니다.', e);
   }
 }
 
-async function saveToSheets(sheetName, headers, rows) {
-  if (!isConfigured()) return;
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST', mode: 'no-cors',
-      body: JSON.stringify({ sheet: sheetName, data: [headers, ...rows] })
-    });
-  } catch (e) { console.warn('저장 실패:', e); }
-}
-
-function saveSources() {
-  lsSet('monitoredSources', monitoredSources);
-  // 사용자가 직접 추가한 기관만 별도 보관 (시트와 구분)
-  const userAdded = monitoredSources.filter(s => s.userAdded);
-  lsSet('userAddedSources', userAdded);
-  saveToSheets('수집기관', ['id', 'name', 'url', 'icon', 'type'],
-    monitoredSources.map(s => [s.id, s.name, s.url, s.icon, s.type]));
-}
-
-function savePrograms() {
-  lsSet('programData', programData);
-  saveToSheets('공고목록',
-    ['id', '제목', '대상', '필터', '일시', '장소', '주요내용', '신청링크', '상태'],
-    programData.map(p => [p.id, p.제목, p.대상, p.필터, p.일시, p.장소, p.주요내용, p.신청링크, p.상태]));
-}
-
-// ══════════════════════════════════════════════════════════
-//  💬 카카오 에듀모닝 수동 발송
-// ══════════════════════════════════════════════════════════
-async function sendEduMorningAlert() {
-  const btn    = document.getElementById('kakaoSendBtn');
-  const status = document.getElementById('kakaoStatus');
-  if (!isConfigured()) {
-    status.textContent = '⚠️ Apps Script URL이 설정되지 않았습니다.';
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = '⏳ 발송 중…';
-  status.textContent = '';
-
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode:   'no-cors',
-      body:   JSON.stringify({ sheet: '알림요청' })
-    });
-    status.textContent = '✅ 알림 요청 완료! 잠시 후 카카오톡을 확인해 주세요.';
-    btn.textContent = '✅ 발송 완료';
-    // 3초 후 버튼 복구
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerHTML = '📨 지금 나에게 알림 보내기';
-      status.textContent = '';
-    }, 5000);
-  } catch (e) {
-    status.textContent = '❌ 요청 실패. 네트워크 또는 Apps Script 설정을 확인해 주세요.';
-    btn.disabled = false;
-    btn.innerHTML = '📨 지금 나에게 알림 보내기';
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-//  📊  기본 데이터 (localStorage 없을 때 초기값)
-// ══════════════════════════════════════════════════════════
-const DEFAULT_SOURCES = [
-  { id: 1, name: "제주도청 공지",   url: "https://www.jeju.go.kr",    icon: "🏢", type: "행정" },
-  { id: 2, name: "제주다모아교육",  url: "https://damoa.jje.go.kr",   icon: "🎓", type: "통합" },
-  { id: 3, name: "여성인력센터",    url: "https://www.jejuwoman.kr",  icon: "👩", type: "여성" },
-  { id: 4, name: "다목적문화센터",  url: "https://www.jeju.go.kr",    icon: "🏛️", type: "문화" },
-  { id: 5, name: "인스타그램 교육", url: "https://www.instagram.com", icon: "📸", type: "SNS"  },
-  { id: 6, name: "페이스북 페이지", url: "https://www.facebook.com",  icon: "👥", type: "SNS"  },
-  { id: 7, name: "제주도 교육청",   url: "https://www.jje.go.kr",     icon: "🏫", type: "교육청"},
-  { id: 8, name: "제주테크노파크",  url: "https://www.jejutp.or.kr",  icon: "💻", type: "ICT"  }
-];
-const DEFAULT_PROGRAMS = [
-  { id: 1, 제목: "[제주콘텐츠진흥원] AI 활용 1인 콘텐츠 제작", 대상: "일반도민",  필터: "일반",  일시: "~ 05.28", 장소: "제주콘텐츠진흥원",    주요내용: "ChatGPT 기반 기획 및 미드저니 이미지 생성 실습.", 신청링크: "#", 상태: "마감임박" },
-  { id: 2, 제목: "[모두의연구소] 아이펠 AI 리서처 캠프",        대상: "취업희망자", 필터: "개발자", 일시: "~ 06.26", 장소: "온라인/제주시",       주요내용: "딥러닝 프로젝트 기반 리서처 양성 과정.", 신청링크: "#", 상태: "진행중" },
-  { id: 3, 제목: "[여성센터] AI 마케팅 실무 전문가",           대상: "경력여성",   필터: "여성",  일시: "~ 06.05", 장소: "제주여성인력개발센터", 주요내용: "생성형 AI를 활용한 블로그 마케팅 고도화.", 신청링크: "#", 상태: "진행중" }
-];
-
-// localStorage에서 불러오기 (없으면 기본값)
-let monitoredSources = lsGet('monitoredSources', DEFAULT_SOURCES);
-let programData      = lsGet('programData',      DEFAULT_PROGRAMS);
+// localStorage에서 불러오기 (없으면 빈 배열)
+let programData = lsGet('programData', []);
 
 const tutorGuides = [
   { tag: "입문", title: "시니어 연계",  content: "디지털 배움터 1:1 도우미 과정으로 먼저 연계하세요." },
@@ -1421,57 +1287,11 @@ let targetChart    = null;
 let deleteTargetId = null;
 let deleteType     = 'program';
 
-// ── 수집기관 렌더링 ──
-function renderMonitoredSources() {
-  const container = document.getElementById('monitoredListContainer');
-  document.getElementById('sourceCount').innerText = `(${monitoredSources.length})`;
-  container.innerHTML = '';
-  monitoredSources.forEach(site => {
-    const item = document.createElement('div');
-    item.className = 'source-item';
-    item.innerHTML = `
-      <div class="source-item-left">
-        <div class="source-icon">${site.icon}</div>
-        <div>
-          <div class="source-name">${site.name}</div>
-          <div class="source-type">${site.type}</div>
-        </div>
-      </div>
-      <div class="source-actions">
-        <a href="${site.url}" target="_blank" class="source-link" title="바로가기">↗</a>
-        <button onclick="requestDeleteSource(${site.id})" class="source-del" title="삭제">✕</button>
-      </div>
-    `;
-    container.appendChild(item);
-  });
-}
-
 // ── 실시간 업데이트 ──
 async function triggerLiveUpdate() {
-  const btn  = document.getElementById('liveRefreshBtn');
-  const icon = document.getElementById('refreshIcon');
-  btn.disabled      = true;
-  btn.style.opacity = '0.75';
-  icon.classList.add('spinning');
-
-  function resetBtn() {
-    btn.disabled      = false;
-    btn.style.opacity = '1';
-    icon.classList.remove('spinning');
-  }
-
-  // 1) 구글 시트에서 최신 데이터 재로드
-  await loadFromSheets();
-
-  // 2) 화면 갱신
-  renderMonitoredSources();
+  await loadFromJson(true);
   renderPrograms();
   updateChart();
-
-  const cnt = monitoredSources.length;
-
-  resetBtn();
-  showToast(`✅ ${cnt}개 기관 데이터 업데이트 완료`);
 }
 
 
@@ -1515,7 +1335,7 @@ function renderPrograms() {
 
 // ── 필터 렌더링 ──
 function renderFilters() {
-  const filters   = ['전체', '일반', '여성', '개발자', '시니어'];
+  const filters   = ['전체', 'IT교육', 'AI교육', '디지털교육', '구글교육'];
   const container = document.getElementById('filterContainer');
   container.innerHTML = '';
   filters.forEach(f => {
@@ -1531,32 +1351,6 @@ function renderFilters() {
 function setFilter(f)      { currentFilter = f; renderFilters(); renderPrograms(); }
 function handleSearch(v)   { currentSearch = v.trim(); renderPrograms(); }
 
-function toggleAddSourceForm(show) {
-  const el = document.getElementById('addSourceFormContainer');
-  el.classList.toggle('open', show);
-}
-function handleAddSourceSubmit() {
-  const name = document.getElementById('sourceName').value.trim();
-  const url  = document.getElementById('sourceUrl').value.trim();
-  if (!name || !url) return showToast("정보를 모두 입력해주세요.", "error");
-  const newSource = {
-    id: Date.now(),
-    name,
-    url,
-    icon:      document.getElementById('sourceIcon').value || '📍',
-    type:      document.getElementById('sourceType').value || '기타',
-    userAdded: true   // 사용자가 직접 추가한 기관 표시
-  };
-  monitoredSources.push(newSource);
-  renderMonitoredSources();
-  saveSources();
-  // 입력 필드 초기화
-  ['sourceIcon','sourceType','sourceName','sourceUrl'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  toggleAddSourceForm(false);
-  showToast("새 수집 기관이 등록되었습니다. 다음 업데이트 시 함께 검색합니다.");
-}
 
 function toggleAddModal(show) {
   document.getElementById('addModal').classList.toggle('open', show);
@@ -1575,15 +1369,14 @@ function handleAddSubmit(e) {
     상태: '진행중'
   };
   programData.unshift(newItem);
+  lsSet('programData', programData);
   renderPrograms();
   updateChart();
-  savePrograms();
   toggleAddModal(false);
   showToast("성공적으로 등록되었습니다.");
 }
 
 function requestDeleteProgram(id) { deleteType = 'program'; deleteTargetId = id; showDeleteModal("공고 삭제", "이 카드를 목록에서 제거하시겠습니까?"); }
-function requestDeleteSource(id)  { deleteType = 'source';  deleteTargetId = id; showDeleteModal("기관 삭제", "이 채널의 모니터링을 중단하시겠습니까?"); }
 function showDeleteModal(title, desc) {
   document.getElementById('deleteModalTitle').innerText       = title;
   document.getElementById('deleteModalDescription').innerText = desc;
@@ -1593,13 +1386,9 @@ function toggleDeleteModal(show) {
   document.getElementById('deleteModal').classList.toggle('open', show);
 }
 document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-  if (deleteType === 'program') {
-    programData = programData.filter(p => p.id !== deleteTargetId);
-    renderPrograms(); updateChart(); savePrograms();
-  } else {
-    monitoredSources = monitoredSources.filter(s => s.id !== deleteTargetId);
-    renderMonitoredSources(); saveSources();
-  }
+  programData = programData.filter(p => p.id !== deleteTargetId);
+  lsSet('programData', programData);
+  renderPrograms(); updateChart();
   toggleDeleteModal(false);
   showToast("삭제 완료되었습니다.", "error");
 });
@@ -1623,7 +1412,7 @@ function initChart() {
   targetChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['일반', '여성', '개발자', '시니어'],
+      labels: ['IT교육', 'AI교육', '디지털교육', '구글교육'],
       datasets: [{
         data: [0, 0, 0, 0],
         backgroundColor: ['#2a3b2e', '#b3753a', '#c9a35b', '#7a716a'],
@@ -1649,7 +1438,7 @@ function initChart() {
 }
 function updateChart() {
   if (!targetChart) return;
-  const counts = { '일반': 0, '여성': 0, '개발자': 0, '시니어': 0 };
+  const counts = { 'IT교육': 0, 'AI교육': 0, '디지털교육': 0, '구글교육': 0 };
   programData.forEach(p => { if (counts[p.필터] !== undefined) counts[p.필터]++; });
   targetChart.data.datasets[0].data = Object.values(counts);
   targetChart.update();
@@ -1667,23 +1456,20 @@ async function checkDailyAutoUpdate() {
   console.log('[AutoUpdate] 오늘 첫 로드 - 자동 업데이트 실행');
   lsSet('lastAutoUpdateDate', todayStr);
 
-  await loadFromSheets();
-  renderMonitoredSources();
+  await loadFromJson(false);
   renderPrograms();
   updateChart();
-
-  const cnt2 = monitoredSources.length;
-  showToast(`📅 오늘 ${cnt2}개 기관 자동 업데이트 완료`);
+  showToast('📅 자동 검색 결과 업데이트 완료');
 }
 
 // ── 초기화 ──
 window.onload = async () => {
 
-  // 1) 기관 리스트 & 공고 초기 렌더 (localStorage 값 우선)
-  renderMonitoredSources();
-  renderPrograms();
+  // 1) 공고 초기 렌더 (edu-auto.json 로드 후 표시)
   renderFilters();
   initChart();
+  await loadFromJson(false);
+  renderPrograms();
 
   // 3) 튜터 가이드
   const guideGrid = document.getElementById('tutorGuideGrid');
