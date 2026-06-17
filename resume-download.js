@@ -14,7 +14,10 @@ const MERGE_CONTRACTS = {
 };
 
 /* ── 별도 블럭으로 묶을 기관 (접두사 매칭) ── */
-const GROUP_BLOCK = { prefix: '에듀인플랫폼', label: '에듀인플랫폼 출강 내역', en: 'EduInPlatform' };
+const GROUP_BLOCKS = [
+  { prefix: '에듀인플랫폼',        label: '에듀인플랫폼 출강 내역',        en: 'EduInPlatform' },
+  { prefix: '제주대학교 찾아가는', label: '제주대학교 찾아가는 학교컨설팅', en: 'School Consulting' },
+];
 
 /* ── 디자인 토큰 (웹사이트 팔레트, 인쇄 친화적) ──
    ink #1b1a18 · accent(딥그린) #2a3b2e · gold #c9a35b · copper #b3753a
@@ -159,13 +162,13 @@ function processCareer(career) {
     return true;
   });
 
-  const mainRows = [], groupRows = [], buckets = {};
+  const mainRows = [], buckets = {};
+  const groupRows = GROUP_BLOCKS.map(() => []);   // 그룹별 행 배열
 
   rows.forEach(r => {
     const org = (r.org || '').trim();
-    if (GROUP_BLOCK.prefix && org.startsWith(GROUP_BLOCK.prefix)) {
-      groupRows.push({ ...r, note: cleanNote(r.note) }); return;
-    }
+    const gi = GROUP_BLOCKS.findIndex(g => g.prefix && org.startsWith(g.prefix));
+    if (gi >= 0) { groupRows[gi].push({ ...r, note: '' }); return; }   // 그룹은 비고 비움
     if (MERGE_CONTRACTS[org]) { (buckets[org] = buckets[org] || []).push(r); return; }
     mainRows.push({ ...r, note: cleanNote(r.note) });
   });
@@ -182,8 +185,8 @@ function processCareer(career) {
     });
   });
 
-  mainRows.sort((a, b)  => careerSortKey(b) - careerSortKey(a));
-  groupRows.sort((a, b) => careerSortKey(b) - careerSortKey(a));
+  mainRows.sort((a, b) => careerSortKey(b) - careerSortKey(a));
+  groupRows.forEach(g => g.sort((a, b) => careerSortKey(b) - careerSortKey(a)));
   return { mainRows, groupRows };
 }
 
@@ -249,15 +252,17 @@ function buildBlocks(bi, education, career, certs, training) {
   addSection('경력사항', 'Career', careerHeaders, careerWidths,
     mainRows, c => [c.period, c.org, c.position, c.work, c.note]);
 
-  if (groupRows.length) {
-    list.push({ type: 'subhead', ko: '경력사항', html: htmlSubhead(GROUP_BLOCK.label, GROUP_BLOCK.en) });
+  GROUP_BLOCKS.forEach((g, gi) => {
+    const grows = groupRows[gi];
+    if (!grows.length) return;
+    list.push({ type: 'subhead', ko: '경력사항', html: htmlSubhead(g.label, g.en) });
     list.push({ type: 'thead', ko: '경력사항', headers: careerHeaders, widths: careerWidths,
       html: htmlThead(careerHeaders, careerWidths) });
-    groupRows.forEach((c, i) => {
+    grows.forEach((c, i) => {
       list.push({ type: 'trow', ko: '경력사항',
         html: htmlTrow([c.period, c.org, c.position, c.work, c.note], careerWidths, i % 2 === 0) });
     });
-  }
+  });
 
   addSection('자격증', 'Certificates',
     ['취득일', '자격명', '발급기관'], [18, 48, 34],
