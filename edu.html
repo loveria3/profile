@@ -1325,7 +1325,7 @@ function renderPrograms() {
           <div class="program-meta">🗓️ ${p.일시} &nbsp;|&nbsp; 📍 ${p.장소}</div>
           <div class="program-desc">"${p.주요내용}"</div>
         </div>
-        <a href="${p.신청링크}" class="btn-program-link">공고 확인 →</a>
+        <a href="${p.신청링크}" class="btn-program-link" target="_blank" rel="noopener noreferrer">공고 확인 →</a>
       `;
       grid.appendChild(card);
     });
