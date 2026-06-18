@@ -2,13 +2,6 @@
   "_comment": "숫자와 설명을 수정하고 저장하면 메인 페이지에 자동 반영됩니다.",
   "stats": [
     {
-      "num": "370",
-      "plus": true,
-      "unit": "시간",
-      "label": "Specialized Training",
-      "desc": "디지털 강사 양성 과정 이수"
-    },
-    {
       "num": "20",
       "plus": true,
       "unit": "개소",
@@ -30,6 +23,13 @@
       "unit": "년",
       "label": "IT Background",
       "desc": "제주대 연구센터 행정· 교육원 강의 경력"
+    },
+    {
+      "num": "370",
+      "plus": true,
+      "unit": "시간",
+      "label": "Specialized Training",
+      "desc": "디지털 강사 양성 과정 이수"
     }
   ]
 }
