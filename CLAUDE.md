@@ -49,6 +49,14 @@
 - 외부 폰트·라이브러리는 CDN 사용, `preconnect` 힌트 포함.
 - 이미지는 `object-fit: cover` + 적절한 크기 지정.
 - 불필요한 인라인 스타일 최소화, CSS 클래스로 관리.
+- **이미지 최적화**: 새 이미지 추가 시 WebP 변환 권장. `<picture>` 태그로 WebP + PNG 폴백 구조 사용.
+  ```html
+  <picture>
+    <source srcset="assets/image.webp" type="image/webp">
+    <img src="assets/image.png" alt="..." class="...">
+  </picture>
+  ```
+- **모든 공개 페이지**에 `<meta name="theme-color" content="#f4ede2">` 포함 (모바일 주소창 색상 통일).
 
 ### 시맨틱 HTML
 - `<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`, `<article>` 등 시맨틱 태그 사용.
@@ -83,7 +91,7 @@
 <span class="mono">Made with Claude · v 1.0 · {페이지명}</span>
 ```
 
-- 기존 페이지(index.html, all.html, edu.html)에는 이미 적용되어 있다.
+- 기존 페이지(index.html, all.html, edu.html, high.html)에는 이미 적용되어 있다.
 - 신규 페이지 생성 시 예외 없이 동일하게 적용한다.
 
 ---
@@ -172,9 +180,10 @@ profile/
 ├── schedule-apps-script.txt    # 강의 스케쥴용 구글 시트 Apps Script (참고용)
 ├── apps-gallery-script.txt     # 수업앱 목록용 구글 시트 Apps Script (참고용)
 └── assets/
-    ├── portrait.png      # 프로필 사진
-    ├── daisy.png         # 데이지 로고 (네비게이션 · PIN화면 공통)
-    └── flower-bar.png    # 하단 플라워 바 이미지
+    ├── portrait.png        # 프로필 사진
+    ├── daisy.png           # 데이지 로고 (네비게이션 · PIN화면 공통)
+    ├── flower-bar.png      # 하단 플라워 바 이미지 (PNG 폴백용)
+    └── flower-bar.webp     # 하단 플라워 바 이미지 (WebP 최적화, 107KB)
 ```
 
 ---
@@ -184,7 +193,7 @@ profile/
 ### index.html — 메인 프로필 페이지
 - **공개 여부**: 공개
 - **외부 의존**: `style.css`, `resume-download.js`, `stats.json`
-- **stats.json**: 통계 카운터 데이터. 카드에 `source` 필드가 있으면 시트 연동(아래).
+- **stats.json**: 통계 카운터 데이터. 카드에 `source` 필드가 있으면 시트 연동(아래). **카드 순서: 출강개소 → 자격종수 → IT경력 → 연수시간** (370시간 카드가 마지막).
 - **주요 버튼**: 명함 다운로드 (html2canvas 캡처), 경력서 다운로드 (resume-download.js 호출)
 - **시트 자동 연동 (페이지 하단 인라인 스크립트, `RESUME_API_URL` 전역 재사용)**:
   - **강의 경력 학교 칩**: `.schools[data-org-prefix]` (에듀인플랫폼 / 제주대학교 찾아가는) — 시트 경력의 `주요업무`에서 학교명을 추출해 **기존 칩은 유지하고 새 학교만 중복 없이 추가** (학교 접미사 정규화로 중복 판정).
@@ -211,6 +220,8 @@ profile/
 - **카테고리**: 퀴즈 / 시뮬레이션 / 게임 / 도구 / **수업** (필터 버튼 + 추가/수정 폼 옵션, `catClass` 매핑 `cat-class`)
 - **앱 추가/수정**: 추가 모달을 추가·수정 공용으로 사용. 수정은 카드 "수정" 버튼 → PIN → 제목·설명·URL·카테고리 변경 → `action:'update'`로 ID(F열) 기준 갱신(등록일 유지).
 - URL이 비어 있으면 `DEFAULT_APPS` 하드코딩 폴백 (폴백 항목은 ID가 없어 수정 불가)
+- ⚠️ **기존 시트 항목 수정 불가 문제**: `앱목록` 시트 F열(ID)이 비어 있으면 수정 버튼 클릭 시 "시트에 저장된 항목이 아닙니다" 오류. Apps Script(doGet)가 F열 자동 백필하므로 **스크립트 재배포 후 페이지 로드 시 자동 해결**. 또는 시트 F열에 수동으로 고유 ID 입력해도 됨.
+- ⚠️ **apps-gallery-script.txt 재배포 필요 시점**: 구버전 스크립트는 F열(ID)을 반환하지 않아 수정 기능이 작동 안 함. 반드시 최신 로컬 파일 내용으로 재배포할 것.
 
 ### edu.html — 실시간 교육 모니터링
 - **공개 여부**: 공개 (PIN 없음)
