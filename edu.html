@@ -1250,29 +1250,36 @@ function lsSet(key, value) {
 const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
 
 async function loadFromJson(showToastMsg) {
+  // 공통: 항목 적용 헬퍼
+  function applyData(data) {
+    const localPrg = programData.filter(p => String(p.id).startsWith('manual-'));
+    programData = [...data.items, ...localPrg];
+    lsSet('programData', programData);
+    if (data.updatedAt) {
+      const label = document.getElementById('lastSearchedLabel');
+      if (label) label.textContent = '최근 검색: ' + data.updatedAt;
+      const badge = document.getElementById('liveBadgeDate');
+      if (badge) badge.textContent = '· ' + data.updatedAt;
+    }
+    if (showToastMsg) showToast('🔍 검색 결과를 불러왔습니다.');
+  }
+
+  // 1차: Apps Script
   try {
     const res  = await fetch(SCHEDULE_API_URL + '?sheet=자동검색결과&t=' + Date.now());
     const data = await res.json();
-
-    if (data && data.items) {
-      // 로컬에서 직접 등록한 항목(id가 'manual-'로 시작) 보존
-      const localPrg = programData.filter(p => String(p.id).startsWith('manual-'));
-      programData = [...data.items, ...localPrg];
-      lsSet('programData', programData);
-    }
-
-    // 마지막 검색 날짜 UI 업데이트
-    if (data && data.updatedAt) {
-      const d = data.updatedAt;
-      const label = document.getElementById('lastSearchedLabel');
-      if (label) label.textContent = '최근 검색: ' + d;
-      const badge = document.getElementById('liveBadgeDate');
-      if (badge) badge.textContent = '· ' + d;
-    }
-
-    if (showToastMsg) showToast('🔍 검색 결과를 불러왔습니다.');
+    if (data && data.items) { applyData(data); return; }
   } catch (e) {
-    console.warn('edu-auto.json 로드 실패, 로컬 데이터로 동작합니다.', e);
+    console.warn('Apps Script 로드 실패, edu-auto.json 시도합니다.', e);
+  }
+
+  // 2차 fallback: edu-auto.json
+  try {
+    const res2  = await fetch('edu-auto.json?t=' + Date.now());
+    const data2 = await res2.json();
+    if (data2 && data2.items) { applyData(data2); }
+  } catch (e2) {
+    console.warn('edu-auto.json 로드 실패, 로컬 데이터로 동작합니다.', e2);
   }
 }
 
