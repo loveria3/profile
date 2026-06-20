@@ -1245,11 +1245,13 @@ function lsSet(key, value) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  📂  edu-auto.json 로드 (자동 검색 결과)
+//  📂  자동 검색 결과 로드 (구글 시트 Apps Script)
 // ══════════════════════════════════════════════════════════
+const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
+
 async function loadFromJson(showToastMsg) {
   try {
-    const res  = await fetch('edu-auto.json?t=' + Date.now());
+    const res  = await fetch(SCHEDULE_API_URL + '?sheet=자동검색결과&t=' + Date.now());
     const data = await res.json();
 
     if (data && data.items) {

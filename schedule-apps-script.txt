@@ -32,10 +32,11 @@ var BASIC_INFO = {
 };
 
 // ── 시트 이름 ─────────────────────────────────────────────────
-var SHEET_EDU      = "학력사항";
-var SHEET_CAREER   = "경력사항";
-var SHEET_CERT     = "자격증현황";
-var SHEET_SCHEDULE = "강의스케쥴";   // ← 새로 추가
+var SHEET_EDU         = "학력사항";
+var SHEET_CAREER      = "경력사항";
+var SHEET_CERT        = "자격증현황";
+var SHEET_SCHEDULE    = "강의스케쥴";
+var SHEET_AUTO_SEARCH = "자동검색결과"; // ← 자동 검색 결과 저장 시트
 
 // ============================================================
 //  doGet — GET 요청 처리
@@ -47,6 +48,11 @@ function doGet(e) {
     // 강의 스케쥴 요청인 경우
     if (e && e.parameter && e.parameter.type === 'schedule') {
       return getScheduleData_();
+    }
+
+    // 자동 검색 결과 요청
+    if (e && e.parameter && e.parameter.sheet === '자동검색결과') {
+      return getAutoSearchData_();
     }
 
     // 기존 경력서 요청 (변경 없음)
@@ -83,6 +89,11 @@ function doPost(e) {
     // 자격증 / 연수 처리
     if (data.action === 'certAdd' || data.action === 'certUpdate' || data.action === 'certDelete') {
       return handleCert_(ss, data);
+    }
+
+    // 자동 검색 결과 저장
+    if (data.action === 'saveAutoSearch') {
+      return saveAutoSearchData_(ss, data);
     }
 
     // 기존: 카카오 알림 요청
@@ -499,4 +510,84 @@ function setupDailyTrigger() {
     .forEach(function(t) { ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('sendDailyKakaoNotification').timeBased().atHour(9).everyDays(1).inTimezone('Asia/Seoul').create();
   Logger.log('✅ 매일 오전 9시 트리거 등록 완료!');
+}
+
+// ============================================================
+//  자동 검색 결과 — 읽기
+//  GET ?sheet=자동검색결과 → { updatedAt, searchedAt, keywords, items[] }
+// ============================================================
+function getAutoSearchData_() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_AUTO_SEARCH);
+
+  // 시트가 없으면 빈 결과 반환
+  if (!sheet || sheet.getLastRow() < 2) {
+    return jsonOutput({ updatedAt: '', searchedAt: '', keywords: [], items: [] });
+  }
+
+  var rows   = sheet.getDataRange().getValues();
+  // 1행: 메타 [updatedAt, searchedAt, keywords(JSON)]
+  var meta   = rows[0];
+  var result = {
+    updatedAt:  String(meta[0] || ''),
+    searchedAt: String(meta[1] || ''),
+    keywords:   JSON.parse(meta[2] || '[]'),
+    items:      []
+  };
+
+  // 3행~: 공고 데이터 [id, 제목, 대상, 필터, 일시, 장소, 주요내용, 신청링크, 상태]
+  for (var i = 2; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0]) continue;
+    result.items.push({
+      id:       String(r[0]),
+      제목:     String(r[1] || ''),
+      대상:     String(r[2] || ''),
+      필터:     String(r[3] || ''),
+      일시:     String(r[4] || ''),
+      장소:     String(r[5] || ''),
+      주요내용: String(r[6] || ''),
+      신청링크: String(r[7] || ''),
+      상태:     String(r[8] || '')
+    });
+  }
+  return jsonOutput(result);
+}
+
+// ============================================================
+//  자동 검색 결과 — 저장
+//  POST action=saveAutoSearch, updatedAt, searchedAt, keywords[], items[]
+// ============================================================
+function saveAutoSearchData_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_AUTO_SEARCH);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_AUTO_SEARCH);
+  }
+  sheet.clearContents();
+
+  // 1행: 메타
+  sheet.appendRow([
+    data.updatedAt  || '',
+    data.searchedAt || '',
+    JSON.stringify(data.keywords || [])
+  ]);
+  // 2행: 헤더
+  sheet.appendRow(['id','제목','대상','필터','일시','장소','주요내용','신청링크','상태']);
+  // 3행~: 공고 데이터
+  var items = data.items || [];
+  items.forEach(function(item) {
+    sheet.appendRow([
+      item.id        || '',
+      item.제목      || '',
+      item.대상      || '',
+      item.필터      || '',
+      item.일시      || '',
+      item.장소      || '',
+      item.주요내용  || '',
+      item.신청링크  || '',
+      item.상태      || ''
+    ]);
+  });
+
+  return jsonOutput({ success: true, saved: items.length });
 }
