@@ -735,7 +735,7 @@
       <input type="file" id="uploadInput" />
       <div class="upload-zone-icon">☁️</div>
       <div class="upload-zone-text">파일을 <strong>드래그</strong>하거나 클릭해서 선택하세요</div>
-      <div class="upload-zone-hint">최대 4MB · .exe, .pdf, .zip 등 모든 파일 형식</div>
+      <div class="upload-zone-hint">최대 50MB · 30MB 이하 권장 · .exe, .pdf, .zip 등 모든 파일 형식</div>
     </div>
 
     <!-- 파일 업로드 버튼 (클릭 시 PIN 인증) -->
@@ -1318,8 +1318,8 @@ uploadInput.addEventListener('change', () => {
 });
 
 async function uploadFile(file) {
-  if (file.size > 4 * 1024 * 1024) {
-    alert('파일이 너무 큽니다. 4MB 이하 파일만 업로드 가능합니다.');
+  if (file.size > 50 * 1024 * 1024) {
+    alert('파일이 너무 큽니다. 최대 50MB까지 업로드 가능합니다.');
     return;
   }
   uploadZone.style.display = 'none';
