@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#f4ede2">
+<title>강지애 · 수업 앱 모음</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌼</text></svg>">
+<meta name="description" content="강지애 디지털 강사가 수업에 활용하는 에듀테크 앱 모음. 퀴즈, 시뮬레이션, 게임, 수업 도구 등 카테고리별 정리.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="강지애 · 수업 앱 모음">
+<meta property="og:description" content="디지털 강사 강지애가 수업에 활용하는 에듀테크 앱 모음. 퀴즈·시뮬레이션·게임·수업 도구 등.">
+<meta property="og:image" content="https://loveria3.github.io/profile/assets/portrait.png">
+<meta property="og:url" content="https://loveria3.github.io/profile/all.html">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="강지애 · 수업 앱 모음">
+<meta name="twitter:image" content="https://loveria3.github.io/profile/assets/portrait.png">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="stylesheet" href="style.css" />
+<style>
+#pinLock.hidden { display:none !important; }
+/* ── 앱 갤러리 전용 스타일 ── */
+
+/* 페이지 히어로 */
+.apps-hero {
+  padding-top: 72px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.apps-hero-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.apps-hero h1 {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-top: 14px;
+}
+.apps-hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+.apps-hero-desc {
+  font-size: 19px;
+  color: var(--ink-soft);
+  margin-top: 18px;
+  max-width: 520px;
+  line-height: 1.65;
+}
+.apps-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.apps-count-badge .count-num {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* 필터 탭 */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  padding-bottom: 32px;
+}
+.filter-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.filter-btn:hover {
+  background: var(--bg-deep);
+  color: var(--ink);
+}
+.filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+/* 앱 카드 그리드 */
+.apps-section {
+  padding-bottom: 96px;
+}
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 32px;
+}
+
+/* 개별 앱 카드 */
+.app-card {
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .18s, box-shadow .18s;
+  position: relative;
+}
+.app-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -12px rgba(27, 26, 24, 0.14);
+}
+.app-card-top {
+  height: 5px;
+  background: var(--accent-warm);
+}
+.app-card-top.cat-quiz    { background: var(--accent-warm); }
+.app-card-top.cat-sim     { background: var(--accent); }
+.app-card-top.cat-game    { background: var(--gold); }
+.app-card-top.cat-tool    { background: #6b7f9e; }
+.app-card-top.cat-class   { background: #5a8f7b; }
+.app-card-top.cat-default { background: var(--muted); }
+
+.app-card-body {
+  padding: 24px 24px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.app-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(42, 59, 46, 0.08);
+  color: var(--accent);
+  width: fit-content;
+}
+.app-category.cat-quiz  { background: rgba(179, 117, 58, 0.1);  color: var(--accent-warm); }
+.app-category.cat-sim   { background: rgba(42, 59, 46, 0.09);   color: var(--accent); }
+.app-category.cat-game  { background: rgba(201, 163, 91, 0.15); color: #9a7b30; }
+.app-category.cat-tool  { background: rgba(107, 127, 158, 0.12); color: #4a5f7a; }
+.app-category.cat-class { background: rgba(90, 143, 123, 0.13); color: #3f6f5e; }
+.app-category.cat-default { background: rgba(122, 113, 106, 0.1); color: var(--muted); }
+
+.app-name {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 14px;
+  color: var(--ink);
+}
+.app-desc {
+  font-size: 15.5px;
+  color: var(--ink-soft);
+  line-height: 1.75;
+  margin-top: 10px;
+  flex: 1;
+}
+.app-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line-soft);
+  gap: 12px;
+}
+.app-foot-actions { display: flex; align-items: center; gap: 8px; }
+.app-edit-btn {
+  background: none; border: 1px solid var(--line);
+  color: var(--muted); font-size: 12px; font-family: inherit;
+  padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  transition: border-color .15s, color .15s; white-space: nowrap;
+}
+.app-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+.app-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.app-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.app-open-btn:hover {
+  background: var(--accent);
+  color: var(--paper);
+}
+.app-open-btn svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* 로딩 / 빈 상태 */
+.apps-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--muted);
+}
+.apps-state-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+.apps-state h3 {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 20px;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.apps-state p {
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.loading-dots {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 20px;
+}
+.loading-dots span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: dot-bounce .9s infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: .15s; }
+.loading-dots span:nth-child(3) { animation-delay: .30s; }
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+  40%            { transform: translateY(-6px); opacity: 1; }
+}
+
+/* 안내 배너 */
+.manage-banner {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 28px 32px;
+  margin-top: 48px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+.manage-banner-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.manage-banner h4 {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.manage-banner p {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+.manage-banner code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-deep);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+.manage-banner-steps {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  padding-left: 16px;
+}
+
+/* ── PIN LOCK ── */
+#pinLock {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+.pin-card {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 12px; padding: 2.8rem 2rem 2rem;
+  width: 100%; max-width: 320px; text-align: center;
+  box-shadow: 0 24px 60px -16px rgba(27,26,24,.18);
+}
+.pin-logo { margin-bottom: 1rem; }
+.pin-ttl {
+  font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 600;
+  color: var(--ink); margin-bottom: .3rem;
+}
+.pin-desc {
+  font-size: .68rem; color: var(--muted);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.8rem;
+}
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 1.2rem; }
+.pd {
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--line); background: transparent;
+  transition: background .18s, border-color .18s, transform .18s;
+}
+.pd.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+.pd.err    { background: #c04a3a; border-color: #c04a3a; transform: scale(1.1); }
+.pin-inp {
+  width: 100%; background: var(--bg); border: 1px solid var(--line);
+  color: transparent; caret-color: var(--accent);
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 1.5rem; text-align: center; letter-spacing: .5em;
+  font-family: inherit; outline: none;
+  transition: border-color .15s;
+}
+.pin-inp:focus { border-color: var(--accent); background: var(--paper); }
+.pin-inp.err-state { border-color: #c04a3a; }
+.pin-err { font-size: .73rem; color: #c04a3a; margin-top: .7rem; min-height: 1.1em; line-height: 1.4; }
+.pin-lockout {
+  font-size: .72rem; color: var(--muted);
+  background: var(--bg-deep); border: 1px solid var(--line);
+  padding: .55rem 1rem; border-radius: 8px;
+  margin-top: .8rem; display: none;
+}
+.pin-submit {
+  margin-top: 1.2rem; width: 100%;
+  background: var(--accent); color: var(--paper);
+  border: none; border-radius: 999px; padding: 12px;
+  font-size: .85rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .15s, opacity .15s;
+  letter-spacing: .04em;
+}
+.pin-submit:hover { background: #14201a; }
+.pin-submit:disabled { opacity: .35; cursor: not-allowed; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-5px); }
+  80%     { transform: translateX(5px); }
+}
+.do-shake { animation: shake .38s ease; }
+
+/* ── 앱 추가 버튼 ── */
+.add-app-wrap { display: flex; justify-content: center; margin-top: 40px; }
+#addAppBtn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 13px 28px;
+  border: 2px dashed var(--line); border-radius: 12px;
+  background: transparent; color: var(--muted);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .18s, color .18s, background .18s;
+}
+#addAppBtn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(42,59,46,.04);
+}
+
+/* ── 앱 추가 모달 ── */
+#addModal {
+  position: fixed; inset: 0; z-index: 800;
+  background: rgba(27,26,24,.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#addModal.hidden { display: none; }
+.add-modal-box {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 20px; padding: 38px 34px 30px;
+  width: 100%; max-width: 480px;
+  box-shadow: 0 20px 60px rgba(27,26,24,.18);
+  position: relative;
+}
+.add-modal-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 20px; font-weight: 600; margin-bottom: 4px;
+}
+.add-modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 26px; }
+.add-modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); padding: 6px; border-radius: 6px;
+  transition: color .15s, background .15s; line-height: 0;
+}
+.add-modal-close:hover { color: var(--ink); background: var(--bg-deep); }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); margin-bottom: 7px;
+}
+.form-label .req { color: var(--accent-warm); margin-left: 2px; }
+.form-control {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px; outline: none; transition: border-color .18s;
+}
+.form-control:focus { border-color: var(--accent); }
+.form-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 120px; gap: 12px; }
+.form-actions { display: flex; gap: 10px; margin-top: 24px; }
+.btn-modal-cancel {
+  flex: 1; padding: 12px;
+  background: transparent; border: 1.5px solid var(--line);
+  border-radius: 8px; color: var(--muted);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.btn-modal-cancel:hover { border-color: var(--ink-soft); color: var(--ink); }
+.btn-modal-submit {
+  flex: 2; padding: 12px;
+  background: var(--accent); color: var(--paper);
+  border: none; border-radius: 8px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background .18s;
+}
+.btn-modal-submit:hover { background: #14201a; }
+.btn-modal-submit:disabled { background: var(--muted); cursor: not-allowed; }
+.form-feedback { font-size: 13px; text-align: center; min-height: 18px; margin-top: 10px; }
+.form-feedback.ok  { color: var(--accent); }
+.form-feedback.err { color: #d9503f; }
+
+/* ── 파일 자료실 ── */
+.files-section {
+  padding-top: 56px;
+  padding-bottom: 80px;
+  border-top: 1px solid var(--line-soft);
+}
+.files-section-header { margin-bottom: 32px; }
+.files-section-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 28px; font-weight: 600; margin-bottom: 6px;
+}
+.files-section-desc { font-size: 15px; color: var(--ink-soft); }
+
+/* 업로드 존 */
+.upload-zone {
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 24px;
+  display: none;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(42,59,46,.04);
+}
+.upload-zone-icon { font-size: 36px; margin-bottom: 10px; }
+.upload-zone-text { font-size: 15px; color: var(--ink-soft); }
+.upload-zone-text strong { color: var(--accent); }
+.upload-zone-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+/* 진행바 */
+.upload-progress { display: none; margin-bottom: 20px; }
+.upload-progress-bar-wrap {
+  background: var(--bg-deep); border-radius: 999px;
+  height: 6px; overflow: hidden; margin-bottom: 8px;
+}
+.upload-progress-bar {
+  height: 100%; background: var(--accent);
+  border-radius: 999px; width: 0%; transition: width .3s;
+}
+.upload-progress-text { font-size: 13px; color: var(--muted); text-align: center; }
+
+/* 파일 목록 */
+.file-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+.file-item {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--paper); border: 1px solid var(--line-soft);
+  border-radius: 8px; padding: 14px 18px;
+  transition: box-shadow .18s;
+}
+.file-item:hover { box-shadow: 0 4px 16px -4px rgba(27,26,24,.1); }
+.file-item-icon { font-size: 22px; flex-shrink: 0; }
+.file-item-info { flex: 1; min-width: 0; }
+.file-item-name {
+  font-size: 15px; font-weight: 500; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.file-item-size {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--muted); margin-top: 2px;
+}
+.file-download-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--accent); background: transparent;
+  color: var(--accent); font-size: 13px; font-weight: 500;
+  text-decoration: none; white-space: nowrap; flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.file-download-btn:hover { background: var(--accent); color: var(--paper); }
+
+/* 업로드 버튼 */
+.upload-trigger-wrap { display: flex; justify-content: center; margin-bottom: 32px; }
+#uploadTriggerBtn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 13px 28px; border: 2px dashed var(--line); border-radius: 12px;
+  background: transparent; color: var(--muted);
+  font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: border-color .18s, color .18s, background .18s;
+}
+#uploadTriggerBtn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(42,59,46,.04);
+}
+.files-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 15px; }
+
+/* 반응형 */
+@media (max-width: 980px) {
+  .apps-hero h1 { font-size: 46px; }
+  .apps-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .apps-hero { padding-top: 48px; padding-bottom: 40px; }
+  .apps-hero h1 { font-size: 34px; }
+  .apps-hero-desc { font-size: 16px; }
+  .apps-grid { grid-template-columns: 1fr; gap: 16px; }
+  .manage-banner { flex-direction: column; padding: 22px 20px; }
+  .app-card-footer { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+</style>
+</head>
+<body data-screen-label="03 Apps Gallery">
+
+<!-- ──────────────── PIN LOCK ──────────────── -->
+<div id="pinLock" class="hidden" role="dialog" aria-modal="true" aria-label="PIN 입력">
+  <div class="pin-card">
+    <div class="pin-logo">
+      <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
+    </div>
+    <div class="pin-ttl">수업활용앱 모음</div>
+    <div class="pin-desc">Teacher Only · Kang Ji-ae</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <input type="password" id="pinInp" class="pin-inp"
+           maxlength="6" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" autofocus>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-lockout" id="pinLockout"></div>
+    <button class="pin-submit" id="pinSubmit">입장</button>
+  </div>
+</div>
+
+<!-- ──────────────── TOPBAR ──────────────── -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand">
+      <img src="assets/daisy.png" alt="데이지" class="brand-mark" />
+      <div>
+        <div class="brand-name">강지애</div>
+        <div class="brand-sub">DIGITAL TUTOR · EDUTECH</div>
+      </div>
+    </a>
+    <nav class="nav">
+      <a href="index.html#about">소개</a>
+      <a href="index.html#competency">핵심역량</a>
+      <a href="index.html#certificates">자격·연수</a>
+      <a href="index.html#experience">강의 경력</a>
+      <a href="schedule.html">강의 스케쥴</a>
+      <a href="all.html" class="cta alt" aria-current="page">수업 앱 모음</a>
+      <a href="edu.html" class="cta">실시간  교육  모니터링</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+</header>
+
+<!-- ──────────────── MOBILE NAV ──────────────── -->
+<nav class="nav-mobile" id="navMobile">
+  <a href="index.html#about">소개</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#competency">핵심역량</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#certificates">자격·연수</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#experience">강의 경력</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="schedule.html">강의 스케쥴</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="all.html">수업 앱 모음</a>
+  <a href="edu.html" class="cta">
+    <span class="live-dot"></span>실시간 교육 모니터링
+  </a>
+</nav>
+
+<!-- ──────────────── HERO ──────────────── -->
+<section class="apps-hero wrap">
+  <div class="apps-hero-inner">
+    <div>
+      <span class="eyebrow">Vibe Coding · 수업 앱</span>
+      <h1>직접 만든 <em>수업 앱</em> 모음</h1>
+      <p class="apps-hero-desc">
+        바이브코딩으로 제작한 퀴즈·시뮬레이션·실습 앱을 한 곳에 모았습니다.<br/>
+        수업에 바로 활용할 수 있는 인터랙티브 학습 도구들이에요.
+      </p>
+    </div>
+    <div class="apps-count-badge">
+      <span class="count-num" id="appCount">—</span>
+      <span>개의 앱</span>
+    </div>
+  </div>
+
+  <!-- 카테고리 필터 -->
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" data-filter="all">전체</button>
+    <button class="filter-btn" data-filter="퀴즈">퀴즈</button>
+    <button class="filter-btn" data-filter="시뮬레이션">시뮬레이션</button>
+    <button class="filter-btn" data-filter="게임">게임</button>
+    <button class="filter-btn" data-filter="도구">도구</button>
+    <button class="filter-btn" data-filter="수업">수업</button>
+  </div>
+</section>
+
+<!-- ──────────────── APPS GRID ──────────────── -->
+<main>
+  <section class="apps-section wrap">
+    <div class="apps-grid" id="appsGrid">
+      <!-- 로딩 상태 -->
+      <div class="apps-state" id="loadingState">
+        <div class="apps-state-icon">📦</div>
+        <h3>앱 목록 불러오는 중</h3>
+        <div class="loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 관리 안내 배너 -->
+    <div class="manage-banner">
+      <div class="manage-banner-icon">📋</div>
+      <div>
+        <h4>앱 추가하는 방법</h4>
+        <p>
+          앱은 <strong>구글 스프레드시트</strong>에서 관리합니다.<br/>
+          시트에 새 행을 추가하면 자동으로 이 페이지에 반영됩니다.
+        </p>
+        <ol class="manage-banner-steps">
+          <li>구글 스프레드시트 &gt; <code>앱목록</code> 시트 열기</li>
+          <li>새 행에 <code>앱이름 | 설명 | URL | 카테고리 | 등록일</code> 입력</li>
+          <li>카테고리: <code>퀴즈</code> / <code>시뮬레이션</code> / <code>게임</code> / <code>도구</code> 중 선택</li>
+          <li>저장하면 다음 방문 시 자동 반영</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- 앱 추가 버튼 (공개 · 클릭 시 PIN 인증) -->
+    <div class="add-app-wrap" id="addAppWrap" style="display:flex">
+      <button id="addAppBtn" aria-label="새 앱 추가">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        앱 추가하기
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ──────────────── 파일 자료실 ──────────────── -->
+  <section class="files-section wrap" id="filesSection">
+    <div class="files-section-header">
+      <h2 class="files-section-title">📁 파일 자료실</h2>
+      <p class="files-section-desc">수업에 활용할 프로그램 및 자료를 다운로드할 수 있습니다.</p>
+    </div>
+
+    <!-- 파일 목록 -->
+    <div class="file-list" id="fileList">
+      <div class="files-empty">파일 목록 불러오는 중…</div>
+    </div>
+
+    <!-- 업로드 진행바 -->
+    <div class="upload-progress" id="uploadProgress">
+      <div class="upload-progress-bar-wrap">
+        <div class="upload-progress-bar" id="uploadProgressBar"></div>
+      </div>
+      <div class="upload-progress-text" id="uploadProgressText"></div>
+    </div>
+
+    <!-- 업로드 존 (PIN 인증 후 표시) -->
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="uploadInput" />
+      <div class="upload-zone-icon">☁️</div>
+      <div class="upload-zone-text">파일을 <strong>드래그</strong>하거나 클릭해서 선택하세요</div>
+      <div class="upload-zone-hint">최대 4MB · .exe, .pdf, .zip 등 모든 파일 형식</div>
+    </div>
+
+    <!-- 파일 업로드 버튼 (클릭 시 PIN 인증) -->
+    <div class="upload-trigger-wrap">
+      <button id="uploadTriggerBtn" aria-label="파일 업로드">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        파일 업로드 (교사 전용)
+      </button>
+    </div>
+  </section>
+</main>
+
+<!-- ──────────────── FOOTER ──────────────── -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand-name serif">강지애 · Kang Ji-ae</div>
+        <p class="foot-brand-sub">제주 기반 디지털 강사 · 에듀테크 컨설턴트<br/>사람과 기술을 연결하고, 배움의 즐거움을 설계합니다.</p>
+      </div>
+      <div class="foot-col">
+        <h5>NAVIGATE</h5>
+        <ul>
+          <li><a href="index.html#about">소개</a></li>
+          <li><a href="index.html#competency">핵심 역량</a></li>
+          <li><a href="index.html#certificates">자격 · 연수</a></li>
+          <li><a href="index.html#experience">강의 경력</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>APPS &amp; LIVE</h5>
+        <ul>
+          <li><a href="all.html">수업 앱 모음</a></li>
+          <li><a href="edu.html">실시간 모니터링</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>CONTACT</h5>
+        <ul>
+          <li><a href="mailto:loveria2@nate.com">loveria2@nate.com</a></li>
+          <li><a href="#">강의 의뢰 / 컨설팅</a></li>
+          <li><a href="#">제주 기반 · 도내 전역 출강</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Kang Ji-ae. All rights reserved.</span>
+      <span class="mono claude-made">Made with Claude · v 1.0 · Apps Gallery</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ──────────────── 앱 추가 모달 ──────────────── -->
+<div id="addModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+  <div class="add-modal-box">
+    <button class="add-modal-close" id="addModalClose" aria-label="닫기">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="add-modal-title" id="addModalTitle">새 앱 추가</div>
+    <div class="add-modal-sub">구글 시트에 저장되고 목록에 즉시 반영됩니다.</div>
+    <form id="addAppForm" autocomplete="off">
+      <div class="form-group">
+        <label class="form-label" for="fName">앱 이름 <span class="req">*</span></label>
+        <input type="text" id="fName" class="form-control" placeholder="예) 단어 타자 게임" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fDesc">설명</label>
+        <input type="text" id="fDesc" class="form-control" placeholder="수업에서 어떻게 활용하는지 간단히 설명해 주세요" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fUrl">URL <span class="req">*</span></label>
+        <input type="text" id="fUrl" class="form-control" placeholder="https://... 또는 quiz.html" required />
+        <div class="form-hint">같은 폴더 파일은 파일명만 입력 (예: quiz.html)</div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label" for="fCat">카테고리</label>
+          <select id="fCat" class="form-control">
+            <option value="퀴즈">퀴즈</option>
+            <option value="게임">게임</option>
+            <option value="시뮬레이션">시뮬레이션</option>
+            <option value="도구">도구</option>
+            <option value="수업">수업</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-modal-cancel" id="addCancelBtn">취소</button>
+        <button type="submit" class="btn-modal-submit" id="addSubmitBtn">시트에 저장</button>
+      </div>
+      <div class="form-feedback" id="formFeedback"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  구글 Apps Script 웹앱 URL을 아래에 붙여넣으세요
+//  (apps-gallery-script.txt 참고)
+// ============================================================
+const APPS_API_URL = 'https://script.google.com/macros/s/AKfycbw0vDZEh7uVvHFq8Y_H60VIoyi6exVjkMYZ9PSMHI3foTLlol9PLyl7BroQPDx8i6lKfA/exec';   // ← 배포 후 URL 여기에 입력
+
+// ──────────────────────────────────────────────────────────
+//  카테고리 → CSS 클래스 매핑
+// ──────────────────────────────────────────────────────────
+function catClass(cat) {
+  if (!cat) return 'default';
+  const map = { '퀴즈': 'quiz', '시뮬레이션': 'sim', '게임': 'game', '도구': 'tool', '수업': 'class' };
+  return map[cat.trim()] || 'default';
+}
+
+// ──────────────────────────────────────────────────────────
+//  날짜 포맷 (YYYY-MM-DD → YY.MM.DD)
+// ──────────────────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  const s = String(d).slice(0, 10);
+  return s.replace(/-/g, '.').slice(2);
+}
+
+// ──────────────────────────────────────────────────────────
+//  카드 HTML 생성
+// ──────────────────────────────────────────────────────────
+function buildCard(app) {
+  const cc  = catClass(app.category);
+  const cat = app.category || '기타';
+  const url = app.url || '#';
+  const disabled = (!app.url || app.url === '#') ? ' aria-disabled="true"' : '';
+  return `
+    <article class="app-card" data-category="${cat}">
+      <div class="app-card-top cat-${cc}"></div>
+      <div class="app-card-body">
+        <span class="app-category cat-${cc}">${cat}</span>
+        <h2 class="app-name">${app.name || '(이름 없음)'}</h2>
+        <p class="app-desc">${app.description || ''}</p>
+      </div>
+      <div class="app-card-footer">
+        <span class="app-date mono">${fmtDate(app.date)}</span>
+        <div class="app-foot-actions">
+          <button class="app-edit-btn" type="button" data-id="${app.id || ''}">수정</button>
+          <a class="app-open-btn" href="${url}" target="_blank" rel="noopener"${disabled}>
+            앱 열기
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </article>`;
+}
+
+// ──────────────────────────────────────────────────────────
+//  기본 데이터 (API 미설정 시 표시)
+// ──────────────────────────────────────────────────────────
+const DEFAULT_APPS = [
+  {
+    name: '초성 퀴즈 게임',
+    description: '초성을 보고 단어를 맞추는 퀴즈 게임입니다. 어휘력과 반응속도를 동시에 키워보세요!',
+    url: 'initial.html',
+    category: '퀴즈',
+    date: '2026-05-25'
+  },
+  {
+    name: '넌센스 퀴즈 게임',
+    description: '엉뚱하지만 웃음 가득한 넌센스 퀴즈! 수업 시작 전 분위기를 풀어주는 최고의 아이스브레이킹 활동입니다.',
+    url: 'nonsense.html',
+    category: '퀴즈',
+    date: '2026-05-25'
+  },
+  {
+    name: '바다생물 찾기 게임',
+    description: '독서코딩 활동과 연계한 바다생물 OX 퀴즈 게임입니다. 책 속 내용을 게임으로 복습해 보세요!',
+    url: 'ox.html',
+    category: '게임',
+    date: '2026-05-25'
+  },
+  {
+    name: '3초 음악 맞추기',
+    description: '딱 3초만 듣고 곡을 맞춰보세요! 음악을 통해 집중력과 청음력을 키우는 인터랙티브 퀴즈 게임입니다.',
+    url: 'music.html',
+    category: '게임',
+    date: '2026-05-25'
+  }
+];
+
+// ──────────────────────────────────────────────────────────
+//  렌더링
+// ──────────────────────────────────────────────────────────
+let allApps = [];
+
+function render(apps) {
+  allApps = apps;
+  const grid = document.getElementById('appsGrid');
+  document.getElementById('appCount').textContent = apps.length;
+
+  if (apps.length === 0) {
+    grid.innerHTML = `
+      <div class="apps-state">
+        <div class="apps-state-icon">🗂️</div>
+        <h3>아직 등록된 앱이 없어요</h3>
+        <p>구글 스프레드시트의 <code>앱목록</code> 시트에 첫 번째 앱을 추가해보세요.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = apps.map(buildCard).join('');
+}
+
+function filterApps(cat) {
+  const filtered = cat === 'all'
+    ? allApps
+    : allApps.filter(a => (a.category || '기타') === cat);
+
+  const grid = document.getElementById('appsGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="apps-state">
+        <div class="apps-state-icon">🔍</div>
+        <h3>${cat} 카테고리 앱이 없어요</h3>
+        <p>다른 카테고리를 선택하거나 새 앱을 추가해보세요.</p>
+      </div>`;
+  } else {
+    grid.innerHTML = filtered.map(buildCard).join('');
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+//  필터 버튼 이벤트
+// ──────────────────────────────────────────────────────────
+document.getElementById('filterBar').addEventListener('click', function(e) {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterApps(btn.dataset.filter);
+});
+
+// ──────────────────────────────────────────────────────────
+//  데이터 로드
+// ──────────────────────────────────────────────────────────
+async function loadApps() {
+  const grid = document.getElementById('appsGrid');
+
+  if (!APPS_API_URL) {
+    // API URL 미설정 → 기본 데이터 표시
+    render(DEFAULT_APPS);
+    return;
+  }
+
+  try {
+    const res  = await fetch(APPS_API_URL);
+    const data = await res.json();
+    render(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error('앱 데이터 로드 실패:', err);
+    grid.innerHTML = `
+      <div class="apps-state">
+        <div class="apps-state-icon">⚠️</div>
+        <h3>데이터를 불러오지 못했어요</h3>
+        <p>네트워크 연결을 확인하거나, Apps Script URL 설정을 다시 확인해주세요.</p>
+      </div>`;
+    document.getElementById('appCount').textContent = '0';
+  }
+}
+
+loadApps();
+
+// ══════════════════════════════════════════════════════════
+//  PIN 게이트 — 페이지는 공개, "앱 추가" 시에만 인증
+// ══════════════════════════════════════════════════════════
+const _allPin = (function () {
+  const overlay = document.getElementById('pinLock');
+  if (!overlay) return { open() {}, isAuthed: () => false };
+
+  const _k = [42, 17, 93, 58, 12, 77];
+  const _e = [26, 38, 109, 8, 60, 116];
+  const _rp = () => _e.map((b, i) => String.fromCharCode(b ^ _k[i])).join('');
+  async function sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  const SALT = 'kja-all-2026';
+  let _expected = null;
+  async function verify(input) {
+    if (_expected === null) _expected = await sha256(SALT + _rp());
+    return (await sha256(SALT + input)) === _expected;
+  }
+
+  const RL_KEY = 'kja_all_rl_v1';
+  const MAX_TRY = 5, LOCK_MIN = 5;
+  const getRL = () => JSON.parse(localStorage.getItem(RL_KEY) || '{"n":0,"until":0}');
+  const setRL = o => localStorage.setItem(RL_KEY, JSON.stringify(o));
+
+  const inp    = document.getElementById('pinInp');
+  const errEl  = document.getElementById('pinErr');
+  const lockEl = document.getElementById('pinLockout');
+  const btn    = document.getElementById('pinSubmit');
+  const dots   = document.querySelectorAll('#pinDots .pd');
+  let onOk = null, cdId;
+
+  function startCountdown() {
+    if (cdId) return;
+    cdId = setInterval(() => {
+      const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(cdId); cdId = null;
+        setRL({ n: 0, until: 0 });
+        inp.disabled = false; btn.disabled = false;
+        lockEl.style.display = 'none'; errEl.textContent = '';
+      } else {
+        const m = String(Math.floor(rem / 60)).padStart(2, '0');
+        const s = String(rem % 60).padStart(2, '0');
+        lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+      }
+    }, 1000);
+  }
+  function checkLockout() {
+    const rl = getRL();
+    if (rl.until <= Date.now()) return false;
+    const rem = Math.ceil((rl.until - Date.now()) / 1000);
+    const m = String(Math.floor(rem / 60)).padStart(2, '0');
+    const s = String(rem % 60).padStart(2, '0');
+    inp.disabled = true; btn.disabled = true;
+    lockEl.style.display = ''; lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+    startCountdown(); return true;
+  }
+
+  inp.addEventListener('input', () => {
+    const v = inp.value.replace(/\D/g, '').slice(0, 6);
+    inp.value = v;
+    dots.forEach((d, i) => { d.classList.toggle('filled', i < v.length); d.classList.remove('err'); });
+    errEl.textContent = ''; inp.classList.remove('err-state');
+    if (v.length === 6) attemptUnlock(v);
+  });
+
+  async function attemptUnlock(val) {
+    if (checkLockout()) return;
+    val = val ?? inp.value.trim();
+    if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
+    btn.disabled = true;
+    const ok = await verify(val);
+    if (ok) {
+      sessionStorage.setItem('kja_all_v1', '1');
+      setRL({ n: 0, until: 0 });
+      close();
+      const f = onOk; onOk = null;
+      if (f) f();
+    } else {
+      const rl = getRL(); rl.n++;
+      if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
+      setRL(rl);
+      dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
+      inp.classList.add('err-state', 'do-shake');
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), { once: true });
+      inp.value = '';
+      if (rl.until > Date.now()) { checkLockout(); }
+      else { errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${MAX_TRY - rl.n}회)`; btn.disabled = false; }
+    }
+  }
+
+  function open(onSuccess) {
+    onOk = onSuccess || null;
+    overlay.classList.remove('hidden');
+    errEl.textContent = ''; inp.value = '';
+    dots.forEach(d => d.classList.remove('filled', 'err'));
+    inp.disabled = false; btn.disabled = false;
+    checkLockout();
+    setTimeout(() => { if (!inp.disabled) inp.focus(); }, 120);
+  }
+  function close() { overlay.classList.add('hidden'); }
+
+  btn.addEventListener('click', () => attemptUnlock(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  return { open: open, isAuthed: () => sessionStorage.getItem('kja_all_v1') === '1' };
+})();
+
+// ══════════════════════════════════════════════════════════
+//  앱 추가 모달
+// ══════════════════════════════════════════════════════════
+const addModal      = document.getElementById('addModal');
+const addModalClose = document.getElementById('addModalClose');
+const addCancelBtn  = document.getElementById('addCancelBtn');
+const addAppForm    = document.getElementById('addAppForm');
+const addSubmitBtn  = document.getElementById('addSubmitBtn');
+const formFeedback  = document.getElementById('formFeedback');
+
+let editingId = null;
+
+function openAddModal() {
+  editingId = null;
+  addAppForm.reset();
+  document.getElementById('addModalTitle').textContent = '새 앱 추가';
+  addSubmitBtn.textContent = '시트에 저장';
+  formFeedback.textContent = ''; formFeedback.className = 'form-feedback';
+  addSubmitBtn.disabled = false;
+  addModal.classList.remove('hidden');
+  document.getElementById('fName').focus();
+}
+
+function openEditModal(app) {
+  editingId = app.id;
+  document.getElementById('fName').value = app.name || '';
+  document.getElementById('fDesc').value = app.description || '';
+  document.getElementById('fUrl').value  = app.url || '';
+  document.getElementById('fCat').value  = app.category || '퀴즈';
+  document.getElementById('addModalTitle').textContent = '앱 수정';
+  addSubmitBtn.textContent = '수정 저장';
+  formFeedback.textContent = ''; formFeedback.className = 'form-feedback';
+  addSubmitBtn.disabled = false;
+  addModal.classList.remove('hidden');
+  document.getElementById('fName').focus();
+}
+
+// 카드의 "수정" 버튼 — PIN 인증 후 수정 모달 열기
+document.getElementById('appsGrid').addEventListener('click', e => {
+  const eb = e.target.closest('.app-edit-btn');
+  if (!eb) return;
+  e.preventDefault();
+  if (!APPS_API_URL) { alert('수정 기능을 사용하려면 APPS_API_URL을 설정해 주세요.'); return; }
+  const app = allApps.find(a => a.id && a.id === eb.dataset.id);
+  if (!app) { alert('이 앱은 시트에 저장된 항목이 아니라 수정할 수 없습니다.'); return; }
+  if (!_allPin.isAuthed()) { _allPin.open(() => openEditModal(app)); return; }
+  openEditModal(app);
+});
+
+document.getElementById('addAppBtn').addEventListener('click', () => {
+  if (!APPS_API_URL) {
+    alert('앱 추가 기능을 사용하려면\nall.html 상단의 APPS_API_URL 변수에\nApps Script URL을 입력해 주세요.\n\n(apps-gallery-script.txt 안내 참고)');
+    return;
+  }
+  if (!_allPin.isAuthed()) { _allPin.open(openAddModal); return; }
+  openAddModal();
+});
+
+function closeModal() {
+  addModal.classList.add('hidden');
+  addAppForm.reset();
+  editingId = null;
+  document.getElementById('addModalTitle').textContent = '새 앱 추가';
+  formFeedback.textContent = '';
+  formFeedback.className = 'form-feedback';
+  addSubmitBtn.disabled = false;
+  addSubmitBtn.textContent = '시트에 저장';
+}
+
+addModalClose.addEventListener('click', closeModal);
+addCancelBtn.addEventListener('click', closeModal);
+addModal.addEventListener('click', e => { if (e.target === addModal) closeModal(); });
+
+addAppForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('fName').value.trim();
+  const url  = document.getElementById('fUrl').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const cat  = document.getElementById('fCat').value;
+
+  if (!name || !url) {
+    formFeedback.textContent = '앱 이름과 URL은 필수입니다.';
+    formFeedback.className = 'form-feedback err';
+    return;
+  }
+
+  const payload = editingId
+    ? { action: 'update', id: editingId, name, description: desc, url, category: cat }
+    : { name, description: desc, url, category: cat };
+
+  addSubmitBtn.disabled = true;
+  addSubmitBtn.textContent = '저장 중…';
+  formFeedback.textContent = '';
+
+  try {
+    const res  = await fetch(APPS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+
+    if (data.success) {
+      if (editingId) {
+        formFeedback.textContent = '✓ 수정됐습니다!';
+        const i = allApps.findIndex(a => a.id === editingId);
+        if (i >= 0) allApps[i] = { ...allApps[i], name, description: desc, url, category: cat };
+      } else {
+        formFeedback.textContent = '✓ 저장됐습니다! 목록에 추가하는 중…';
+        const today = new Date().toISOString().slice(0, 10);
+        allApps.push({ name, description: desc, url, category: cat, date: today, id: data.id });
+      }
+      formFeedback.className = 'form-feedback ok';
+      render(allApps);
+      setTimeout(closeModal, 1000);
+    } else {
+      formFeedback.textContent = data.message || '저장 중 오류가 발생했습니다.';
+      formFeedback.className = 'form-feedback err';
+      addSubmitBtn.disabled = false;
+      addSubmitBtn.textContent = editingId ? '수정 저장' : '시트에 저장';
+    }
+  } catch {
+    formFeedback.textContent = '네트워크 오류입니다. 잠시 후 다시 시도해 주세요.';
+    formFeedback.className = 'form-feedback err';
+    addSubmitBtn.disabled = false;
+    addSubmitBtn.textContent = editingId ? '수정 저장' : '시트에 저장';
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+//  파일 자료실 — 업로드 / 다운로드
+// ══════════════════════════════════════════════════════════
+const FILE_API_URL = 'https://script.google.com/macros/s/AKfycbzH-HZ1b_s5sbeH1LV08KfMCsWSpS0jilseyJ8IarccL56v3Al-tnthgvUAYxBJ8Jj9/exec';
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function fileIcon(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = { exe:'⚙️', pdf:'📄', zip:'📦', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝', xls:'📊', xlsx:'📊', mp4:'🎬', mp3:'🎵', png:'🖼️', jpg:'🖼️', jpeg:'🖼️' };
+  return map[ext] || '📁';
+}
+
+async function loadFiles() {
+  const list = document.getElementById('fileList');
+  try {
+    const res = await fetch(FILE_API_URL);
+    const files = await res.json();
+    if (!Array.isArray(files) || files.length === 0) {
+      list.innerHTML = '<div class="files-empty">등록된 파일이 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = files.map(f => `
+      <div class="file-item">
+        <div class="file-item-icon">${fileIcon(f.name)}</div>
+        <div class="file-item-info">
+          <div class="file-item-name">${f.name}</div>
+          <div class="file-item-size">${formatBytes(f.size)}</div>
+        </div>
+        <a class="file-download-btn" href="${f.downloadUrl}" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          다운로드
+        </a>
+      </div>`).join('');
+  } catch {
+    list.innerHTML = '<div class="files-empty">파일 목록을 불러올 수 없습니다.</div>';
+  }
+}
+
+// 업로드 요소
+const uploadZone     = document.getElementById('uploadZone');
+const uploadInput    = document.getElementById('uploadInput');
+const uploadProgress = document.getElementById('uploadProgress');
+const uploadProgressBar  = document.getElementById('uploadProgressBar');
+const uploadProgressText = document.getElementById('uploadProgressText');
+
+document.getElementById('uploadTriggerBtn').addEventListener('click', () => {
+  if (!_allPin.isAuthed()) { _allPin.open(showUploadZone); return; }
+  showUploadZone();
+});
+
+function showUploadZone() {
+  uploadZone.style.display = 'block';
+  uploadZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+uploadZone.addEventListener('click', () => uploadInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+});
+uploadInput.addEventListener('change', () => {
+  if (uploadInput.files[0]) uploadFile(uploadInput.files[0]);
+  uploadInput.value = '';
+});
+
+async function uploadFile(file) {
+  if (file.size > 4 * 1024 * 1024) {
+    alert('파일이 너무 큽니다. 4MB 이하 파일만 업로드 가능합니다.');
+    return;
+  }
+  uploadZone.style.display = 'none';
+  uploadProgress.style.display = 'block';
+  uploadProgressBar.style.width = '10%';
+  uploadProgressText.textContent = `${file.name} 읽는 중…`;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    uploadProgressBar.style.width = '40%';
+    uploadProgressText.textContent = '구글 드라이브에 업로드 중…';
+    try {
+      const res = await fetch(FILE_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          fileName: file.name,
+          fileData: ev.target.result.split(',')[1],
+          mimeType: file.type || 'application/octet-stream'
+        })
+      });
+      const data = await res.json();
+      uploadProgressBar.style.width = '100%';
+      if (data.success) {
+        uploadProgressText.textContent = `✓ ${file.name} 업로드 완료!`;
+        setTimeout(() => {
+          uploadProgress.style.display = 'none';
+          uploadProgressBar.style.width = '0%';
+          loadFiles();
+        }, 1500);
+      } else {
+        uploadProgressText.textContent = '업로드 실패: ' + (data.error || '알 수 없는 오류');
+      }
+    } catch {
+      uploadProgressText.textContent = '네트워크 오류로 업로드 실패했습니다.';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+loadFiles();
+
+// ──────────────────────────────────────────────────────────
+//  모바일 네비게이션 토글
+// ──────────────────────────────────────────────────────────
+const navToggle = document.getElementById('navToggle');
+const navMobile = document.getElementById('navMobile');
+if (navToggle && navMobile) {
+  navToggle.addEventListener('click', function() {
+    const open = navMobile.classList.toggle('open');
+    navToggle.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+  });
+}
+</script>
+</body>
+</html>
