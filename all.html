@@ -481,38 +481,6 @@
 }
 .files-section-desc { font-size: 15px; color: var(--ink-soft); }
 
-/* 업로드 존 */
-.upload-zone {
-  border: 2px dashed var(--line);
-  border-radius: 12px;
-  padding: 40px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
-  margin-bottom: 24px;
-  display: none;
-}
-.upload-zone:hover, .upload-zone.drag-over {
-  border-color: var(--accent);
-  background: rgba(42,59,46,.04);
-}
-.upload-zone-icon { font-size: 36px; margin-bottom: 10px; }
-.upload-zone-text { font-size: 15px; color: var(--ink-soft); }
-.upload-zone-text strong { color: var(--accent); }
-.upload-zone-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-/* 진행바 */
-.upload-progress { display: none; margin-bottom: 20px; }
-.upload-progress-bar-wrap {
-  background: var(--bg-deep); border-radius: 999px;
-  height: 6px; overflow: hidden; margin-bottom: 8px;
-}
-.upload-progress-bar {
-  height: 100%; background: var(--accent);
-  border-radius: 999px; width: 0%; transition: width .3s;
-}
-.upload-progress-text { font-size: 13px; color: var(--muted); text-align: center; }
-
 /* 파일 목록 */
 .file-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
 .file-item {
@@ -542,19 +510,6 @@
 }
 .file-download-btn:hover { background: var(--accent); color: var(--paper); }
 
-/* 업로드 버튼 */
-.upload-trigger-wrap { display: flex; justify-content: center; margin-bottom: 32px; }
-#uploadTriggerBtn {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 13px 28px; border: 2px dashed var(--line); border-radius: 12px;
-  background: transparent; color: var(--muted);
-  font-family: 'Pretendard', sans-serif; font-size: 14px; font-weight: 500;
-  cursor: pointer; transition: border-color .18s, color .18s, background .18s;
-}
-#uploadTriggerBtn:hover {
-  border-color: var(--accent); color: var(--accent);
-  background: rgba(42,59,46,.04);
-}
 .files-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 15px; }
 
 /* 반응형 */
@@ -722,33 +677,6 @@
       <div class="files-empty">파일 목록 불러오는 중…</div>
     </div>
 
-    <!-- 업로드 진행바 -->
-    <div class="upload-progress" id="uploadProgress">
-      <div class="upload-progress-bar-wrap">
-        <div class="upload-progress-bar" id="uploadProgressBar"></div>
-      </div>
-      <div class="upload-progress-text" id="uploadProgressText"></div>
-    </div>
-
-    <!-- 업로드 존 (PIN 인증 후 표시) -->
-    <div class="upload-zone" id="uploadZone">
-      <input type="file" id="uploadInput" />
-      <div class="upload-zone-icon">☁️</div>
-      <div class="upload-zone-text">파일을 <strong>드래그</strong>하거나 클릭해서 선택하세요</div>
-      <div class="upload-zone-hint">최대 50MB · 30MB 이하 권장 · .exe, .pdf, .zip 등 모든 파일 형식</div>
-    </div>
-
-    <!-- 파일 업로드 버튼 (클릭 시 PIN 인증) -->
-    <div class="upload-trigger-wrap">
-      <button id="uploadTriggerBtn" aria-label="파일 업로드">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        파일 업로드 (교사 전용)
-      </button>
-    </div>
   </section>
 </main>
 
@@ -1305,81 +1233,6 @@ async function loadFiles() {
   } catch {
     list.innerHTML = '<div class="files-empty">파일 목록을 불러올 수 없습니다.</div>';
   }
-}
-
-// 업로드 요소
-const uploadZone     = document.getElementById('uploadZone');
-const uploadInput    = document.getElementById('uploadInput');
-const uploadProgress = document.getElementById('uploadProgress');
-const uploadProgressBar  = document.getElementById('uploadProgressBar');
-const uploadProgressText = document.getElementById('uploadProgressText');
-
-document.getElementById('uploadTriggerBtn').addEventListener('click', () => {
-  if (!_allPin.isAuthed()) { _allPin.open(showUploadZone); return; }
-  showUploadZone();
-});
-
-function showUploadZone() {
-  uploadZone.style.display = 'block';
-  uploadZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-uploadZone.addEventListener('click', (e) => { if (e.target !== uploadInput) uploadInput.click(); });
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
-});
-uploadInput.addEventListener('change', () => {
-  if (uploadInput.files[0]) uploadFile(uploadInput.files[0]);
-  uploadInput.value = '';
-});
-
-async function uploadFile(file) {
-  if (file.size > 50 * 1024 * 1024) {
-    alert('파일이 너무 큽니다. 최대 50MB까지 업로드 가능합니다.');
-    return;
-  }
-  uploadZone.style.display = 'none';
-  uploadProgress.style.display = 'block';
-  uploadProgressBar.style.width = '10%';
-  uploadProgressText.textContent = `${file.name} 읽는 중…`;
-
-  const reader = new FileReader();
-  reader.onload = async (ev) => {
-    uploadProgressBar.style.width = '40%';
-    let elapsed = 0;
-    const timer = setInterval(() => {
-      elapsed++;
-      uploadProgressText.textContent = `구글 드라이브에 업로드 중… (${elapsed}초 경과, 파일 크기에 따라 1~3분 소요)`;
-    }, 1000);
-    try {
-      await fetch(FILE_API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-          fileName: file.name,
-          fileData: ev.target.result.split(',')[1],
-          mimeType: file.type || 'application/octet-stream'
-        }),
-        headers: { 'Content-Type': 'text/plain' }
-      });
-      clearInterval(timer);
-      uploadProgressBar.style.width = '100%';
-      uploadProgressText.textContent = `✓ ${file.name} 업로드 완료! 목록 새로고침 중…`;
-      setTimeout(() => {
-        uploadProgress.style.display = 'none';
-        uploadProgressBar.style.width = '0%';
-        loadFiles();
-      }, 2000);
-    } catch {
-      clearInterval(timer);
-      uploadProgressText.textContent = '네트워크 오류로 업로드 실패했습니다.';
-    }
-  };
-  reader.readAsDataURL(file);
 }
 
 loadFiles();
