@@ -202,6 +202,13 @@
   transition: border-color .15s, color .15s; white-space: nowrap;
 }
 .app-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+.app-delete-btn {
+  background: none; border: 1px solid var(--line);
+  color: var(--muted); font-size: 12px; font-family: inherit;
+  padding: 7px 13px; border-radius: 999px; cursor: pointer;
+  transition: border-color .15s, color .15s; white-space: nowrap;
+}
+.app-delete-btn:hover { border-color: #d9503f; color: #d9503f; }
 .app-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
@@ -809,6 +816,7 @@ function buildCard(app) {
         <span class="app-date mono">${fmtDate(app.date)}</span>
         <div class="app-foot-actions">
           <button class="app-edit-btn" type="button" data-id="${app.id || ''}">수정</button>
+          <button class="app-delete-btn" type="button" data-id="${app.id || ''}" data-name="${(app.name || '').replace(/"/g, '&quot;')}">삭제</button>
           <a class="app-open-btn" href="${url}" target="_blank" rel="noopener"${disabled}>
             앱 열기
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -1094,6 +1102,45 @@ document.getElementById('appsGrid').addEventListener('click', e => {
   if (!app) { alert('이 앱은 시트에 저장된 항목이 아니라 수정할 수 없습니다.'); return; }
   if (!_allPin.isAuthed()) { _allPin.open(() => openEditModal(app)); return; }
   openEditModal(app);
+});
+
+// 카드의 "삭제" 버튼 — PIN 인증 후 삭제
+document.getElementById('appsGrid').addEventListener('click', async e => {
+  const db = e.target.closest('.app-delete-btn');
+  if (!db) return;
+  e.preventDefault();
+
+  async function doDelete() {
+    const id   = db.dataset.id;
+    const name = db.dataset.name || '이 앱';
+    if (!confirm(`"${name}"을(를) 삭제할까요?\n삭제하면 시트에서도 제거되며 되돌릴 수 없습니다.`)) return;
+
+    // ID 없으면 로컬(기본 데이터)에서만 제거
+    if (!id || !APPS_API_URL) {
+      allApps = allApps.filter(a => (a.name || '') !== name || a.id);
+      render(allApps);
+      return;
+    }
+
+    try {
+      const res  = await fetch(APPS_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        allApps = allApps.filter(a => a.id !== id);
+        render(allApps);
+      } else {
+        alert(data.message || '삭제 중 오류가 발생했습니다.');
+      }
+    } catch {
+      alert('네트워크 오류입니다. 잠시 후 다시 시도해 주세요.');
+    }
+  }
+
+  if (!_allPin.isAuthed()) { _allPin.open(doDelete); return; }
+  doDelete();
 });
 
 document.getElementById('addAppBtn').addEventListener('click', () => {
