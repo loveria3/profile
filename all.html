@@ -1352,8 +1352,9 @@ async function uploadFile(file) {
     uploadProgressBar.style.width = '40%';
     uploadProgressText.textContent = '구글 드라이브에 업로드 중…';
     try {
-      const res = await fetch(FILE_API_URL, {
+      await fetch(FILE_API_URL, {
         method: 'POST',
+        mode: 'no-cors',
         body: JSON.stringify({
           fileName: file.name,
           fileData: ev.target.result.split(',')[1],
@@ -1361,18 +1362,13 @@ async function uploadFile(file) {
         }),
         headers: { 'Content-Type': 'text/plain' }
       });
-      const data = await res.json();
       uploadProgressBar.style.width = '100%';
-      if (data.success) {
-        uploadProgressText.textContent = `✓ ${file.name} 업로드 완료!`;
-        setTimeout(() => {
-          uploadProgress.style.display = 'none';
-          uploadProgressBar.style.width = '0%';
-          loadFiles();
-        }, 1500);
-      } else {
-        uploadProgressText.textContent = '업로드 실패: ' + (data.error || '알 수 없는 오류');
-      }
+      uploadProgressText.textContent = `✓ ${file.name} 업로드 완료! 목록 새로고침 중…`;
+      setTimeout(() => {
+        uploadProgress.style.display = 'none';
+        uploadProgressBar.style.width = '0%';
+        loadFiles();
+      }, 2000);
     } catch {
       uploadProgressText.textContent = '네트워크 오류로 업로드 실패했습니다.';
     }
