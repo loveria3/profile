@@ -1246,6 +1246,26 @@ function fileIcon(name) {
   return map[ext] || '📁';
 }
 
+function renderFileList(files) {
+  const list = document.getElementById('fileList');
+  if (!Array.isArray(files) || files.length === 0) {
+    list.innerHTML = '<div class="files-empty">등록된 파일이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = files.map(f => `
+    <div class="file-item">
+      <div class="file-item-icon">${fileIcon(f.name)}</div>
+      <div class="file-item-info">
+        <div class="file-item-name">${f.name}</div>
+        <div class="file-item-size">${formatBytes(f.size)}</div>
+      </div>
+      <a class="file-download-btn" href="${f.downloadUrl}" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        다운로드
+      </a>
+    </div>`).join('');
+}
+
 function loadFilesJSONP() {
   return new Promise((resolve, reject) => {
     const cbName = 'fc_' + Date.now();
@@ -1254,7 +1274,7 @@ function loadFilesJSONP() {
       delete window[cbName];
       if (script.parentNode) script.parentNode.removeChild(script);
       reject(new Error('timeout'));
-    }, 10000);
+    }, 15000);
     window[cbName] = (data) => {
       clearTimeout(timer);
       delete window[cbName];
@@ -1270,25 +1290,21 @@ function loadFilesJSONP() {
 async function loadFiles() {
   const list = document.getElementById('fileList');
   try {
-    const files = await loadFilesJSONP();
-    if (!Array.isArray(files) || files.length === 0) {
-      list.innerHTML = '<div class="files-empty">등록된 파일이 없습니다.</div>';
-      return;
-    }
-    list.innerHTML = files.map(f => `
-      <div class="file-item">
-        <div class="file-item-icon">${fileIcon(f.name)}</div>
-        <div class="file-item-info">
-          <div class="file-item-name">${f.name}</div>
-          <div class="file-item-size">${formatBytes(f.size)}</div>
-        </div>
-        <a class="file-download-btn" href="${f.downloadUrl}" target="_blank" rel="noopener">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          다운로드
-        </a>
-      </div>`).join('');
+    // fetch 우선 (모바일 포함 모든 환경)
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(FILE_API_URL + '?t=' + Date.now(), { signal: controller.signal });
+    clearTimeout(timer);
+    const files = await res.json();
+    renderFileList(files);
   } catch {
-    list.innerHTML = '<div class="files-empty">파일 목록을 불러올 수 없습니다.</div>';
+    // fetch 실패 시 JSONP 폴백
+    try {
+      const files = await loadFilesJSONP();
+      renderFileList(files);
+    } catch {
+      list.innerHTML = '<div class="files-empty">파일 목록을 불러올 수 없습니다.</div>';
+    }
   }
 }
 
