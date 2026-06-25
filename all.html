@@ -1324,7 +1324,7 @@ function showUploadZone() {
   uploadZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-uploadZone.addEventListener('click', () => uploadInput.click());
+uploadZone.addEventListener('click', (e) => { if (e.target !== uploadInput) uploadInput.click(); });
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
 uploadZone.addEventListener('drop', e => {
