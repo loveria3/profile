@@ -1350,7 +1350,11 @@ async function uploadFile(file) {
   const reader = new FileReader();
   reader.onload = async (ev) => {
     uploadProgressBar.style.width = '40%';
-    uploadProgressText.textContent = '구글 드라이브에 업로드 중…';
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed++;
+      uploadProgressText.textContent = `구글 드라이브에 업로드 중… (${elapsed}초 경과, 파일 크기에 따라 1~3분 소요)`;
+    }, 1000);
     try {
       await fetch(FILE_API_URL, {
         method: 'POST',
@@ -1362,6 +1366,7 @@ async function uploadFile(file) {
         }),
         headers: { 'Content-Type': 'text/plain' }
       });
+      clearInterval(timer);
       uploadProgressBar.style.width = '100%';
       uploadProgressText.textContent = `✓ ${file.name} 업로드 완료! 목록 새로고침 중…`;
       setTimeout(() => {
@@ -1370,6 +1375,7 @@ async function uploadFile(file) {
         loadFiles();
       }, 2000);
     } catch {
+      clearInterval(timer);
       uploadProgressText.textContent = '네트워크 오류로 업로드 실패했습니다.';
     }
   };
