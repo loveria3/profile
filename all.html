@@ -792,8 +792,18 @@ function catClass(cat) {
 // ──────────────────────────────────────────────────────────
 function fmtDate(d) {
   if (!d) return '';
-  const s = String(d).slice(0, 10);
-  return s.replace(/-/g, '.').slice(2);
+  // ISO 형식 (YYYY-MM-DD) 우선 처리
+  const iso = String(d).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return iso[1].slice(2) + '.' + iso[2] + '.' + iso[3];
+  // 그 외 형식은 Date 객체로 파싱
+  const dt = new Date(d);
+  if (!isNaN(dt)) {
+    const y = String(dt.getFullYear()).slice(2);
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return y + '.' + m + '.' + day;
+  }
+  return String(d).slice(0, 10);
 }
 
 // ──────────────────────────────────────────────────────────
