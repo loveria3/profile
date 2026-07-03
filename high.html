@@ -367,6 +367,10 @@ body{
 .tbl-search{padding:6px 10px;border:1.5px solid var(--s2);border-radius:7px;font-size:.8rem;font-family:inherit;outline:none;transition:all .2s;min-width:120px;flex:1}
 .tbl-search:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(99,102,241,.1)}
 .tbl-note{font-size:.73rem;color:var(--s5);line-height:1.9;padding:8px 4px}
+/* 직업 칩 — 클릭 가능함을 시각적으로 강조 */
+.chip{cursor:pointer}
+.chip::after{content:' ›';font-weight:800;opacity:.55}
+.chip:hover{transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -432,533 +436,389 @@ const GQ=[
 ];
 
 // ============================================================
-// DATA: SCHOOLS & CURRICULUM
+// DATA: 2022 개정 교육과정 기준 (교육부 고시 제2022-33호)
+//  · 총 192학점 = 교과 174학점 + 창의적 체험활동 18학점
+//  · 필수이수학점(84): 국어8·수학8·영어8·사회14(한국사6 포함)·과학10·체육10·예술10·생활교양16
+//  · 자율이수학점 90 | 국어+수학+영어 총합 81학점 이하 | 체육은 매 학기 이수
+//  · 참고: 교육부 고교학점제, 시도교육청 고교학점제 지원센터 과목 안내
 // ============================================================
-// subject type: mandatory=공통필수(잠금), school=학교지정(권장), student=학생자율(선택)
-// area: 교과군 이름 (국어, 수학, 영어, 사회, 과학, 체육, 예술, 기술정보, 제2외국어, 교양, 창체)
-// sem: '1-1'~'3-2'
-// tags: 진로 연관 카테고리 (추천 표시용)
-// why: 진로 연계 설명 (student/school 과목에 추가)
-// subtype: 'common'|'general'|'career'|'fusion'
-
-const SCHOOLS_DB = {
-  jejusadaebugo: {
-    name:'제주대학교사범대학부설고등학교',
-    short:'제주사대부고',
-    emoji:'🌊',
-    location:'제주특별자치도',
-    // 학기별 목표 교과 학점
-    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
-    subjects: [
-      // ── 1학년 1학기 (22학점) ────────────────
-      {id:'j01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j08',name:'미술',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      // ── 1학년 2학기 (23학점) ────────────────
-      {id:'j09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j16',name:'음악',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      // ── 2학년 1학기 (32학점) ────────────────
-      {id:'j18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'j19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',  subtype:'general',tags:['it','stem'],why:'디지털 시대 필수! IT 기초 능력을 키워요'},
-      // student subjects 2-1
-      {id:'j20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','media'],why:'논리적 말하기·쓰기 능력은 모든 직업에 필요해요'},
-      {id:'j21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'글쓰기·독해력은 어문·법학 진로의 핵심이에요'},
-      {id:'j22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz','medical'],why:'방정식·함수 심화 — 이공계·의약 진학 기초예요'},
-      {id:'j23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','medical'],why:'이과 진학의 핵심! 미적분 없이 이공계 진학 어려워요'},
-      {id:'j24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it','medical','stem'],why:'데이터 분석·연구·경영에 모두 활용되는 필수 수학이에요'},
-      {id:'j25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it','media'],why:'거의 모든 직업에 필요한 영어 심화 과목이에요'},
-      {id:'j26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','biz'],why:'사회 구조와 문화를 이해하는 인문·사회 기본 과목이에요'},
-      {id:'j27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'기계·전자·항공 공학의 핵심 기초 과목이에요'},
-      {id:'j28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'화학공학·약학·의학 계열 진학의 필수 과목이에요'},
-      {id:'j29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의대·생명공학·수의학 진학의 핵심 과목이에요'},
-      {id:'j30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports','medical'],why:'운동 원리와 건강 관리를 배워요'},
-      {id:'j31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공자의 핵심 실기·이론 과목이에요'},
-      {id:'j32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'시각 예술·디자인 진로의 기본 과목이에요'},
-      {id:'j33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI 시대 필수! 인공지능 원리를 처음 배우는 과목이에요'},
-      {id:'j34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','media'],why:'일본어 능력은 무역·관광·한일 외교에 도움 돼요'},
-      {id:'j35',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어는 글로벌 비즈니스에서 강력한 경쟁력이에요'},
-      // ── 2학년 2학기 (32학점) ────────────────
-      {id:'j36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 작품 분석·창작 — 어문·출판·미디어 진로 기초예요'},
-      {id:'j37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical','it'],why:'이공계 심화 필수! 미적분Ⅰ 이수 후 선택하세요'},
-      {id:'j38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 감각·건축·게임 그래픽에 필요한 수학이에요'},
-      {id:'j39',name:'인공지능 수학',cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'AI·데이터사이언스의 수학적 기초를 배워요'},
-      {id:'j40',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영·경제 계열 진학에 필요한 수학 개념이에요'},
-      {id:'j41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it'],why:'심화 영어 독해·청취 — 해외 진학 목표라면 필수예요'},
-      {id:'j42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','medical'],why:'영어 논술·보고서 작성 능력을 키워요'},
-      {id:'j43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','edu'],why:'사회·윤리 문제를 분석하는 인문학 필수 과목이에요'},
-      {id:'j44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz','law'],why:'시장 원리·경제 현상을 배우는 경영계열 기초예요'},
-      {id:'j45',name:'정치와 법',    cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['law'],why:'민주주의·법 체계 이해 — 법학·행정 진로 필수예요'},
-      {id:'j46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지질·천문·기상 — 환경공학·지질학 진로에 유리해요'},
-      {id:'j47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports','media'],why:'스포츠 산업·미디어 이해 — 스포츠 관련 진로에 추천해요'},
-      {id:'j48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연 예술·방송 연기 기초를 배워요'},
-      {id:'j49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem','biz'],why:'빅데이터 분석 — AI·경영 분석 직업에 핵심 역량이에요'},
-      {id:'j50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'코딩 실습 — 개발자·AI엔지니어의 핵심 기술이에요'},
-      // ── 3학년 1학기 (32학점) ────────────────
-      {id:'j51',name:'주제 탐구 독서',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'심화 독서·탐구 능력을 키워요. 대입 논술에 도움돼요'},
-      {id:'j52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학과 영상 콘텐츠를 연결해 분석·창작해요'},
-      {id:'j53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'직장·조직 내 소통 능력을 실무 중심으로 배워요'},
-      {id:'j54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해 — 영문학·번역 진로에 추천해요'},
-      {id:'j55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','media','sports'],why:'일상·직업 상황의 실용 영어 회화 능력을 키워요'},
-      {id:'j56',name:'법과 사회',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 진로의 입문 과목 — 실생활 법 적용을 배워요'},
-      {id:'j57',name:'동아시아 역사 기행',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'한·중·일 역사 이해 — 인문·관광·외교 진로에 유익해요'},
-      {id:'j58',name:'역학과 에너지',cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'공학의 기초 역학 원리를 심화 학습해요'},
-      {id:'j59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'약학·화학공학·의학 계열에 필요한 심화 화학이에요'},
-      {id:'j60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명공학 진학에 필수적인 생물 심화 과목이에요'},
-      {id:'j61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동과 과학의 융합 — 스포츠트레이너·의학에 도움돼요'},
-      {id:'j62',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교육의 원리·방법 — 교사가 되려면 꼭 들어야 해요'},
-      {id:'j63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'인간 심리 이해 — 상담·복지·의료·경영에 폭넓게 활용돼요'},
-      {id:'j64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초를 실습 중심으로 배워요'},
-      {id:'j65',name:'논리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['law','hum'],why:'논리적 사고력 — 법학·철학·토론 역량의 기초예요'},
-      {id:'j66',name:'보건',         cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['medical','sports'],why:'건강·의료 기초 지식을 배워요'},
-      // ── 3학년 2학기 (33학점) ────────────────
-      // 학교지정 (자동 이수, 9학점)
-      {id:'j73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'career', tags:[],why:'진로와 연계한 자기주도 탐구 프로젝트예요'},
-      {id:'j74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'general',tags:[],why:'학교 특화 자율 과목이에요'},
-      {id:'j75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',  subtype:'general',tags:[],why:'학교 특화 자율 과목이에요'},
-      // 선택군 A — 탐구·교양 (택4, 16학점)
-      {id:'j67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학을 통해 과학적 사고력을 넓혀요'},
-      {id:'j68',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해 — 도시·환경 계획 진로에 유용해요'},
-      {id:'j69',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','biz','edu'],why:'글로벌 지역 이해 — 국제 비즈니스·외교에 필요해요'},
-      {id:'j70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가를 목표로 한다면 핵심 과목이에요'},
-      {id:'j71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해 — 환경공학·NGO 진로에 추천해요'},
-      {id:'j72',name:'스페인어Ⅰ',   cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'스페인어권 비즈니스·중남미 진출에 유리해요'},
-      // 선택군 B — 심화 탐구 (택2, 8학점)
-      {id:'j76',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law','edu'],why:'현대 사회 문제를 융합적 시각으로 분석해요'},
-      {id:'j77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'실험 중심 물리 심화 — 공학계 진학에 추천해요'},
-      {id:'j78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it','biz'],why:'수학적 사고력을 프로젝트로 심화 학습해요'},
-    ]
-  },
-
-  // ============================================================
-  // 제주제일고등학교 (인문사회 중점)
-  // ============================================================
-  jejujeilo: {
-    name:'제주제일고등학교', short:'제주제일고', emoji:'🏛️', location:'제주시',
-    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
-    subjects:[
-      // ── 1학년 1학기 (22학점) ──
-      {id:'z01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z08',name:'음악',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      // ── 1학년 2학기 (23학점) ──
-      {id:'z09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z16',name:'미술',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      // ── 2학년 1학기 (32학점) ──
-      {id:'z18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'z19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it','stem'],why:'디지털 역량 기초 — 모든 진로에 필요해요'},
-      {id:'z20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu','media'],why:'논리적 말하기·글쓰기의 기본'},
-      {id:'z21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'독해력과 작문 — 어문·법학 핵심'},
-      {id:'z22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz','medical'],why:'이공계·의약 진학의 수학 기초'},
-      {id:'z23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','medical'],why:'이과 진학 핵심 수학'},
-      {id:'z24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it','medical'],why:'데이터·경영·연구에 필수'},
-      {id:'z25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz','it'],why:'대부분 진로에서 요구하는 영어 심화'},
-      {id:'z26',name:'동아시아 역사',cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law'],why:'한·중·일 역사 이해 — 외교·인문 기초'},
-      {id:'z27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'공학의 기초 과학'},
-      {id:'z28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'의약·화학공학 필수'},
-      {id:'z29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의대·생명공학 핵심'},
-      {id:'z30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports','medical'],why:'건강·스포츠 진로의 기본'},
-      {id:'z31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공 핵심 실기'},
-      {id:'z32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'시각예술·디자인 기본'},
-      {id:'z33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI 시대 필수 과목'},
-      {id:'z34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'일본어 능력으로 외교·무역 경쟁력'},
-      {id:'z35',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 — 글로벌 비즈니스 핵심'},
-      // ── 2학년 2학기 (32학점) ──
-      {id:'z36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 분석·창작 — 어문 기초'},
-      {id:'z37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical','it'],why:'이공계 심화 필수 수학'},
-      {id:'z38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 감각·건축·그래픽'},
-      {id:'z39',name:'인공지능 수학',cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'AI·데이터 수학 기초'},
-      {id:'z40',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영·경제 계열 필수'},
-      {id:'z41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['stem','medical','hum','law','biz'],why:'심화 영어 독해·청취'},
-      {id:'z42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','law','medical'],why:'영어 논술·보고서 작성'},
-      {id:'z43',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum','law','edu'],why:'사회 구조·문화 이해 기본'},
-      {id:'z44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz','law'],why:'시장 원리·경제 현상 이해'},
-      {id:'z45',name:'세계사',       cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum','law'],why:'세계 역사 이해 — 외교·인문'},
-      {id:'z46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지질·천문·기상 — 환경공학'},
-      {id:'z47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports','media'],why:'스포츠 산업·미디어 이해'},
-      {id:'z48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연예술·방송 연기 기초'},
-      {id:'z49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem','biz'],why:'빅데이터 분석 핵심'},
-      {id:'z50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'개발자·AI엔지니어 기본기'},
-      // ── 3학년 1학기 (32학점) ──
-      {id:'z51',name:'주제 탐구 독서',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'심화 독서·대입 논술에 도움'},
-      {id:'z52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학과 영상 융합 창작'},
-      {id:'z53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통 능력 강화'},
-      {id:'z54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해 심화'},
-      {id:'z55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','media','sports'],why:'직업 현장 영어 회화'},
-      {id:'z56',name:'정치와 법',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 진로 입문 필수'},
-      {id:'z57',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'글로벌 지역 이해'},
-      {id:'z58',name:'역학과 에너지',cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'공학 기초 역학'},
-      {id:'z59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학·약학 심화'},
-      {id:'z60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명공학 필수'},
-      {id:'z61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동+과학 융합'},
-      {id:'z62',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
-      {id:'z63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'심리·상담·복지에 필요'},
-      {id:'z64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 실습 기초'},
-      {id:'z65',name:'중국어 회화Ⅰ', cr:4,area:'제2외국어',sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'중국어 심화 회화'},
-      {id:'z66',name:'일본어 회화Ⅰ', cr:4,area:'제2외국어',sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'일본어 심화 회화'},
-      // ── 3학년 2학기 (33학점) ──
-      {id:'z73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 자기주도 탐구 프로젝트'},
-      {id:'z74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 자율과목'},
-      {id:'z75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 자율과목'},
-      {id:'z67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학 융합 사고'},
-      {id:'z68',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해 — 도시·환경 계획'},
-      {id:'z69',name:'경제지리',     cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'글로벌 경제·지역 이해'},
-      {id:'z70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가 핵심'},
-      {id:'z71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해'},
-      {id:'z72',name:'중국어Ⅱ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 심화'},
-      {id:'z76',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law','edu'],why:'사회 현안 융합 분석'},
-      {id:'z77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'공학계 실험 심화'},
-      {id:'z78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it','biz'],why:'수학 프로젝트 심화'},
-    ]
-  },
-
-  // ============================================================
-  // 대정여자고등학교 (예술·교육 중점)
-  // ============================================================
-  daejeongnyeo: {
-    name:'대정여자고등학교', short:'대정여고', emoji:'🌸', location:'서귀포시 대정읍',
-    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
-    subjects:[
-      // ── 1학년 1학기 (22학점) ──
-      {id:'d01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d08',name:'음악',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      // ── 1학년 2학기 (23학점) ──
-      {id:'d09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d16',name:'미술',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      // ── 2학년 1학기 (32학점) ──
-      {id:'d18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'d19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it'],why:'디지털 기초 역량'},
-      {id:'d20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','law','edu'],why:'논리적 말하기·글쓰기'},
-      {id:'d21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'독해·작문 능력 강화'},
-      {id:'d22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it','biz'],why:'이공계 수학 기초'},
-      {id:'d23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'이과 진학 필수'},
-      {id:'d24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','it'],why:'통계·경영·연구 필수'},
-      {id:'d25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','edu'],why:'영어 심화 — 다양한 진로'},
-      {id:'d26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu','law'],why:'사회·문화 이해 인문 기본'},
-      {id:'d27',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'의·생명공학 필수'},
-      {id:'d28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'의약·화학공학 기초'},
-      {id:'d29',name:'지구과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem'],why:'환경·지구 관련 진로'},
-      {id:'d30',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 전공 핵심'},
-      {id:'d31',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts','media'],why:'미술·디자인 진로 기본'},
-      {id:'d32',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports'],why:'건강·스포츠 역량'},
-      {id:'d33',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI·디지털 기초'},
-      {id:'d34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'외국어 능력 강화'},
-      {id:'d35',name:'영어 발표와 토론',cr:4,area:'영어',sem:'2-1',type:'student',subtype:'general',tags:['hum','media','edu'],why:'영어 토론·발표 실력'},
-      // ── 2학년 2학기 (32학점) ──
-      {id:'d36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts','media'],why:'문학 분석·창작 기초'},
-      {id:'d37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical'],why:'이공계 심화'},
-      {id:'d38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','arts'],why:'공간 사고·건축·디자인'},
-      {id:'d39',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영계열 수학'},
-      {id:'d41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','biz','medical'],why:'심화 영어'},
-      {id:'d42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'영어 논술·작문'},
-      {id:'d43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·윤리 분석'},
-      {id:'d44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz'],why:'시장 원리 이해'},
-      {id:'d45',name:'정치와 법',    cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['law'],why:'법학·행정 진로 기초'},
-      {id:'d46',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','biz'],why:'데이터 분석 역량'},
-      {id:'d47',name:'음악 감상과 비평',cr:4,area:'예술',sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'음악 문화·비평 역량'},
-      {id:'d48',name:'미술 감상과 비평',cr:4,area:'예술',sem:'2-2',type:'student',subtype:'career',tags:['arts'],why:'미술 감상·이론'},
-      {id:'d49',name:'스포츠 생활',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports'],why:'건강한 스포츠 생활'},
-      {id:'d50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'코딩 기초 실습'},
-      // ── 3학년 1학기 (32학점) ──
-      {id:'d51',name:'주제 탐구 독서',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'대입 논술·탐구 독서'},
-      {id:'d52',name:'문학과 영상',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'문학·영상 융합 창작'},
-      {id:'d53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통 역량'},
-      {id:'d54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum','media'],why:'영어 원서 독해'},
-      {id:'d55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','edu'],why:'실용 영어 회화'},
-      {id:'d56',name:'법과 사회',    cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['law'],why:'법학 입문'},
-      {id:'d57',name:'동아시아 역사 기행',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum'],why:'인문·외교 역사 심화'},
-      {id:'d58',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의약·생명 심화'},
-      {id:'d59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학 심화'},
-      {id:'d60',name:'지구 환경과 기후변화',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'fusion',tags:['stem'],why:'환경·기후 문제 탐구'},
-      {id:'d61',name:'음악 실기와 연구',cr:4,area:'예술',sem:'3-1',type:'student',subtype:'career',tags:['arts'],why:'음악 전공 심화 실기'},
-      {id:'d62',name:'미술 실기와 연구',cr:4,area:'예술',sem:'3-1',type:'student',subtype:'career',tags:['arts'],why:'미술 전공 심화 실기'},
-      {id:'d63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum','medical'],why:'심리·상담·복지 필수'},
-      {id:'d64',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
-      {id:'d65',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초'},
-      {id:'d66',name:'복지와 돌봄',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','medical'],why:'사회복지·보건 진로 필수'},
-      // ── 3학년 2학기 (33학점) ──
-      {id:'d73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 탐구 프로젝트'},
-      {id:'d74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
-      {id:'d75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
-      {id:'d67',name:'음악 문화와 산업',cr:4,area:'예술',sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'음악 산업·문화 기획'},
-      {id:'d68',name:'미술 문화와 산업',cr:4,area:'예술',sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'미술 산업·전시 기획'},
-      {id:'d69',name:'사회문제 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'fusion',tags:['hum','law'],why:'사회 현안 융합 탐구'},
-      {id:'d70',name:'한국지리 탐구',cr:4,area:'사회',  sem:'3-2',type:'student',subtype:'general',tags:['hum','edu'],why:'국토 이해·환경 계획'},
-      {id:'d71',name:'환경',         cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후·환경 문제 이해'},
-      {id:'d72',name:'일본어Ⅱ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'일본어 심화'},
-      {id:'d76',name:'문화와 예술',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['arts','media'],why:'예술 문화 융합 이해'},
-      {id:'d77',name:'심리와 상담',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'career',tags:['edu','medical'],why:'상담·복지 심화'},
-      {id:'d78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','biz'],why:'수학 심화 프로젝트'},
-    ]
-  },
-
-  // ============================================================
-  // 대정고등학교 (자연환경·실용 중점)
-  // ============================================================
-  daejeong: {
-    name:'대정고등학교', short:'대정고', emoji:'🌿', location:'서귀포시 대정읍',
-    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
-    subjects:[
-      // ── 1학년 1학기 (22학점) ──
-      {id:'e01',name:'공통국어1',    cr:4,area:'국어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e02',name:'공통수학1',    cr:4,area:'수학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e03',name:'공통영어1',    cr:4,area:'영어',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e04',name:'한국사1',      cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e05',name:'통합사회1',    cr:2,area:'사회',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e06',name:'통합과학1',    cr:2,area:'과학',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e07',name:'체육1',        cr:2,area:'체육',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e08',name:'미술',         cr:2,area:'예술',  sem:'1-1',type:'mandatory',subtype:'common',tags:[]},
-      // ── 1학년 2학기 (23학점) ──
-      {id:'e09',name:'공통국어2',    cr:4,area:'국어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e10',name:'공통수학2',    cr:4,area:'수학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e11',name:'공통영어2',    cr:4,area:'영어',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e12',name:'통합사회2',    cr:2,area:'사회',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e13',name:'통합과학2',    cr:2,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e14',name:'과학탐구실험1',cr:1,area:'과학',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e15',name:'기술·가정',    cr:2,area:'기술정보',sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e16',name:'음악',         cr:2,area:'예술',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e17',name:'진로와 직업',  cr:2,area:'교양',  sem:'1-2',type:'mandatory',subtype:'common',tags:[]},
-      // ── 2학년 1학기 (32학점) ──
-      {id:'e18',name:'한국사2',      cr:2,area:'사회',  sem:'2-1',type:'mandatory',subtype:'common',tags:[]},
-      {id:'e19',name:'정보',         cr:2,area:'기술정보',sem:'2-1',type:'school',subtype:'general',tags:['it'],why:'디지털 기초 역량'},
-      {id:'e20',name:'화법과 언어',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'논리적 표현 능력'},
-      {id:'e21',name:'독서와 작문',  cr:4,area:'국어',  sem:'2-1',type:'student',subtype:'general',tags:['hum'],why:'독해·작문 능력'},
-      {id:'e22',name:'대수',         cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','it'],why:'이공계 수학 기초'},
-      {id:'e23',name:'미적분Ⅰ',     cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'이과 진학 필수'},
-      {id:'e24',name:'확률과 통계',  cr:4,area:'수학',  sem:'2-1',type:'student',subtype:'general',tags:['biz','stem'],why:'데이터·통계 기초'},
-      {id:'e25',name:'영어Ⅰ',       cr:4,area:'영어',  sem:'2-1',type:'student',subtype:'general',tags:['hum','biz','stem'],why:'영어 심화'},
-      {id:'e26',name:'사회와 문화',  cr:4,area:'사회',  sem:'2-1',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·문화 이해'},
-      {id:'e27',name:'물리학',       cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem'],why:'공학 기초 과학'},
-      {id:'e28',name:'화학',         cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['stem','medical'],why:'화학·의약 진학 기초'},
-      {id:'e29',name:'생명과학',     cr:4,area:'과학',  sem:'2-1',type:'student',subtype:'general',tags:['medical','stem'],why:'생명공학·의대 필수'},
-      {id:'e30',name:'운동과 건강',  cr:4,area:'체육',  sem:'2-1',type:'student',subtype:'general',tags:['sports'],why:'건강·운동 역량'},
-      {id:'e31',name:'음악 연주와 창작',cr:4,area:'예술',sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'음악 실기·창작'},
-      {id:'e32',name:'미술 창작',    cr:4,area:'예술',  sem:'2-1',type:'student',subtype:'general',tags:['arts'],why:'미술·디자인 기초'},
-      {id:'e33',name:'농업·생명기술',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'career',tags:['stem','medical'],why:'제주 특화! 농업·생명 기술'},
-      {id:'e34',name:'일본어Ⅰ',     cr:4,area:'제2외국어',sem:'2-1',type:'student',subtype:'general',tags:['hum','biz'],why:'외국어 역량'},
-      {id:'e35',name:'인공지능 기초',cr:4,area:'기술정보',sem:'2-1',type:'student',subtype:'general',tags:['it','stem'],why:'AI·디지털 기초'},
-      // ── 2학년 2학기 (32학점) ──
-      {id:'e36',name:'문학',         cr:4,area:'국어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','arts'],why:'문학 분석·창작'},
-      {id:'e37',name:'미적분Ⅱ',     cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem','medical'],why:'이공계 심화'},
-      {id:'e38',name:'기하',         cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['stem'],why:'공간 수학'},
-      {id:'e39',name:'경제 수학',    cr:4,area:'수학',  sem:'2-2',type:'student',subtype:'career',tags:['biz'],why:'경영계열 수학'},
-      {id:'e41',name:'영어Ⅱ',       cr:4,area:'영어',  sem:'2-2',type:'student',subtype:'general',tags:['hum','biz'],why:'심화 영어'},
-      {id:'e42',name:'영어 독해와 작문',cr:4,area:'영어',sem:'2-2',type:'student',subtype:'general',tags:['hum'],why:'영어 작문'},
-      {id:'e43',name:'현대사회와 윤리',cr:4,area:'사회',sem:'2-2',type:'student',subtype:'general',tags:['hum','edu'],why:'사회·윤리 분석'},
-      {id:'e44',name:'경제',         cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['biz'],why:'경제 현상 이해'},
-      {id:'e45',name:'세계사',       cr:4,area:'사회',  sem:'2-2',type:'student',subtype:'general',tags:['hum'],why:'세계 역사 이해'},
-      {id:'e46',name:'지구과학',     cr:4,area:'과학',  sem:'2-2',type:'student',subtype:'general',tags:['stem'],why:'지구·환경 과학'},
-      {id:'e47',name:'스포츠 문화',  cr:4,area:'체육',  sem:'2-2',type:'student',subtype:'career',tags:['sports'],why:'스포츠 문화 이해'},
-      {id:'e48',name:'연극',         cr:4,area:'예술',  sem:'2-2',type:'student',subtype:'career',tags:['arts','media'],why:'공연·연기 기초'},
-      {id:'e49',name:'데이터 과학',  cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it','stem'],why:'데이터 분석'},
-      {id:'e50',name:'프로그래밍',   cr:4,area:'기술정보',sem:'2-2',type:'student',subtype:'career',tags:['it'],why:'코딩 기초'},
-      // ── 3학년 1학기 (32학점) ──
-      {id:'e51',name:'독서와 언어탐구',cr:4,area:'국어', sem:'3-1',type:'student',subtype:'career',tags:['hum','edu'],why:'언어·독서 심화'},
-      {id:'e52',name:'문학과 매체',  cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'career',tags:['media','arts'],why:'매체·문학 융합'},
-      {id:'e53',name:'직무 의사소통',cr:4,area:'국어',  sem:'3-1',type:'student',subtype:'fusion',tags:['biz','edu'],why:'실무 소통'},
-      {id:'e54',name:'영미 문학 읽기',cr:4,area:'영어', sem:'3-1',type:'student',subtype:'career',tags:['hum'],why:'영어 원서 독해'},
-      {id:'e55',name:'실용 영어',    cr:4,area:'영어',  sem:'3-1',type:'student',subtype:'career',tags:['biz','sports'],why:'실용 영어'},
-      {id:'e56',name:'제주 환경과 사회',cr:4,area:'사회',sem:'3-1',type:'student',subtype:'career',tags:['hum','stem'],why:'제주 특화! 지역 환경·사회'},
-      {id:'e57',name:'세계지리 탐구',cr:4,area:'사회',  sem:'3-1',type:'student',subtype:'career',tags:['hum','biz'],why:'글로벌 지역 이해'},
-      {id:'e58',name:'생태와 환경',  cr:4,area:'과학',  sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'제주 특화! 생태·환경 탐구'},
-      {id:'e59',name:'화학 반응의 세계',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'화학 심화'},
-      {id:'e60',name:'세포와 물질대사',cr:4,area:'과학',sem:'3-1',type:'student',subtype:'career',tags:['medical','stem'],why:'의대·생명 필수'},
-      {id:'e61',name:'스포츠 과학',  cr:4,area:'체육',  sem:'3-1',type:'student',subtype:'career',tags:['sports','stem'],why:'운동+과학 융합'},
-      {id:'e62',name:'농업과 생명',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['stem','medical'],why:'제주 특화! 농업·생명 심화'},
-      {id:'e63',name:'심리학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu','hum'],why:'심리·상담 기초'},
-      {id:'e64',name:'창업과 경영',  cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['biz'],why:'창업·경영 기초'},
-      {id:'e65',name:'해양환경과 탐구',cr:4,area:'과학', sem:'3-1',type:'student',subtype:'career',tags:['stem'],why:'제주 특화! 해양 환경 탐구'},
-      {id:'e66',name:'교육학',       cr:4,area:'교양',  sem:'3-1',type:'student',subtype:'career',tags:['edu'],why:'교사 희망자 필수'},
-      // ── 3학년 2학기 (33학점) ──
-      {id:'e73',name:'진로 프로젝트', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'career', tags:[],why:'진로 탐구 프로젝트'},
-      {id:'e74',name:'학교자율과목1', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
-      {id:'e75',name:'학교자율과목2', cr:3,area:'교양',  sem:'3-2',type:'school',subtype:'general',tags:[],why:'학교 특화 과목'},
-      {id:'e67',name:'과학의 역사와 문화',cr:4,area:'과학',sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'과학사·철학 융합'},
-      {id:'e68',name:'제주 역사와 문화',cr:4,area:'사회',sem:'3-2',type:'student',subtype:'fusion',tags:['hum'],why:'제주 특화! 지역 역사·문화'},
-      {id:'e69',name:'세계지리 탐구2',cr:4,area:'사회', sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'글로벌 지역 심화'},
-      {id:'e70',name:'정보 보안',    cr:4,area:'기술정보',sem:'3-2',type:'student',subtype:'career',tags:['it'],why:'사이버보안 전문가'},
-      {id:'e71',name:'환경과 기후',  cr:4,area:'교양',  sem:'3-2',type:'student',subtype:'fusion',tags:['stem','hum'],why:'기후변화·환경 문제'},
-      {id:'e72',name:'중국어Ⅰ',     cr:4,area:'제2외국어',sem:'3-2',type:'student',subtype:'general',tags:['hum','biz'],why:'중국어 기초'},
-      {id:'e76',name:'환경공학의 이해',cr:4,area:'과학', sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'환경공학 진로 입문'},
-      {id:'e77',name:'물리학과 실험',cr:4,area:'과학',  sem:'3-2',type:'student',subtype:'career',tags:['stem'],why:'공학계 실험 심화'},
-      {id:'e78',name:'수학과제 탐구',cr:4,area:'수학',  sem:'3-2',type:'student',subtype:'career',tags:['stem','it'],why:'수학 심화 프로젝트'},
-    ]
-  },
-};
-
-// 창체 학점 (학기당 3학점씩 × 6학기 = 18학점, 자동 포함)
 const CCHA_PER_SEM = 3;
 const SEMS = ['1-1','1-2','2-1','2-2','3-1','3-2'];
 const SEM_LABEL = {'1-1':'1학년 1학기','1-2':'1학년 2학기','2-1':'2학년 1학기','2-2':'2학년 2학기','3-1':'3학년 1학기','3-2':'3학년 2학기'};
 
-// Area guide
-const AREA_GUIDE = {
-  '국어':      {rec:'1~2과목', min:1, max:2, hint:'📝 국어 중 1~2과목만 골라요. 어문·교육 계열이면 2개, 이공계면 1개로 충분해요.'},
-  '수학':      {rec:'1~3과목', min:1, max:3, hint:'➕ 이과·의약·IT면 미적분Ⅱ까지 3과목, 문과·예술이면 확률과통계 1과목으로 OK!'},
-  '영어':      {rec:'1~2과목', min:1, max:2, hint:'🌍 영어Ⅰ은 대부분 선택해요. 해외 진학·외국어 중요 진로면 2과목 선택하세요.'},
-  '사회':      {rec:'1~2과목', min:1, max:2, hint:'🌏 진로와 가장 관련 있는 것 1~2과목 골라요.'},
-  '과학':      {rec:'1~2과목', min:1, max:3, hint:'🔬 이과·의약이면 2~3과목, 인문·예술·체육 진로면 1과목이면 충분해요.'},
-  '체육':      {rec:'1과목',   min:0, max:1, hint:'⚽ 체육 진로가 아니면 1과목만 선택하면 돼요.'},
-  '예술':      {rec:'1과목',   min:0, max:1, hint:'🎨 예술 진로가 아니면 1과목만 선택해요.'},
-  '기술정보':  {rec:'1~2과목', min:1, max:2, hint:'💻 IT·AI 진로면 2~3과목, 다른 진로도 "인공지능 기초" 1과목은 추천해요!'},
-  '제2외국어': {rec:'0~1과목', min:0, max:1, hint:'🗣️ 어학·무역·외교 진로면 1과목 선택해요. 필수는 아니에요.'},
-  '교양':      {rec:'1과목',   min:0, max:1, hint:'📚 진로와 관련된 것 1과목만 골라요.'},
-  '창체':      {rec:'자동포함',min:0, max:0, hint:''},
+// ── 과목 사전: 2022 개정 보통교과 공식 과목명 → 정보 ──────────
+// t: common(공통)|general(일반선택)|career(진로선택)|fusion(융합선택)
+const SUBJECT_CATALOG = {
+  // 국어
+  '공통국어1':{a:'국어',t:'common'},'공통국어2':{a:'국어',t:'common'},
+  '화법과 언어':{a:'국어',t:'general',tags:['hum','law','edu','media'],why:'논리적 말하기·쓰기 능력은 모든 직업에 필요해요'},
+  '독서와 작문':{a:'국어',t:'general',tags:['hum','law','edu'],why:'글쓰기·독해력은 어문·법학 진로의 핵심이에요'},
+  '문학':{a:'국어',t:'general',tags:['hum','arts','media'],why:'문학 작품 분석·창작 — 어문·출판·미디어 진로 기초예요'},
+  '주제 탐구 독서':{a:'국어',t:'career',tags:['hum','edu'],why:'심화 독서·탐구 능력을 키워요. 대입 면접·논술에 도움돼요'},
+  '문학과 영상':{a:'국어',t:'career',tags:['media','arts'],why:'문학과 영상 콘텐츠를 연결해 분석·창작해요'},
+  '직무 의사소통':{a:'국어',t:'career',tags:['biz','edu'],why:'직장·조직 내 소통 능력을 실무 중심으로 배워요'},
+  '독서 토론과 글쓰기':{a:'국어',t:'fusion',tags:['hum','edu','law'],why:'토론과 글쓰기로 생각하는 힘을 키우는 융합 과목이에요'},
+  '매체 의사소통':{a:'국어',t:'fusion',tags:['media','it'],why:'디지털 매체 시대의 소통 능력을 배워요'},
+  '언어생활 탐구':{a:'국어',t:'fusion',tags:['hum','edu'],why:'일상 속 언어를 탐구하며 언어 감각을 키워요'},
+  // 수학
+  '공통수학1':{a:'수학',t:'common'},'공통수학2':{a:'수학',t:'common'},
+  '대수':{a:'수학',t:'general',tags:['stem','it','biz','medical'],why:'방정식·함수 심화 — 이공계·의약 진학의 수학 기초예요'},
+  '미적분Ⅰ':{a:'수학',t:'general',tags:['stem','it','medical'],why:'이과 진학의 핵심! 미적분Ⅱ로 가는 필수 관문이에요'},
+  '확률과 통계':{a:'수학',t:'general',tags:['biz','it','medical','stem'],why:'데이터 분석·연구·경영에 모두 활용되는 수학이에요'},
+  '기하':{a:'수학',t:'career',tags:['stem','arts'],why:'공간 감각 — 건축·디자인·게임 그래픽에 필요한 수학이에요'},
+  '미적분Ⅱ':{a:'수학',t:'career',tags:['stem','medical','it'],why:'이공계 심화 필수! 대수·미적분Ⅰ을 먼저 이수해야 해요'},
+  '경제 수학':{a:'수학',t:'career',tags:['biz'],why:'경영·경제 계열 진학에 필요한 수학 개념이에요'},
+  '인공지능 수학':{a:'수학',t:'career',tags:['it','stem'],why:'AI·데이터사이언스의 수학적 기초를 배워요'},
+  '수학과 문화':{a:'수학',t:'fusion',tags:['arts','hum'],why:'수학을 예술·문화와 연결해 배우는 융합 과목이에요'},
+  '실용 통계':{a:'수학',t:'fusion',tags:['biz','it'],why:'실생활 데이터로 통계를 배워요'},
+  '수학과제 탐구':{a:'수학',t:'fusion',tags:['stem','it','biz'],why:'수학적 사고력을 프로젝트로 심화 학습해요'},
+  // 영어
+  '공통영어1':{a:'영어',t:'common'},'공통영어2':{a:'영어',t:'common'},
+  '영어Ⅰ':{a:'영어',t:'general',tags:['stem','medical','hum','law','biz','it','media'],why:'거의 모든 진로에 필요한 영어 심화 과목이에요'},
+  '영어Ⅱ':{a:'영어',t:'general',tags:['stem','medical','hum','law','biz','it'],why:'심화 영어 독해·청취 — 영어Ⅰ을 먼저 이수해야 해요'},
+  '영어 독해와 작문':{a:'영어',t:'general',tags:['hum','law','medical'],why:'영어 논술·보고서 작성 능력을 키워요'},
+  '영미 문학 읽기':{a:'영어',t:'career',tags:['hum','media'],why:'영어 원서 독해 — 영문학·번역 진로에 추천해요'},
+  '영어 발표와 토론':{a:'영어',t:'career',tags:['hum','media','edu','law'],why:'영어 발표·토론 실력 — 국제무대 진출의 기본기예요'},
+  '심화 영어':{a:'영어',t:'career',tags:['hum','biz'],why:'최고 수준 영어 심화 — 어학·국제 계열 진학에 유리해요'},
+  '실생활 영어 회화':{a:'영어',t:'fusion',tags:['biz','media','sports'],why:'일상·직업 상황의 실용 영어 회화 능력을 키워요'},
+  '미디어 영어':{a:'영어',t:'fusion',tags:['media','it'],why:'영상·미디어 속 영어를 배워요 — 글로벌 콘텐츠 진로에 도움돼요'},
+  '세계 문화와 영어':{a:'영어',t:'fusion',tags:['hum','biz'],why:'영어로 세계 문화를 이해해요 — 국제·관광 진로에 유익해요'},
+  // 사회 (역사/도덕 포함)
+  '한국사1':{a:'사회',t:'common'},'한국사2':{a:'사회',t:'common'},
+  '통합사회1':{a:'사회',t:'common'},'통합사회2':{a:'사회',t:'common'},
+  '세계시민과 지리':{a:'사회',t:'general',tags:['hum','edu','biz'],why:'세계의 지역과 문화 이해 — 국제·환경 진로의 기초예요'},
+  '세계사':{a:'사회',t:'general',tags:['hum','law'],why:'세계 역사의 흐름 이해 — 외교·인문 계열 기초예요'},
+  '사회와 문화':{a:'사회',t:'general',tags:['hum','law','edu','biz'],why:'사회 구조와 문화를 이해하는 인문·사회 기본 과목이에요'},
+  '현대사회와 윤리':{a:'사회',t:'general',tags:['hum','law','edu'],why:'사회·윤리 문제를 분석하는 인문학 필수 과목이에요'},
+  '한국지리 탐구':{a:'사회',t:'career',tags:['hum','edu'],why:'국토 이해 — 도시·환경 계획 진로에 유용해요'},
+  '도시의 미래 탐구':{a:'사회',t:'career',tags:['stem','hum'],why:'미래 도시 문제를 탐구해요 — 도시공학·행정 진로에 추천해요'},
+  '동아시아 역사 기행':{a:'사회',t:'career',tags:['hum','media'],why:'한·중·일 역사 이해 — 인문·관광·외교 진로에 유익해요'},
+  '정치':{a:'사회',t:'career',tags:['law'],why:'민주주의·정치 과정 이해 — 법·행정·외교 진로 필수예요'},
+  '법과 사회':{a:'사회',t:'career',tags:['law'],why:'법학 진로의 입문 과목 — 실생활 법 적용을 배워요'},
+  '경제':{a:'사회',t:'career',tags:['biz','law'],why:'시장 원리·경제 현상을 배우는 경영계열 기초예요'},
+  '윤리와 사상':{a:'사회',t:'career',tags:['hum','edu','law'],why:'동서양 윤리 사상 — 철학·교육 계열 진학 기초예요'},
+  '인문학과 윤리':{a:'사회',t:'career',tags:['hum','edu'],why:'인문 고전으로 삶의 문제를 탐구해요'},
+  '국제 관계의 이해':{a:'사회',t:'career',tags:['law','biz','hum'],why:'국제 정세·외교 이해 — 외교관·국제기구 진로 추천!'},
+  '여행지리':{a:'사회',t:'fusion',tags:['media','biz','hum'],why:'여행으로 배우는 지리 — 관광·콘텐츠 진로와 잘 맞아요'},
+  '역사로 탐구하는 현대 세계':{a:'사회',t:'fusion',tags:['hum','law'],why:'역사적 시각으로 현대 문제를 분석해요'},
+  '사회문제 탐구':{a:'사회',t:'fusion',tags:['hum','law','edu'],why:'현대 사회 문제를 융합적 시각으로 분석해요'},
+  '금융과 경제생활':{a:'사회',t:'fusion',tags:['biz'],why:'금융 이해력(돈 관리 능력)을 키워요 — 경제·경영 진로 추천!'},
+  '윤리문제 탐구':{a:'사회',t:'fusion',tags:['hum','law'],why:'생명·AI 윤리 등 현대 윤리 쟁점을 탐구해요'},
+  '기후변화와 지속가능한 세계':{a:'사회',t:'fusion',tags:['stem','hum'],why:'기후 위기를 사회적 관점으로 탐구해요 — 환경 진로 추천!'},
+  // 과학
+  '통합과학1':{a:'과학',t:'common'},'통합과학2':{a:'과학',t:'common'},
+  '과학탐구실험1':{a:'과학',t:'common'},'과학탐구실험2':{a:'과학',t:'common'},
+  '물리학':{a:'과학',t:'general',tags:['stem','it'],why:'기계·전자·항공 공학의 핵심 기초 과목이에요'},
+  '화학':{a:'과학',t:'general',tags:['stem','medical'],why:'화학공학·약학·의학 계열 진학의 필수 과목이에요'},
+  '생명과학':{a:'과학',t:'general',tags:['medical','stem'],why:'의대·생명공학·수의학 진학의 핵심 과목이에요'},
+  '지구과학':{a:'과학',t:'general',tags:['stem'],why:'지질·천문·기상 — 환경·지구과학 진로에 유리해요'},
+  '역학과 에너지':{a:'과학',t:'career',tags:['stem'],why:'물리학 심화(역학) — 기계·항공 공학 진학에 추천해요'},
+  '전자기와 양자':{a:'과학',t:'career',tags:['stem','it'],why:'물리학 심화(전자기) — 전자·반도체·IT 공학에 추천해요'},
+  '물질과 에너지':{a:'과학',t:'career',tags:['stem','medical'],why:'화학 심화 — 소재·에너지 분야 진학에 추천해요'},
+  '화학 반응의 세계':{a:'과학',t:'career',tags:['stem','medical'],why:'화학 심화 — 약학·화학공학·의학 계열에 필요해요'},
+  '세포와 물질대사':{a:'과학',t:'career',tags:['medical','stem','sports'],why:'생명과학 심화 — 의대·생명공학 진학에 필수적이에요'},
+  '생물의 유전':{a:'과학',t:'career',tags:['medical','stem'],why:'유전학 심화 — 의약·바이오 계열 진학에 추천해요'},
+  '지구시스템과학':{a:'과학',t:'career',tags:['stem'],why:'지구 환경 시스템 심화 — 환경·해양 분야 진학에 추천해요'},
+  '행성우주과학':{a:'과학',t:'career',tags:['stem'],why:'천문·우주 심화 — 항공우주 분야 진학에 추천해요'},
+  '과학의 역사와 문화':{a:'과학',t:'fusion',tags:['stem','hum'],why:'과학사·철학을 통해 과학적 사고력을 넓혀요'},
+  '기후변화와 환경생태':{a:'과학',t:'fusion',tags:['stem'],why:'기후·생태를 과학적으로 탐구해요 — 환경 진로 추천!'},
+  '융합과학 탐구':{a:'과학',t:'fusion',tags:['stem','it'],why:'여러 과학 분야를 융합해 프로젝트로 탐구해요'},
+  // 체육
+  '체육1':{a:'체육',t:'general'},'체육2':{a:'체육',t:'general'},
+  '운동과 건강':{a:'체육',t:'career',tags:['sports','medical'],why:'운동 원리와 건강 관리를 배워요'},
+  '스포츠 문화':{a:'체육',t:'career',tags:['sports','media'],why:'스포츠 산업·문화 이해 — 스포츠 관련 진로에 추천해요'},
+  '스포츠 과학':{a:'체육',t:'career',tags:['sports','stem'],why:'운동을 과학적으로 분석해요 — 트레이너·스포츠의학 추천!'},
+  '스포츠 생활1':{a:'체육',t:'fusion',tags:['sports']},
+  '스포츠 생활2':{a:'체육',t:'fusion',tags:['sports']},
+  // 예술
+  '음악':{a:'예술',t:'general',tags:['arts']},'미술':{a:'예술',t:'general',tags:['arts','media']},
+  '연극':{a:'예술',t:'general',tags:['arts','media'],why:'공연 예술·방송 연기의 기초를 배워요'},
+  '음악 연주와 창작':{a:'예술',t:'career',tags:['arts'],why:'음악 전공자의 핵심 실기·이론 과목이에요'},
+  '음악 감상과 비평':{a:'예술',t:'career',tags:['arts','media'],why:'음악 문화·비평 역량을 키워요'},
+  '미술 창작':{a:'예술',t:'career',tags:['arts','media'],why:'시각 예술·디자인 진로의 기본 과목이에요'},
+  '미술 감상과 비평':{a:'예술',t:'career',tags:['arts'],why:'미술 감상·이론 — 큐레이터·평론 진로에 유익해요'},
+  '음악과 미디어':{a:'예술',t:'fusion',tags:['arts','media','it'],why:'음악과 디지털 미디어를 융합해요 — 음향·콘텐츠 진로 추천!'},
+  '미술과 매체':{a:'예술',t:'fusion',tags:['arts','media'],why:'디지털 매체로 미술을 표현해요 — 디자인·영상 진로 추천!'},
+  // 기술·가정/정보
+  '기술·가정':{a:'기술정보',t:'general'},
+  '정보':{a:'기술정보',t:'general',tags:['it','stem'],why:'디지털 시대 필수! 코딩·IT 기초 능력을 키워요'},
+  '로봇과 공학세계':{a:'기술정보',t:'career',tags:['stem','it'],why:'로봇·공학 기술을 체험해요 — 공학 계열 진로 추천!'},
+  '생활과학 탐구':{a:'기술정보',t:'career',tags:['medical','stem'],why:'생활 속 과학 원리를 탐구해요'},
+  '인공지능 기초':{a:'기술정보',t:'career',tags:['it','stem'],why:'AI 시대 필수! 인공지능 원리를 처음 배우는 과목이에요'},
+  '데이터 과학':{a:'기술정보',t:'career',tags:['it','stem','biz'],why:'빅데이터 분석 — AI·경영 분석 직업의 핵심 역량이에요'},
+  '창의 공학 설계':{a:'기술정보',t:'fusion',tags:['stem','it','arts'],why:'아이디어를 설계·제작으로 구현해요 — 공학·발명 진로 추천!'},
+  '지식 재산 일반':{a:'기술정보',t:'fusion',tags:['biz','law'],why:'특허·저작권을 배워요 — 창업·법 관련 진로에 유익해요'},
+  '소프트웨어와 생활':{a:'기술정보',t:'fusion',tags:['it','stem','biz'],why:'SW로 생활 문제를 해결해요 — 개발자 진로의 출발점!'},
+  // 제2외국어/한문
+  '중국어':{a:'제2외국어',t:'general',tags:['hum','biz'],why:'중국어는 글로벌 비즈니스에서 강력한 경쟁력이에요'},
+  '일본어':{a:'제2외국어',t:'general',tags:['hum','biz','media'],why:'일본어 능력은 무역·관광·콘텐츠 분야에 도움 돼요'},
+  '스페인어':{a:'제2외국어',t:'general',tags:['hum','biz'],why:'스페인어권 비즈니스·중남미 진출에 유리해요'},
+  '중국어 회화':{a:'제2외국어',t:'career',tags:['hum','biz','media'],why:'실전 중국어 회화 능력을 키워요'},
+  '일본어 회화':{a:'제2외국어',t:'career',tags:['hum','biz','media'],why:'실전 일본어 회화 능력을 키워요'},
+  '심화 중국어':{a:'제2외국어',t:'career',tags:['hum','biz'],why:'중국어 심화 — 어학 특기자 수준으로 발전시켜요'},
+  '심화 일본어':{a:'제2외국어',t:'career',tags:['hum','biz'],why:'일본어 심화 — 어학 특기자 수준으로 발전시켜요'},
+  '중국 문화':{a:'제2외국어',t:'fusion',tags:['hum','media','biz'],why:'중국 문화 이해 — 국제 교류·관광 진로에 유익해요'},
+  '일본 문화':{a:'제2외국어',t:'fusion',tags:['hum','media','biz'],why:'일본 문화 이해 — 콘텐츠·관광 진로에 유익해요'},
+  // 교양
+  '진로와 직업':{a:'교양',t:'general'},
+  '생태와 환경':{a:'교양',t:'general',tags:['stem','hum'],why:'생태·환경 문제 이해 — 환경 관련 진로의 기초예요'},
+  '인간과 철학':{a:'교양',t:'career',tags:['hum'],why:'철학적 사고 — 인문학 진로의 뿌리를 다져요'},
+  '논리와 사고':{a:'교양',t:'career',tags:['law','hum','it'],why:'논리적 사고력 — 법학·철학·토론 역량의 기초예요'},
+  '인간과 심리':{a:'교양',t:'career',tags:['edu','hum','medical','sports'],why:'인간 심리 이해 — 상담·복지·의료·경영에 폭넓게 활용돼요'},
+  '교육의 이해':{a:'교양',t:'career',tags:['edu'],why:'교육의 원리·방법 — 교사가 꿈이라면 꼭 들어보세요'},
+  '삶과 종교':{a:'교양',t:'career',tags:['hum'],why:'종교와 삶의 의미를 탐구해요'},
+  '보건':{a:'교양',t:'career',tags:['medical','sports'],why:'건강·의료 기초 지식 — 보건·의료 진로의 출발점이에요'},
+  '인간과 경제활동':{a:'교양',t:'fusion',tags:['biz'],why:'경제활동과 진로를 연결해요 — 창업·경영 관심자 추천!'},
+  '논술':{a:'교양',t:'fusion',tags:['hum','law','edu'],why:'글로 논증하는 힘 — 대입 논술·자기표현에 도움돼요'},
 };
 
-// ============================================================
-// DATA: 선택군 (택N) — 학기별 학생 자율 선택 그룹
-// ============================================================
-const COURSE_GROUPS = {
-  // ── 2학년 1학기 ─────────────────────────────
-  'g21a':{label:'국어 선택군',  note:'택1', pick:1, ids:['j20','j21']},
-  'g21b':{label:'수학 선택군',  note:'택1', pick:1, ids:['j22','j23','j24']},
-  'g21c':{label:'영어 선택군',  note:'택1', pick:1, ids:['j25']},
-  'g21d':{label:'탐구 선택군',  note:'택2', pick:2, ids:['j26','j27','j28','j29']},
-  'g21e':{label:'예체능·기타 선택군', note:'택2', pick:2, ids:['j30','j31','j32','j33','j34','j35']},
-  // ── 2학년 2학기 ─────────────────────────────
-  'g22a':{label:'국어 선택군',     note:'택1', pick:1, ids:['j36']},
-  'g22b':{label:'수학 선택군',     note:'택1', pick:1, ids:['j37','j38','j39','j40']},
-  'g22c':{label:'영어 선택군',     note:'택1', pick:1, ids:['j41','j42']},
-  'g22d':{label:'사회 선택군',     note:'택2', pick:2, ids:['j43','j44','j45']},
-  'g22e':{label:'과학·정보 선택군',note:'택2', pick:2, ids:['j46','j49','j50']},
-  'g22f':{label:'예체능 선택군',   note:'택1', pick:1, ids:['j47','j48']},
-  // ── 3학년 1학기 ─────────────────────────────
-  'g31a':{label:'국어 선택군',     note:'택1', pick:1, ids:['j51','j52','j53']},
-  'g31b':{label:'영어 선택군',     note:'택1', pick:1, ids:['j54','j55']},
-  'g31c':{label:'사회 선택군',     note:'택1', pick:1, ids:['j56','j57']},
-  'g31d':{label:'과학 선택군',     note:'택2', pick:2, ids:['j58','j59','j60']},
-  'g31e':{label:'체육·교양 선택군',note:'택3', pick:3, ids:['j61','j62','j63','j64','j65','j66']},
-  // ── 3학년 2학기 ─────────────────────────────
-  'g32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['j67','j68','j69','j70','j71','j72']},
-  'g32b':{label:'심화 탐구 선택군 B',note:'택2', pick:2, ids:['j76','j77','j78']},
-  // ── 제주제일고등학교 (z-prefix) ────────────────────
-  'gz21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z20','z21']},
-  'gz21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['z22','z23','z24']},
-  'gz21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['z25']},
-  'gz21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['z26','z27','z28','z29']},
-  'gz21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['z30','z31','z32','z33','z34','z35']},
-  'gz22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z36']},
-  'gz22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['z37','z38','z39','z40']},
-  'gz22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['z41','z42']},
-  'gz22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['z43','z44','z45']},
-  'gz22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['z46','z49','z50']},
-  'gz22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['z47','z48']},
-  'gz31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['z51','z52','z53']},
-  'gz31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['z54','z55']},
-  'gz31c':{label:'사회 선택군',       note:'택1', pick:1, ids:['z56','z57']},
-  'gz31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['z58','z59','z60']},
-  'gz31e':{label:'체육·교양 선택군',  note:'택3', pick:3, ids:['z61','z62','z63','z64','z65','z66']},
-  'gz32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['z67','z68','z69','z70','z71','z72']},
-  'gz32b':{label:'심화 탐구 선택군 B',note:'택2', pick:2, ids:['z76','z77','z78']},
-  // ── 대정여자고등학교 (d-prefix) ────────────────────
-  'gd21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d20','d21']},
-  'gd21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['d22','d23','d24']},
-  'gd21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['d25','d35']},
-  'gd21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['d26','d27','d28','d29']},
-  'gd21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['d30','d31','d32','d33','d34']},
-  'gd22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d36']},
-  'gd22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['d37','d38','d39']},
-  'gd22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['d41','d42']},
-  'gd22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['d43','d44','d45']},
-  'gd22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['d46','d49','d50']},
-  'gd22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['d47','d48']},
-  'gd31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['d51','d52','d53']},
-  'gd31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['d54','d55']},
-  'gd31c':{label:'사회 선택군',       note:'택1', pick:1, ids:['d56','d57']},
-  'gd31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['d58','d59','d60']},
-  'gd31e':{label:'예술·교양 선택군',  note:'택3', pick:3, ids:['d61','d62','d63','d64','d65','d66']},
-  'gd32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['d67','d68','d69','d70','d71','d72']},
-  'gd32b':{label:'심화 선택군 B',     note:'택2', pick:2, ids:['d76','d77','d78']},
-  // ── 대정고등학교 (e-prefix) ──────────────────────
-  'ge21a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e20','e21']},
-  'ge21b':{label:'수학 선택군',       note:'택1', pick:1, ids:['e22','e23','e24']},
-  'ge21c':{label:'영어 선택군',       note:'택1', pick:1, ids:['e25']},
-  'ge21d':{label:'탐구 선택군',       note:'택2', pick:2, ids:['e26','e27','e28','e29']},
-  'ge21e':{label:'예체능·기타 선택군',note:'택2', pick:2, ids:['e30','e31','e32','e33','e34','e35']},
-  'ge22a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e36']},
-  'ge22b':{label:'수학 선택군',       note:'택1', pick:1, ids:['e37','e38','e39']},
-  'ge22c':{label:'영어 선택군',       note:'택1', pick:1, ids:['e41','e42']},
-  'ge22d':{label:'사회 선택군',       note:'택2', pick:2, ids:['e43','e44','e45']},
-  'ge22e':{label:'과학·정보 선택군',  note:'택2', pick:2, ids:['e46','e49','e50']},
-  'ge22f':{label:'예체능 선택군',     note:'택1', pick:1, ids:['e47','e48']},
-  'ge31a':{label:'국어 선택군',       note:'택1', pick:1, ids:['e51','e52','e53']},
-  'ge31b':{label:'영어 선택군',       note:'택1', pick:1, ids:['e54','e55']},
-  'ge31c':{label:'사회·환경 선택군',  note:'택1', pick:1, ids:['e56','e57']},
-  'ge31d':{label:'과학 선택군',       note:'택2', pick:2, ids:['e58','e59','e60']},
-  'ge31e':{label:'교양·체육 선택군',  note:'택3', pick:3, ids:['e61','e62','e63','e64','e65','e66']},
-  'ge32a':{label:'탐구·교양 선택군 A',note:'택4', pick:4, ids:['e67','e68','e69','e70','e71','e72']},
-  'ge32b':{label:'심화 선택군 B',     note:'택2', pick:2, ids:['e76','e77','e78']},
-};
-// 과목ID → 선택군ID 역방향 맵
-const SUB_TO_GRP = {};
-Object.entries(COURSE_GROUPS).forEach(([gid,g])=>g.ids.forEach(id=>{SUB_TO_GRP[id]=gid;}));
-
-// ── 선수과목 안내 맵 (과목명 → 선수과목 배열) ─────────────
+// ── 선이수 과목 안내 (2025학년도 입학생 기준, 고교학점제 지원센터) ──
+// req: 선이수 필수, rec: 선이수 권장
 const PREREQ_MAP = {
-  '미적분Ⅱ':['미적분Ⅰ'],
-  '기하':['대수'],
-  '인공지능 수학':['대수 또는 미적분Ⅰ 중 1과목'],
-  '경제 수학':['대수 또는 확률과 통계 중 1과목'],
-  '역학과 에너지':['물리학'],
-  '화학 반응의 세계':['화학'],
-  '세포와 물질대사':['생명과학'],
-  '영어Ⅱ':['영어Ⅰ'],
-  '영어 독해와 작문':['영어Ⅰ'],
-  '영미 문학 읽기':['영어Ⅰ','영어Ⅱ'],
-  '실용 영어':['영어Ⅰ'],
-  '중국어Ⅱ':['중국어Ⅰ'],
-  '일본어 회화Ⅰ':['일본어Ⅰ'],
-  '중국어 회화Ⅰ':['중국어Ⅰ'],
-  '주제 탐구 독서':['독서와 작문'],
-  '문학과 영상':['문학'],
-  '고급 수학Ⅱ':['고급 수학Ⅰ'],
-  '심화 국어':['독서와 작문 또는 문학'],
-  '심화 수학Ⅱ':['심화 수학Ⅰ'],
+  '미적분Ⅱ':{req:['대수','미적분Ⅰ'],rec:[]},
+  '실용 통계':{req:['확률과 통계'],rec:[]},
+  '영어Ⅱ':{req:['영어Ⅰ'],rec:[]},
+  '주제 탐구 독서':{req:[],rec:['독서와 작문']},
+  '문학과 영상':{req:[],rec:['문학']},
+  '독서 토론과 글쓰기':{req:[],rec:['독서와 작문']},
+  '언어생활 탐구':{req:[],rec:['화법과 언어']},
+  '심화 영어':{req:[],rec:['영어Ⅰ','영어Ⅱ']},
+  '한국지리 탐구':{req:[],rec:['세계시민과 지리']},
+  '도시의 미래 탐구':{req:[],rec:['세계시민과 지리']},
+  '동아시아 역사 기행':{req:[],rec:['세계사']},
+  '인문학과 윤리':{req:[],rec:['현대사회와 윤리','윤리와 사상']},
+  '역사로 탐구하는 현대 세계':{req:[],rec:['세계사']},
+  '사회문제 탐구':{req:[],rec:['사회와 문화']},
+  '금융과 경제생활':{req:[],rec:['경제']},
+  '윤리문제 탐구':{req:[],rec:['현대사회와 윤리','윤리와 사상']},
+  '기후변화와 지속가능한 세계':{req:[],rec:['세계시민과 지리']},
+  '여행지리':{req:[],rec:['세계시민과 지리']},
+  '역학과 에너지':{req:[],rec:['물리학']},
+  '전자기와 양자':{req:[],rec:['물리학']},
+  '물질과 에너지':{req:[],rec:['화학']},
+  '화학 반응의 세계':{req:[],rec:['화학']},
+  '세포와 물질대사':{req:[],rec:['생명과학']},
+  '생물의 유전':{req:[],rec:['생명과학']},
+  '지구시스템과학':{req:[],rec:['지구과학']},
+  '행성우주과학':{req:[],rec:['지구과학']},
+  '인공지능 기초':{req:[],rec:['정보']},
+  '데이터 과학':{req:[],rec:['정보']},
+  '중국어 회화':{req:[],rec:['중국어']},
+  '일본어 회화':{req:[],rec:['일본어']},
+  '심화 중국어':{req:[],rec:['중국어']},
+  '심화 일본어':{req:[],rec:['일본어']},
 };
 
-// 필수 이수학점 기준 (2022 개정 교육과정)
-// 예술·체육은 필수(4·2학점)만 보장, 나머지는 선택군 자유선택 → 학교기준 최솟값으로 조정
-const MIN_AREA   = {'국어':8,'수학':8,'영어':8,'사회':10,'과학':12,'체육':4,'예술':4};
-const MIN_SELECT = 16;  // 기술정보+제2외국어+교양 합산 최소
-const MIN_REQ    = 84;  // 필수 이수학점 합계 최소
-const MAX_KEM    = 81;  // 국어+영어+수학 합 상한
+// ── 필수 이수학점 기준 (2022 개정 교육과정, 일반고) ──────────
+// 사회는 한국사(6학점)를 포함해 14학점
+const MIN_AREA   = {'국어':8,'수학':8,'영어':8,'사회':14,'과학':10,'체육':10,'예술':10};
+const MIN_SELECT = 16;  // 기술·가정/정보 + 제2외국어/한문 + 교양 합산 최소
+const MIN_REQ    = 84;  // 필수 이수학점 합계
+const MAX_KEM    = 81;  // 국어+수학+영어 총 이수학점 상한
+
+// ── 교과군별 선택 가이드 ─────────────────────────────────
+const AREA_GUIDE = {
+  '국어':      {rec:'학기당 1과목', min:1, max:4, hint:'📝 2·3학년 매 학기 국어 선택군에서 1과목씩 골라요.'},
+  '수학':      {rec:'학기당 1과목', min:1, max:4, hint:'➕ 이공·의약·IT 진로면 대수→미적분Ⅰ→미적분Ⅱ 순서로, 인문·예술 진로면 확률과 통계·실용 통계를 추천해요!'},
+  '영어':      {rec:'학기당 1과목', min:1, max:4, hint:'🌍 영어Ⅰ→영어Ⅱ 순서로 이수해요. 국제 진로면 심화 과목까지!'},
+  '사회':      {rec:'탐구 택2에서', min:0, max:4, hint:'🌏 탐구 선택군에서 진로와 관련 있는 사회 과목을 골라요.'},
+  '과학':      {rec:'탐구 택2에서', min:0, max:4, hint:'🔬 이공·의약 진로면 물리·화학·생명 등을 2학년부터 챙기고, 3학년에 심화(진로선택)로 이어가요.'},
+  '체육':      {rec:'자동 이수',    min:0, max:0, hint:'⚽ 체육은 매 학기 학교지정으로 자동 이수돼요 (3년간 12학점).'},
+  '예술':      {rec:'자동+선택',    min:0, max:2, hint:'🎨 예술 필수 10학점은 학교지정으로 채워져요. 예술 진로면 자율 선택군에서 추가로 골라요!'},
+  '기술정보':  {rec:'0~2과목',     min:0, max:3, hint:'💻 기술·가정과 정보는 학교지정으로 이수해요. IT·AI 진로면 인공지능 기초·데이터 과학을 추가 선택!'},
+  '제2외국어': {rec:'0~2과목',     min:0, max:3, hint:'🗣️ 어학·국제·관광 진로면 자율 선택군에서 골라요.'},
+  '교양':      {rec:'0~2과목',     min:0, max:3, hint:'📚 생활·교양 영역(기술정보+제2외국어+교양) 합계 16학점 이상 필요 — 자율 선택군에서 1~2과목 채워요.'},
+  '창체':      {rec:'자동포함',    min:0, max:0, hint:''},
+};
+
+// ============================================================
+// 학교 편제표 (2022 개정 기준 예시 편제표)
+//  구조: 1학년 전과목 공통필수(58학점) + 2·3학년 학교지정/선택군
+//  학기별 교과학점: 30·30·29·29·28·28 = 174 (+창체 18 = 192)
+//  새 학교를 추가하려면 SCHOOL_DEFS에 항목 하나만 더 쓰면 됩니다!
+// ============================================================
+const SEM_TARGET_STD = {'1-1':30,'1-2':30,'2-1':29,'2-2':29,'3-1':28,'3-2':28};
+
+// 공통 선택군 템플릿 — 학교별로 pool만 바꿔 특색을 냅니다
+function stdGroups(o={}){
+  return {
+    '2-1':[
+      ['국어 선택군',1,o.k21||['화법과 언어','독서와 작문']],
+      ['수학 선택군',1,o.m21||['대수','확률과 통계']],
+      ['영어 선택군',1,o.e21||['영어Ⅰ']],
+      ['탐구 선택군',2,o.t21||['사회와 문화','세계시민과 지리','물리학','화학']],
+    ],
+    '2-2':[
+      ['국어 선택군',1,o.k22||['문학']],
+      ['수학 선택군',1,o.m22||['미적분Ⅰ','수학과 문화']],
+      ['영어 선택군',1,o.e22||['영어Ⅱ','영어 독해와 작문']],
+      ['탐구 선택군',2,o.t22||['현대사회와 윤리','경제','생명과학','지구과학']],
+      ['자율 선택군',1,o.f22||['인공지능 기초','미술 감상과 비평','중국어','일본어']],
+    ],
+    '3-1':[
+      ['국어 선택군',1,o.k31||['주제 탐구 독서','문학과 영상','직무 의사소통']],
+      ['수학 선택군',1,o.m31||['미적분Ⅱ','기하','인공지능 수학','실용 통계']],
+      ['영어 선택군',1,o.e31||['영미 문학 읽기','영어 발표와 토론','실생활 영어 회화']],
+      ['탐구 선택군',2,o.t31||['역학과 에너지','화학 반응의 세계','세포와 물질대사','정치','법과 사회','윤리와 사상']],
+      ['자율 선택군',1,o.f31||['인간과 심리','교육의 이해','논리와 사고','보건','데이터 과학']],
+    ],
+    '3-2':[
+      ['융합·탐구 선택군 A',4,o.a32||['사회문제 탐구','융합과학 탐구','기후변화와 환경생태','금융과 경제생활','소프트웨어와 생활','매체 의사소통','수학과제 탐구']],
+      ['심화 선택군 B',2,o.b32||['생물의 유전','전자기와 양자','국제 관계의 이해','인문학과 윤리','심화 영어']],
+    ],
+  };
+}
+
+const SCHOOL_DEFS = {
+  jejusadaebugo: {
+    name:'제주대학교사범대학부설고등학교', short:'제주사대부고', emoji:'🌊', location:'제주시',
+    desc:'균형 종합형 · 모든 계열 고루 개설',
+    art1:'음악', art2:'미술', artFix:'음악 연주와 창작',
+    special:[
+      {name:'진로 탐구 프로젝트',sem:'3-1',tags:[],why:'진로와 연계한 자기주도 탐구 프로젝트예요'},
+      {name:'제주 이해',sem:'3-2',tags:['hum'],why:'제주의 역사·문화·자연을 배우는 학교 특색 과목이에요'},
+    ],
+    groups: stdGroups(),
+  },
+  jejujeilo: {
+    name:'제주제일고등학교', short:'제주제일고', emoji:'🏛️', location:'제주시',
+    desc:'인문·사회 중점 예시 · 법·정치·역사 과목 강화',
+    art1:'음악', art2:'미술', artFix:'음악 연주와 창작',
+    special:[
+      {name:'인문 고전과 토론',sem:'3-1',tags:['hum','law'],why:'고전을 읽고 토론하며 인문 소양을 키워요'},
+      {name:'제주 역사 탐방',sem:'3-2',tags:['hum'],why:'제주 역사 현장을 탐방하는 학교 특색 과목이에요'},
+    ],
+    groups: stdGroups({
+      t21:['사회와 문화','세계시민과 지리','세계사','물리학','화학'],
+      t31:['정치','법과 사회','윤리와 사상','인문학과 윤리','동아시아 역사 기행','역학과 에너지','세포와 물질대사'],
+      f31:['인간과 철학','인간과 심리','논리와 사고','교육의 이해','데이터 과학'],
+      a32:['사회문제 탐구','역사로 탐구하는 현대 세계','기후변화와 지속가능한 세계','금융과 경제생활','여행지리','매체 의사소통','융합과학 탐구'],
+      b32:['국제 관계의 이해','심화 영어','생물의 유전','전자기와 양자'],
+    }),
+  },
+  daejeongnyeo: {
+    name:'대정여자고등학교', short:'대정여고', emoji:'🌸', location:'서귀포시 대정읍',
+    desc:'예술·교육 중점 예시 · 음악·미술·교육 과목 강화',
+    art1:'미술', art2:'음악', artFix:'미술 창작',
+    special:[
+      {name:'예술 창작 프로젝트',sem:'3-1',tags:['arts'],why:'나만의 작품을 기획·창작하는 학교 특색 과목이에요'},
+      {name:'문화예술 기획',sem:'3-2',tags:['arts','media'],why:'전시·공연을 기획해보는 학교 특색 과목이에요'},
+    ],
+    groups: stdGroups({
+      f22:['음악 감상과 비평','미술 감상과 비평','인공지능 기초','일본어'],
+      f31:['교육의 이해','인간과 심리','보건','논리와 사고'],
+      a32:['사회문제 탐구','융합과학 탐구','기후변화와 환경생태','금융과 경제생활','매체 의사소통','음악과 미디어','미술과 매체'],
+      b32:['음악 연주와 창작','생물의 유전','국제 관계의 이해','심화 영어'],
+    }),
+  },
+  daejeong: {
+    name:'대정고등학교', short:'대정고', emoji:'🌿', location:'서귀포시 대정읍',
+    desc:'자연·환경 중점 예시 · 생태·해양·환경 과목 강화',
+    art1:'미술', art2:'음악', artFix:'미술 창작',
+    special:[
+      {name:'제주 환경 탐구',sem:'3-1',tags:['stem'],why:'제주의 생태·환경을 직접 탐구하는 학교 특색 과목이에요'},
+      {name:'해양과 생활',sem:'3-2',tags:['stem'],why:'제주 바다와 해양 자원을 배우는 학교 특색 과목이에요'},
+    ],
+    groups: stdGroups({
+      f22:['인공지능 기초','생태와 환경','중국어','일본어'],
+      t31:['역학과 에너지','화학 반응의 세계','세포와 물질대사','지구시스템과학','법과 사회','윤리와 사상'],
+      f31:['보건','인간과 심리','데이터 과학','논리와 사고'],
+      a32:['사회문제 탐구','융합과학 탐구','기후변화와 환경생태','기후변화와 지속가능한 세계','여행지리','소프트웨어와 생활','수학과제 탐구'],
+      b32:['생물의 유전','행성우주과학','전자기와 양자','국제 관계의 이해'],
+    }),
+  },
+  seogwipo: {
+    name:'서귀포고등학교', short:'서귀포고', emoji:'🌅', location:'서귀포시',
+    desc:'IT·소프트웨어 중점 예시 · AI·데이터·공학 과목 강화',
+    art1:'음악', art2:'미술', artFix:'음악 연주와 창작',
+    special:[
+      {name:'SW·AI 프로젝트',sem:'3-1',tags:['it','stem'],why:'소프트웨어·AI로 문제를 해결하는 학교 특색 과목이에요'},
+      {name:'디지털 문제 해결',sem:'3-2',tags:['it'],why:'디지털 도구로 지역 문제를 해결해보는 특색 과목이에요'},
+    ],
+    groups: stdGroups({
+      f22:['인공지능 기초','로봇과 공학세계','중국어','일본어'],
+      t31:['역학과 에너지','전자기와 양자','화학 반응의 세계','세포와 물질대사','정치','법과 사회'],
+      f31:['데이터 과학','창의 공학 설계','인간과 심리','논리와 사고'],
+      a32:['소프트웨어와 생활','사회문제 탐구','융합과학 탐구','기후변화와 환경생태','금융과 경제생활','매체 의사소통','수학과제 탐구'],
+      b32:['생물의 유전','지구시스템과학','국제 관계의 이해','심화 영어'],
+    }),
+  },
+  jejuyeogo: {
+    name:'제주여자고등학교', short:'제주여고', emoji:'🌍', location:'제주시',
+    desc:'국제·외국어 중점 예시 · 외국어·국제이해 과목 강화',
+    art1:'음악', art2:'미술', artFix:'음악 연주와 창작',
+    special:[
+      {name:'국제 이해 교육',sem:'3-1',tags:['hum','biz'],why:'세계 여러 나라의 문화·이슈를 배우는 특색 과목이에요'},
+      {name:'세계시민 프로젝트',sem:'3-2',tags:['hum'],why:'세계시민으로서 지역·지구 문제에 참여해보는 과목이에요'},
+    ],
+    groups: stdGroups({
+      f22:['중국어','일본어','스페인어','인공지능 기초'],
+      e31:['영미 문학 읽기','영어 발표와 토론','심화 영어','실생활 영어 회화'],
+      t31:['정치','법과 사회','윤리와 사상','국제 관계의 이해','세포와 물질대사','화학 반응의 세계'],
+      f31:['중국어 회화','일본어 회화','인간과 심리','교육의 이해'],
+      a32:['사회문제 탐구','여행지리','금융과 경제생활','기후변화와 지속가능한 세계','매체 의사소통','융합과학 탐구','세계 문화와 영어'],
+      b32:['심화 중국어','심화 일본어','미디어 영어','생물의 유전'],
+    }),
+  },
+};
+
+// ── 편제표 빌더: SCHOOL_DEFS → 과목 목록 + 선택군 자동 생성 ──
+function buildSchool(id, d){
+  const subs=[]; let n=0;
+  const add=(name,cr,sem,type,over)=>{
+    const c=SUBJECT_CATALOG[name]||{};
+    const o=over||{};
+    const sub={
+      id:`${id}_${(++n)}`, name, cr, sem, type,
+      area:o.area||c.a||'교양',
+      subtype:o.subtype||c.t||'general',
+      tags:o.tags||c.tags||[],
+      why:o.why||c.why||'',
+    };
+    subs.push(sub);
+    return sub.id;
+  };
+  // ── 1학년: 전 과목 공통필수 (학기 30학점) ──
+  add('공통국어1',4,'1-1','mandatory'); add('공통수학1',4,'1-1','mandatory');
+  add('공통영어1',4,'1-1','mandatory'); add('한국사1',3,'1-1','mandatory');
+  add('통합사회1',4,'1-1','mandatory'); add('통합과학1',4,'1-1','mandatory');
+  add('과학탐구실험1',1,'1-1','mandatory'); add('체육1',2,'1-1','mandatory');
+  add(d.art1,4,'1-1','mandatory');
+  add('공통국어2',4,'1-2','mandatory'); add('공통수학2',4,'1-2','mandatory');
+  add('공통영어2',4,'1-2','mandatory'); add('한국사2',3,'1-2','mandatory');
+  add('통합사회2',4,'1-2','mandatory'); add('통합과학2',4,'1-2','mandatory');
+  add('과학탐구실험2',1,'1-2','mandatory'); add('체육2',2,'1-2','mandatory');
+  add(d.art2,4,'1-2','mandatory');
+  // ── 2·3학년 학교지정 (체육 매학기 + 예술·생활교양 확보) ──
+  add('운동과 건강',2,'2-1','school');
+  add(d.artFix,2,'2-1','school');
+  add('기술·가정',3,'2-1','school');
+  add('진로와 직업',2,'2-1','school');
+  add('스포츠 문화',2,'2-2','school');
+  add('정보',3,'2-2','school');
+  add('스포츠 생활1',2,'3-1','school');
+  add('스포츠 생활2',2,'3-2','school');
+  (d.special||[]).forEach(sp=>{
+    add(sp.name,2,sp.sem,'school',{area:'교양',subtype:'special',tags:sp.tags,why:sp.why});
+  });
+  // ── 선택군 → 학생 자율과목 (모두 4학점) ──
+  const groups={};
+  Object.entries(d.groups).forEach(([sem,glist])=>{
+    glist.forEach(([label,pick,names],gi)=>{
+      const ids=names.map(nm=>add(nm,4,sem,'student'));
+      groups[`${id}_${sem}_${gi}`]={label,note:`택${pick}`,pick,ids};
+    });
+  });
+  return {
+    name:d.name, short:d.short, emoji:d.emoji, location:d.location, desc:d.desc||'',
+    semTarget:{...SEM_TARGET_STD},
+    subjects:subs, groups,
+  };
+}
+
+const SCHOOLS_DB = {};
+Object.entries(SCHOOL_DEFS).forEach(([id,d])=>{ SCHOOLS_DB[id]=buildSchool(id,d); });
+
 
 // Career-area hint matrix
 const CAT_WHY = {
@@ -1089,8 +949,32 @@ function getWhy(s){
   return null;
 }
 
+// ── 자동 저장 (브라우저 localStorage) ─────────────────────
+const LS_KEY='hs_sim_state_v2';
+function saveState(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify({
+      schoolId:S.schoolId, sel:S.sel, career:S.career, grade:S.grade,
+      studentName:S.studentName||'', customSchools:S.customSchools
+    }));
+  }catch(e){}
+}
+function loadState(){
+  try{return JSON.parse(localStorage.getItem(LS_KEY)||'null');}catch(e){return null;}
+}
+function resumeState(){
+  const d=S._saved; if(!d) return;
+  S.customSchools=d.customSchools||S.customSchools||{};
+  const okSchool=d.schoolId&&(SCHOOLS_DB[d.schoolId]||S.customSchools[d.schoolId]);
+  S.schoolId=okSchool?d.schoolId:null;
+  S.sel=d.sel||{}; S.career=d.career||null; S.grade=d.grade||2; S.studentName=d.studentName||'';
+  if(!S.schoolId){ set({screen:'school_select'}); return; }
+  set({screen:S.career?'subject_select':'career_explore'});
+}
+
 function set(upd,noRender){
   Object.assign(S,upd);
+  saveState();
   if(!noRender) render();
 }
 
@@ -1380,8 +1264,9 @@ function savePdfSchool(){
   const id='pdf_'+Date.now();
   S.customSchools[id]={
     name,short:short||name,emoji:'📄',location:loc||'',
-    semTarget:{'1-1':22,'1-2':23,'2-1':32,'2-2':32,'3-1':32,'3-2':33},
-    subjects
+    desc:'편제표 PDF로 추가',
+    semTarget:{...SEM_TARGET_STD},
+    subjects, groups:{}
   };
   alert(`✅ "${name}" 학교를 추가했어요! (${subjects.length}개 과목)`);
   pickSchool(id);
@@ -1490,9 +1375,24 @@ function rHome(){
           </div>
         </div>
         <div style="font-size:.75rem;color:var(--s5);line-height:1.55;word-break:keep-all">
-          선택과목은 <strong style="color:var(--s9)">2·3학년에서 약 30과목 이상</strong>을 직접 골라야 해요!
+          2·3학년에서는 <strong style="color:var(--s9)">매 학기 선택군에서 총 23과목</strong>을 직접 골라요!
         </div>
       </div>
+
+      <!-- 고교학점제 핵심 정리 -->
+      <details style="background:#fff;border:1.5px solid #e2e8f0;border-radius:13px;padding:11px 15px;margin-bottom:14px">
+        <summary style="font-size:.84rem;font-weight:800;color:var(--s7);cursor:pointer">🧭 고교학점제 핵심 정리 — 눌러서 열기</summary>
+
+        <ul style="font-size:.78rem;color:var(--s7);line-height:1.9;margin:8px 0 0 18px;word-break:keep-all">
+          <li>3년간 <strong>192학점</strong>(교과 174 + 창의적 체험활동 18) 이상 이수해야 졸업해요.</li>
+          <li>교과는 <strong>필수이수 84학점 + 자율이수 90학점</strong>으로 구성돼요.</li>
+          <li>과목 유형: <strong>공통과목</strong>(1학년) → <strong>일반선택 → 진로선택 → 융합선택</strong> 순으로 넓고 깊게!</li>
+          <li>성적은 <strong>5등급제 + 성취평가(A~E)</strong>로 함께 표시돼요 (2025학년도 입학생부터).</li>
+          <li>출석 2/3 이상 + 학업성취율 40% 이상이어야 학점 취득! 미달이면 <strong>미이수(I)</strong> → 보충이수를 해요.</li>
+          <li>국어+수학+영어 총합은 <strong>81학점</strong>을 넘을 수 없어요.</li>
+          <li>체육은 <strong>매 학기</strong> 이수해요.</li>
+        </ul>
+      </details>
 
       <!-- 4단계 흐름 -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:16px">
@@ -1515,6 +1415,7 @@ function rHome(){
       </div>
 
       <!-- 시작 버튼 -->
+      ${S._saved?`<button class="btn btn-outline btn-block" style="margin-bottom:8px" onclick="resumeState()">⏪ 지난 기록 이어서 하기</button>`:''}
       <button class="btn btn-primary btn-block" style="font-size:1.02rem;padding:15px;letter-spacing:-.01em;gap:8px" onclick="set({screen:'school_select'})">
         ${I.school} 지금 시작하기 →
       </button>
@@ -1543,6 +1444,7 @@ function rSchoolSelect(){
             <div style="width:52px;height:52px;border-radius:50%;background:${SCHOOL_COLORS[i%4]};display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 4px;box-shadow:0 4px 12px rgba(0,0,0,.15)">${sc.emoji||'🏫'}</div>
             <div class="s-name">${sc.short||sc.name}</div>
             <div class="s-loc">📍 ${sc.location||'위치 미상'}</div>
+            ${sc.desc?`<div style="font-size:.64rem;color:var(--s4);margin-top:3px;line-height:1.4">${sc.desc}</div>`:''}
           </div>`).join('')}
         <div class="add-school-btn" onclick="set({screen:'add_school'})">
           <div style="font-size:1.6rem;margin-bottom:5px">➕</div>
@@ -1564,8 +1466,9 @@ function rSchoolSelect(){
       </div>
 
       <div class="warn-box" style="margin-top:10px">
-        ⚠️ 이 앱의 교육과정은 <strong>연습용 예시</strong>입니다.<br>
-        실제 과목 선택 시에는 담임·진로 선생님과 반드시 상담하세요.
+        ⚠️ 학교별 편제표는 <strong>2022 개정 교육과정 기준으로 만든 연습용 예시</strong>로,
+        실제 학교의 편제표와 다를 수 있어요.<br>
+        실제 과목 선택(수강신청) 시에는 우리 학교 안내 책자와 담임·진로 선생님 상담이 기준입니다!
       </div>
     </div>
   </div>`;
@@ -1600,10 +1503,15 @@ function rAddSchool(){
         <label class="form-label">학교 약칭</label>
         <input class="form-input" id="ns-short" type="text" placeholder="예: ○○고" value="${S.newSchool.short||''}">
       </div>
+      <div class="form-group">
+        <label class="form-label">기준 편제표 (복사해서 시작할 학교)</label>
+        <select class="form-input" id="ns-base">
+          ${Object.entries(SCHOOLS_DB).map(([id,sc])=>`<option value="${id}">${sc.emoji} ${sc.short} — ${sc.desc}</option>`).join('')}
+        </select>
+      </div>
       <div class="info-box">
-        💡 추가된 학교는 공통필수 과목이 기본 포함되어 있어요.<br>
-        선택과목은 제주사대부고와 동일한 목록으로 시작해요.<br>
-        향후 선생님이 직접 과목 목록을 편집하는 기능이 추가될 예정이에요.
+        💡 선택한 기준 학교의 편제표(공통필수+학교지정+선택군)를 그대로 복사해서 시작해요.<br>
+        📄 우리 학교의 실제 편제표 PDF가 있다면 <strong>편제표 PDF 업로드</strong>가 더 정확해요!
       </div>
       <div class="nav-row">
         <button class="btn btn-secondary" style="flex:1" onclick="set({screen:'school_select'})">← 취소</button>
@@ -1619,12 +1527,18 @@ function addSchool(){
   const short=document.getElementById('ns-short')?.value?.trim();
   if(!name){alert('학교 이름을 입력해 주세요!');return;}
   const id='custom_'+Date.now();
-  // Clone jejusadaebugo subjects with new IDs
-  const baseSubs=SCHOOLS_DB.jejusadaebugo.subjects.map(s=>({...s,id:s.id+'_c'}));
+  // 기준 학교 편제표 복사 (과목 ID 재부여 + 선택군 연결 유지)
+  const baseId=document.getElementById('ns-base')?.value||'jejusadaebugo';
+  const base=SCHOOLS_DB[baseId]||SCHOOLS_DB.jejusadaebugo;
+  const idMap={};
+  const baseSubs=base.subjects.map(s=>{const nid=s.id+'_c';idMap[s.id]=nid;return {...s,id:nid};});
+  const baseGroups={};
+  Object.entries(base.groups||{}).forEach(([gid,g])=>{baseGroups[gid+'_c']={...g,ids:g.ids.map(i=>idMap[i])};});
   S.customSchools[id]={
     name, short:short||name, emoji:'🏫', location:loc||'',
-    semTarget:{...SCHOOLS_DB.jejusadaebugo.semTarget},
-    subjects:baseSubs
+    desc:'직접 추가 (기준: '+base.short+')',
+    semTarget:{...base.semTarget},
+    subjects:baseSubs, groups:baseGroups
   };
   set({newSchool:{name:'',location:'',short:''}});
   pickSchool(id);
@@ -1679,18 +1593,22 @@ function rGuided(){
             i===1?`<span style="font-size:.68rem;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:20px;font-weight:700;flex-shrink:0">2위</span>`:''}
         </div>`).join('')}
 
-      <p style="font-size:.82rem;font-weight:700;color:#374151;margin:10px 0 7px">✨ 관련 직업 선택</p>
-      <div class="chips">
-        ${topJobs.map(j=>{
-          const c=sorted.find(([cid])=>(JOBS[cid]||[]).includes(j))?.[0]||sorted[0][0];
-          return `<span class="chip" data-job="${j}" data-cat="${c}">${j}</span>`;
-        }).join('')}
+      <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fbbf24;border-radius:12px;padding:12px 14px;margin-top:12px">
+        <p style="font-size:.88rem;font-weight:800;color:#92400e;margin-bottom:3px">👇 다음 단계: 마음에 드는 직업을 1개 눌러 주세요!</p>
+        <p style="font-size:.74rem;color:#78350f;margin-bottom:9px">직업 이름을 누르면 그 직업에 맞는 <strong>과목 추천 단계</strong>로 바로 넘어가요.</p>
+        <div class="chips">
+          ${topJobs.map(j=>{
+            const c=sorted.find(([cid])=>(JOBS[cid]||[]).includes(j))?.[0]||sorted[0][0];
+            return `<span class="chip" data-job="${j}" data-cat="${c}">${j}</span>`;
+          }).join('')}
+        </div>
       </div>
 
       ${S.showMoreJobs?`
         <!-- 더 많은 직업 패널 -->
         <div style="margin-top:12px;background:#f8faff;border-radius:10px;padding:12px;border:1px solid #c7d2fe">
-          <div style="font-size:.82rem;font-weight:700;color:#4338ca;margin-bottom:10px">📋 추천 분야별 전체 직업 목록</div>
+          <div style="font-size:.82rem;font-weight:700;color:#4338ca;margin-bottom:2px">📋 추천 분야별 전체 직업 목록</div>
+          <div style="font-size:.72rem;color:#6b7280;margin-bottom:10px">👇 여기서도 직업을 누르면 바로 다음 단계로 넘어가요</div>
           ${allRelatedCats.map((cat,i)=>`
             <div style="margin-bottom:10px">
               <div style="font-size:.8rem;font-weight:700;color:#374151;margin-bottom:5px">
@@ -1712,9 +1630,14 @@ function rGuided(){
         </div>
         <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%" onclick="set({showMoreJobs:false})">▲ 접기</button>
       `:`
-        <button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%" onclick="set({showMoreJobs:true})">
-          📋 더 많은 직업 보기 (추천 분야 전체 목록)
-        </button>
+        <div style="background:#f8faff;border:1.5px dashed #c7d2fe;border-radius:10px;padding:10px 12px;margin-top:10px;text-align:center">
+          <div style="font-size:.76rem;color:#4b5563;line-height:1.65;margin-bottom:8px;word-break:keep-all">
+            🤔 <strong>위 직업 중에 마음에 드는 게 없나요?</strong><br>
+            아래 버튼을 누르면 나의 추천 분야에 속한 <strong>전체 직업 목록</strong>이 펼쳐져요.<br>
+            더 다양한 직업을 살펴보고 그중에서 골라도 좋아요!
+          </div>
+          <button class="btn btn-outline btn-sm" style="width:100%" onclick="set({showMoreJobs:true})">📋 더 많은 직업 펼쳐 보기</button>
+        </div>
       `}
 
       <div style="display:flex;gap:7px;margin-top:10px">
@@ -1774,6 +1697,7 @@ function rSearch(){
         :`<div>
             <p style="font-size:.78rem;font-weight:700;color:#6b7280;margin-bottom:9px;display:flex;align-items:center;gap:5px">
               <span style="background:#fef3c7;padding:2px 8px;border-radius:6px;color:#92400e">⭐ 인기 직업</span>
+              <span style="font-size:.71rem;color:#9ca3af;font-weight:400">누르면 바로 다음 단계로!</span>
             </p>
             <div class="chips">${['의사','소프트웨어개발자','교사','변호사','그래픽디자이너','유튜버·크리에이터','간호사','AI엔지니어','경영컨설턴트','초등교사'].map(j=>{const f=ALL_JOBS.find(x=>x.name===j);return `<span class="chip" data-job="${j}" data-cat="${f?.cat||'stem'}">${j}</span>`;}).join('')}</div>
           </div>`}
@@ -1802,7 +1726,8 @@ function rCategory(){
     </div>
     ${S.selCat?`
       <div style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:2px solid #c7d2fe;border-radius:12px;padding:12px 14px;margin-top:4px">
-        <p style="font-size:.82rem;font-weight:800;color:#3730a3;margin-bottom:8px">${CAT.find(c=>c.id===S.selCat)?.emoji} ${CAT.find(c=>c.id===S.selCat)?.name} 관련 직업</p>
+        <p style="font-size:.82rem;font-weight:800;color:#3730a3;margin-bottom:2px">${CAT.find(c=>c.id===S.selCat)?.emoji} ${CAT.find(c=>c.id===S.selCat)?.name} 관련 직업</p>
+        <p style="font-size:.73rem;color:#6b7280;margin-bottom:8px">👇 직업을 1개 누르면 <strong>과목 추천 단계</strong>로 넘어가요!</p>
         <div class="chips">${(JOBS[S.selCat]||[]).map(j=>`<span class="chip" data-job="${j}" data-cat="${S.selCat}">${j}</span>`).join('')}</div>
       </div>`:''}
   </div>`;
@@ -1907,18 +1832,20 @@ function rSubjectSel(){
         학생이 직접 선택할 수 없어요.<br>
         아래 과목 목록을 <strong>확인</strong>한 후 버튼을 눌러주세요!
       </div>
-      <button class="btn btn-primary btn-block" style="max-width:320px;margin:0 auto;font-size:.95rem" onclick="set({grade:2})">
-        ✅ 1학년 과목 확인 완료! 2학년 과목 선택하러 가기 →
+      <button class="btn btn-primary btn-block" style="max-width:320px;margin:0 auto;font-size:.95rem" onclick="set({grade:2});window.scrollTo(0,0)">
+        ✅ 1학년 과목 확인 완료! 다음 단계 → 2학년 과목 선택하러 가기
       </button>
     </div>
     `:''}
     <!-- 2학년 안내 -->
     ${grade===2?`<div class="info-box" style="margin-bottom:8px">
-      ✋ <strong>2학년 과목을 선택하세요!</strong> &nbsp;|&nbsp; 1학년 말에 선택 &nbsp;|&nbsp; 각 선택군에서 정해진 수만큼 골라주세요
+      ✋ <strong>2단계: 2학년 과목을 선택하세요!</strong> 각 선택군에서 정해진 수(택1·택2)만큼 골라요.<br>
+      📌 2학년을 다 고르면 → <strong>3학년 과목 선택</strong>으로 넘어가요. (화면 아래에 다음 단계 버튼이 나타나요)
     </div>`:''}
     <!-- 3학년 안내 -->
     ${grade===3?`<div class="info-box" style="margin-bottom:8px">
-      🎓 <strong>3학년 과목을 선택하세요!</strong> &nbsp;|&nbsp; 2학년 말에 선택 &nbsp;|&nbsp; 진로와 연계해 심화과목을 골라보세요
+      🎓 <strong>3단계: 3학년 과목을 선택하세요!</strong> 진로와 연계해 심화(진로·융합) 과목을 골라보세요.<br>
+      📌 3학년까지 다 고르면 → <strong>최종 확인</strong>에서 나의 과목 선택표를 완성해요.
     </div>`:''}
 
     <!-- 과목 테이블 -->
@@ -1954,13 +1881,60 @@ function rSubjectSel(){
       🎨 창의적 체험활동 18학점(학기당 3학점)은 자동 포함
     </div>
 
+    <!-- 다음 단계 안내 -->
+    ${rNextStep(grade)}
+
     <!-- 학점 자동 체크 패널 -->
     ${rCreditCheck()}
 
     <div class="nav-row">
       <button class="btn btn-secondary" onclick="set({screen:'career_confirm'})">← 이전</button>
-      <button class="btn btn-primary" style="flex:1" onclick="set({screen:'summary'})">📋 최종 확인 →</button>
+      ${grade===1
+        ?`<button class="btn btn-primary" style="flex:1" onclick="set({grade:2});window.scrollTo(0,0)">다음 단계: 2학년 과목 선택 →</button>`
+        :grade===2
+        ?`<button class="btn btn-primary" style="flex:1" onclick="set({grade:3});window.scrollTo(0,0)">다음 단계: 3학년 과목 선택 →</button>`
+        :`<button class="btn btn-primary" style="flex:1" onclick="set({screen:'summary'});window.scrollTo(0,0)">📋 다음 단계: 최종 확인 →</button>`}
     </div>
+  </div>`;
+}
+
+// ── 학년별 선택군 완료 현황 ─────────────────────────────
+function gradeGroupStatus(grade){
+  const sc=getSchool();
+  if(!sc) return {total:0,done:0,remaining:[],noGroups:true,creditOk:false};
+  const groups=Object.entries(sc.groups||{}).map(([gid,g])=>{
+    const subs=g.ids.map(id=>sc.subjects.find(s=>s.id===id)).filter(Boolean);
+    return {...g,sem:subs[0]?subs[0].sem:''};
+  }).filter(g=>g.sem.startsWith(grade+'-'));
+  if(!groups.length){
+    // 선택군이 없는 학교(PDF 추가 등)는 학점 기준으로 판단
+    return {total:0,done:0,remaining:[],noGroups:true,creditOk:gradeCredits(grade)>=gradeTarget(grade)};
+  }
+  const remaining=groups.filter(g=>g.ids.filter(id=>S.sel[id]).length<g.pick);
+  return {total:groups.length,done:groups.length-remaining.length,remaining,noGroups:false};
+}
+
+// ── 다음 단계 안내 배너 (2·3학년) ────────────────────────
+function rNextStep(grade){
+  if(grade===1) return '';
+  const st=gradeGroupStatus(grade);
+  const isDone=st.noGroups?st.creditOk:(st.remaining.length===0&&st.total>0);
+  if(isDone){
+    return grade===2
+      ?`<div class="success-box" style="text-align:center">
+          🎊 <strong>2학년 과목 선택을 모두 마쳤어요!</strong>
+          <button class="btn btn-primary btn-block" style="margin-top:10px;font-size:.95rem" onclick="set({grade:3});window.scrollTo(0,0)">✅ 다음 단계 → 3학년 과목 선택하러 가기</button>
+        </div>`
+      :`<div class="success-box" style="text-align:center">
+          🎉 <strong>3학년까지 과목 선택 완료!</strong> 이제 마지막 단계예요.
+          <button class="btn btn-primary btn-block" style="margin-top:10px;font-size:.95rem;background:linear-gradient(135deg,#059669,#10b981)" onclick="set({screen:'summary'});window.scrollTo(0,0)">📋 다음 단계 → 최종 확인하러 가기</button>
+        </div>`;
+  }
+  if(st.noGroups) return '';
+  return `<div class="warn-box">
+    ✍️ <strong>${grade}학년 선택군 ${st.done}/${st.total} 완료</strong> — 아직 <strong>${st.remaining.length}개 선택군</strong>이 남았어요!<br>
+    ${st.remaining.map(g=>`<span style="display:inline-block;background:#fff;border:1px solid #fdba74;border-radius:6px;padding:1px 8px;margin:3px 3px 0 0;font-size:.74rem">${g.sem.endsWith('-1')?'1학기':'2학기'} · ${g.label} (${g.note})</span>`).join('')}
+    <div style="margin-top:7px;font-size:.76rem">위 표에서 남은 선택군을 모두 고르면 <strong>다음 단계 버튼</strong>이 나타나요.</div>
   </div>`;
 }
 
@@ -1974,7 +1948,7 @@ function renderSubRow(s,recIds,grade,grp=null){
   const isRec=recIds.has(s.id);
   const rowClass=locked?'mandatory-row':school?'school-row':isRec&&on?'rec-sel-row':isRec?'rec-row':on?'sel-row':'';
   const typBadge=s.subtype==='career'?'badge-career-t':s.subtype==='fusion'?'badge-fusion-t':'badge-common-t';
-  const typLabel=s.subtype==='common'?'공통':s.subtype==='career'?'진로':s.subtype==='fusion'?'융합':'일반';
+  const typLabel=s.subtype==='common'?'공통':s.subtype==='career'?'진로':s.subtype==='fusion'?'융합':s.subtype==='special'?'학교특색':'일반';
   const why=getWhy(s);
 
   // 선택군 박스 테두리 스타일 (left·right + 첫행 top, 마지막행 bottom)
@@ -1984,7 +1958,7 @@ function renderSubRow(s,recIds,grade,grp=null){
   const bB=grp&&grp.isLast?`border-bottom:2.5px solid ${grp.color};`:'';
   const cellBase=bL+bR+bT+bB;  // 모든 td 공통 테두리
 
-  return `<tr class="${rowClass}${canClick?' clickable':''}" ${canClick?`onclick="toggleSub('${s.id}')"`:''}}>
+  return `<tr class="${rowClass}${canClick?' clickable':''}" ${canClick?`onclick="toggleSub('${s.id}')"`:''}>
     <td style="text-align:center;${cellBase}">
       ${locked||school||grade===1
         ?`<div class="tbl-chk locked">✓</div>`
@@ -1994,7 +1968,7 @@ function renderSubRow(s,recIds,grade,grp=null){
       ${isRec&&grade!==1?`<div class="rec-label">⭐ ${S.career?.name||'진로'} 추천</div>`:''}
       <strong style="font-size:.84rem">${locked?'🔒 ':school?'🏫 ':''}${s.name}</strong>
       ${why&&!locked?`<div style="font-size:.69rem;color:#4f46e5;margin-top:2px;line-height:1.4">💡 ${why}</div>`:''}
-      ${PREREQ_MAP[s.name]?`<div style="font-size:.67rem;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;padding:2px 7px;border-radius:5px;margin-top:3px;display:inline-block;line-height:1.5">📋 선수과목: ${PREREQ_MAP[s.name].join(' · ')}</div>`:''}
+      ${PREREQ_MAP[s.name]?`<div style="font-size:.67rem;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;padding:2px 7px;border-radius:5px;margin-top:3px;display:inline-block;line-height:1.5">📋 ${PREREQ_MAP[s.name].req.length?`<strong>선이수 필수: ${PREREQ_MAP[s.name].req.join('·')}</strong>`:''}${PREREQ_MAP[s.name].req.length&&PREREQ_MAP[s.name].rec.length?' · ':''}${PREREQ_MAP[s.name].rec.length?`선이수 권장: ${PREREQ_MAP[s.name].rec.join('·')}`:''}</div>`:''}
     </td>
     <td style="font-size:.78rem;color:#374151;white-space:nowrap;${cellBase}">${s.area}</td>
     <td style="white-space:nowrap;${cellBase}">
@@ -2045,10 +2019,12 @@ function renderGroupedRows(filtered,recIds,grade){
       autoSubs.forEach(s=>rows.push(renderSubRow(s,recIds,grade)));
     }
 
-    // ③ 각 선택군 블록 (필터 적용: 학기·교과군 필터 시 그룹 일부 과목만 나올 수 있음)
+    // ③ 각 선택군 블록 (학교 객체에 저장된 선택군 사용)
     const allSemSubIds=new Set(sc?sc.subjects.filter(s=>s.sem===sem).map(s=>s.id):[]);
     if(grade!==1&&allSemSubIds.size){
-      const grpEntries=Object.entries(COURSE_GROUPS).filter(([,g])=>g.ids.some(id=>allSemSubIds.has(id)));
+      const groupsObj=(sc&&sc.groups)||{};
+      const grpEntries=Object.entries(groupsObj).filter(([,g])=>g.ids.some(id=>allSemSubIds.has(id)));
+      const groupedIds=new Set(Object.values(groupsObj).flatMap(g=>g.ids));
       for(const [gid,g] of grpEntries){
         const grpSubs=g.ids.map(id=>semSubs.find(s=>s.id===id)).filter(Boolean);
         if(!grpSubs.length) continue;
@@ -2079,26 +2055,20 @@ function renderGroupedRows(filtered,recIds,grade){
         // 선택군 간 공백 행
         rows.push(`<tr><td colspan="6" style="height:4px;background:#f8fafc;padding:0"></td></tr>`);
       }
+      // ④ 선택군에 속하지 않은 학생자율 과목 (직접 추가·PDF 학교용)
+      const freeSubs=semSubs.filter(s=>s.type==='student'&&!groupedIds.has(s.id));
+      if(freeSubs.length){
+        rows.push(`<tr>
+          <td colspan="6" style="background:#f0f9ff;border-left:4px solid #0ea5e9;border-bottom:1px solid #7dd3fc;padding:6px 11px">
+            <span style="font-size:.77rem;font-weight:800;color:#0369a1">✏️ 선택 과목</span>
+            <span style="font-size:.7rem;color:#0369a1;margin-left:6px">원하는 과목을 자유롭게 선택하세요</span>
+          </td>
+        </tr>`);
+        freeSubs.forEach(s=>rows.push(renderSubRow(s,recIds,grade)));
+      }
     }
   }
   return rows.join('');
-}
-
-// ── 선택군 비고 셀 렌더링 (레거시 — 참고용 보존) ──────────
-function getGroupNote(s){
-  const gid=SUB_TO_GRP[s.id];
-  if(!gid) return '<span style="color:#d1d5db;font-size:.72rem">—</span>';
-  const g=COURSE_GROUPS[gid];
-  const selCnt=g.ids.filter(id=>S.sel[id]).length;
-  const ok=selCnt>=g.pick;
-  const over=selCnt>g.pick;
-  const bg=over?'#dbeafe':ok?'#d1fae5':'#fff7ed';
-  const cl=over?'#1e40af':ok?'#065f46':'#92400e';
-  const icon=over?'⚠️':ok?'✅':'◻️';
-  return `<div style="font-size:.68rem;font-weight:700;padding:3px 7px;border-radius:5px;background:${bg};color:${cl};white-space:nowrap;display:inline-block;line-height:1.5">
-    ${icon} ${g.note} 선택군<br>
-    <span style="font-weight:400">(${selCnt}/${g.pick}과목 선택)</span>
-  </div>`;
 }
 
 // ── 교과군별 총 이수학점 계산 ────────────────────────────
@@ -2171,16 +2141,16 @@ function rCreditCheck(){
       </summary>
       <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
         <table class="cr-table">
-          <thead><tr><th style="text-align:left">필수 이수영역</th><th>현재</th><th>학교 최소</th><th>상태</th></tr></thead>
+          <thead><tr><th style="text-align:left">교과(군)</th><th>현재</th><th>국가 기준</th><th>상태</th></tr></thead>
           <tbody>
             ${areaRows.map(r=>`<tr>
-              <td style="text-align:left;font-weight:600">${r.area}${(r.area==='예술'||r.area==='체육')?`<br><span style="font-size:.62rem;font-weight:400;color:#9ca3af">국가기준 10학점, 진로에 따라 추가 선택</span>`:''}</td>
+              <td style="text-align:left;font-weight:600">${r.area}${r.area==='사회'?`<br><span style="font-size:.62rem;font-weight:400;color:#9ca3af">한국사 6학점 포함</span>`:''}</td>
               <td style="font-weight:700;color:${r.ok?'#059669':'#d97706'}">${r.cr}학점</td>
               <td>${r.min}학점 이상</td>
               <td>${statusPill(r.ok,r.ok?'충족':'부족')}</td>
             </tr>`).join('')}
             <tr>
-              <td style="text-align:left;font-weight:600">선택계열<br><span style="font-size:.67rem;font-weight:400;color:#9ca3af">(기술정보+제2외+교양)</span></td>
+              <td style="text-align:left;font-weight:600">생활·교양 영역<br><span style="font-size:.67rem;font-weight:400;color:#9ca3af">(기술·가정/정보+제2외국어+교양)</span></td>
               <td style="font-weight:700;color:${selOk?'#059669':'#d97706'}">${selCr}학점</td>
               <td>${MIN_SELECT}학점 이상</td>
               <td>${statusPill(selOk,selOk?'충족':'부족')}</td>
@@ -2213,8 +2183,9 @@ function rCreditCheck(){
           <div style="font-size:1.05rem;font-weight:800;color:${kemOk?'#059669':'#d97706'}">${kem}학점</div>
         </div>
       </div>
-      <p style="font-size:.72rem;color:#6b7280;margin-top:7px">* 국어·영어·수학 3과목 합계는 <strong>${MAX_KEM}학점</strong>을 초과하면 안 됩니다.</p>
+      <p style="font-size:.72rem;color:#6b7280;margin-top:7px">* 국어·영어·수학 총 이수학점은 <strong>${MAX_KEM}학점</strong>을 초과할 수 없어요.</p>
     </div>
+    <p style="font-size:.7rem;color:#9ca3af;margin-top:8px;line-height:1.6">* 기준: 2022 개정 교육과정(교육부 고시) — 총 192학점, 필수이수 84학점. 체육은 매 학기 이수하며, 성취율 40% 미만 또는 출석 2/3 미만이면 미이수(I)가 될 수 있어요.</p>
   </div>`;
 }
 
@@ -2362,6 +2333,13 @@ function rSummary(){
     ${done?`<div class="confetti">🎉 🎊 🏆 🎊 🎉</div><div class="hi-box" style="text-align:center;margin-bottom:10px"><div style="font-size:1.4rem;font-weight:800;color:#059669">총 ${totalCr}학점 — 졸업 기준 달성!</div></div>`
     :`<div class="cr-bar" style="margin-bottom:10px"><div><div class="cr-num">${totalCr}학점</div><div class="cr-lbl">/ 졸업 기준 192학점 (${192-totalCr}학점 더 필요)</div></div><div class="cr-status st-under">${192-totalCr}학점 부족</div></div>`}
 
+    <!-- 이름/날짜 (인쇄물에 표시) -->
+    <div class="card" style="padding:11px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <label style="font-size:.82rem;font-weight:800;color:var(--s7);white-space:nowrap">👤 이름</label>
+      <input class="form-input" style="flex:1;min-width:120px;margin:0" id="stu-name" value="${S.studentName||''}" placeholder="이름을 쓰면 인쇄물에 함께 나와요" onchange="S.studentName=this.value;saveState()">
+      <span style="font-size:.76rem;color:var(--s5);white-space:nowrap">📅 ${new Date().toLocaleDateString('ko-KR')}</span>
+    </div>
+
     <!-- 학기별 요약 -->
     <div class="sem-sum">
       ${SEMS.map(s=>{const cr=semCredits(s);const tg=semTarget(s)+CCHA_PER_SEM;const ok=cr>=tg-4;return `<div class="ss-card"><div class="ss-sem">${SEM_LABEL[s]}</div><div class="ss-cr ${ok?'cr-green':'cr-orange'}">${cr}/${tg}학점</div></div>`;}).join('')}
@@ -2472,16 +2450,25 @@ function printDoc(){
 }
 
 function resetApp(){
-  set({screen:'home',schoolId:null,sel:{},career:null,mode:'guided',gStep:0,gScores:{},searchQ:'',searchR:[],selCat:null,grade:1,showMoreJobs:false,newSchool:{name:'',location:'',short:''}});
+  try{localStorage.removeItem(LS_KEY);}catch(e){}
+  S._saved=null;
+  set({screen:'home',schoolId:null,sel:{},career:null,studentName:'',mode:'guided',gStep:0,gScores:{},searchQ:'',searchR:[],selCat:null,grade:1,showMoreJobs:false,newSchool:{name:'',location:'',short:''}});
 }
 
 // ============================================================
-// INIT
+// INIT — 저장된 상태 불러오기 (직접 추가한 학교는 항상 복원)
 // ============================================================
+(function(){
+  const saved=loadState();
+  if(saved){
+    S.customSchools=saved.customSchools||{};
+    if(saved.schoolId||saved.career) S._saved=saved;
+  }
+})();
 render();
 </script>
 <footer style="text-align:center;padding:12px 0 16px;font-size:0.72rem;color:#888;font-family:'JetBrains Mono',monospace;background:transparent;">
-  <span class="mono">Made with Claude · v 1.0 · High</span>
+  <span class="mono">Made with Claude · v 2.0 · 2022 개정 교육과정 기준 · High</span>
 </footer>
 </body>
 </html>
