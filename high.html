@@ -367,7 +367,6 @@ body{
 .tbl-search{padding:6px 10px;border:1.5px solid var(--s2);border-radius:7px;font-size:.8rem;font-family:inherit;outline:none;transition:all .2s;min-width:120px;flex:1}
 .tbl-search:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(99,102,241,.1)}
 .tbl-note{font-size:.73rem;color:var(--s5);line-height:1.9;padding:8px 4px}
-.badge-voc-t{background:#ccfbf1;color:#0f766e}
 /* 직업 칩 — 클릭 가능함을 시각적으로 강조 */
 .chip{cursor:pointer}
 .chip::after{content:' ›';font-weight:800;opacity:.55}
@@ -608,8 +607,6 @@ const PREREQ_MAP = {
   '일본어 회화':{req:[],rec:['일본어']},
   '심화 중국어':{req:[],rec:['중국어']},
   '심화 일본어':{req:[],rec:['일본어']},
-  '고급 물리학':{req:[],rec:['물리학']},
-  '고급 생명과학':{req:[],rec:['생명과학']},
 };
 
 // ── 필수 이수학점 기준 (2022 개정 교육과정, 일반고) ──────────
@@ -822,179 +819,6 @@ function buildSchool(id, d){
 const SCHOOLS_DB = {};
 Object.entries(SCHOOL_DEFS).forEach(([id,d])=>{ SCHOOLS_DB[id]=buildSchool(id,d); });
 
-// ── 졸업 기준 설정 (일반고 기본값 — 2022 개정 교육과정) ──────
-const DEFAULT_CHECK={
-  rows:[
-    {label:'국어',areas:['국어'],min:8},
-    {label:'수학',areas:['수학'],min:8},
-    {label:'영어',areas:['영어'],min:8},
-    {label:'사회',sub:'한국사 6학점 포함',areas:['사회'],min:14},
-    {label:'과학',areas:['과학'],min:10},
-    {label:'체육',areas:['체육'],min:10},
-    {label:'예술',areas:['예술'],min:10},
-    {label:'생활·교양 영역',sub:'(기술·가정/정보+제2외국어+교양)',areas:['기술정보','제2외국어','교양'],min:16},
-  ],
-  minReq:84, kemMax:81,
-  note:'* 기준: 2022 개정 교육과정(교육부 고시) — 총 192학점, 필수이수 84학점. 체육은 매 학기 이수하며, 성취율 40% 미만 또는 출석 2/3 미만이면 미이수(I)가 될 수 있어요.'
-};
-
-// ════════════════════════════════════════════════════════════
-// 제주여자상업고등학교 (특성화고) — 2026학년도 실제 편제표 반영
-// 출처: 제주여상 「2026학년도 학교교육과정 편성·운영 및 평가」
-// 필수이수(특성화고): 국수영 24·한국사 6·통사+통과 12·체육 8·예술 6·
-//                    생활교양 8·전문교과 80 = 144학점, 총 192학점
-// ════════════════════════════════════════════════════════════
-const YEOSANG_CHECK={
-  rows:[
-    {label:'국어+수학+영어',sub:'특성화고는 3개 교과 합산 기준',areas:['국어','수학','영어'],min:24},
-    {label:'사회·과학',sub:'한국사 6학점 포함',areas:['사회','과학'],min:18},
-    {label:'체육',areas:['체육'],min:8},
-    {label:'예술',areas:['예술'],min:6},
-    {label:'생활·교양 영역',sub:'(정보+제2외국어+교양)',areas:['기술정보','제2외국어','교양'],min:8},
-    {label:'전문교과',sub:'전공 실무 과목',areas:['전문교과'],min:80},
-  ],
-  minReq:144, kemMax:null,
-  note:'* 기준: 2022 개정 교육과정 특성화고 + 제주여상 2026학년도 편제표 — 필수이수 144학점(전문교과 80학점 포함), 총 192학점. 성취율 40% 미만 또는 출석 2/3 미만이면 미이수(I)가 될 수 있어요.'
-};
-
-function buildYeosang(id,deptName,emoji,d){
-  const subs=[];let n=0;
-  const add=(name,cr,sem,type,over)=>{
-    const c=SUBJECT_CATALOG[name]||{};const o=over||{};
-    subs.push({id:id+'_'+(++n),name,cr,sem,type,
-      area:o.area||c.a||'전문교과',subtype:o.subtype||c.t||'vocational',
-      tags:o.tags||c.tags||[],why:o.why||c.why||''});
-    return subs[subs.length-1].id;
-  };
-  const V={area:'전문교과',subtype:'vocational'};
-  const vb={...V,tags:['biz']}, vi={...V,tags:['it','biz']};
-  // ── 1학년 (공통필수 + 전문 기초) ──
-  add('공통국어1',3,'1-1','mandatory');add('공통수학1',3,'1-1','mandatory');add('공통영어1',3,'1-1','mandatory');
-  add('통합사회1',3,'1-1','mandatory');add('체육1',2,'1-1','mandatory');add('음악',2,'1-1','mandatory');add('정보',3,'1-1','mandatory');
-  add('디지털과 직업 생활',2,'1-1','mandatory',{...V,tags:['biz','it'],why:'직업 세계와 디지털 소양을 배우는 전문 공통 과목이에요'});
-  add('상업 경제',4,'1-1','mandatory',vb);add('사무 관리',4,'1-1','mandatory',vb);
-  add('공통국어2',3,'1-2','mandatory');add('공통수학2',3,'1-2','mandatory');add('공통영어2',3,'1-2','mandatory');
-  add('통합사회2',3,'1-2','mandatory');add('체육2',2,'1-2','mandatory');add('음악 연주와 창작',2,'1-2','mandatory');add('인공지능 기초',3,'1-2','mandatory');
-  add('회계 원리',4,'1-2','mandatory',{...vb,why:'회계의 기본 원리 — 상업계 전공의 핵심 기초예요'});
-  add('정보 처리와 관리',4,'1-2','mandatory',vi);add('비즈니스 커뮤니케이션',2,'1-2','mandatory',vb);
-  // ── 2학년 (학교지정) ──
-  add('문학',3,'2-1','school');add('대수',3,'2-1','school');add('영어Ⅰ',3,'2-1','school');add('한국사1',3,'2-1','school');
-  add('통합과학1',3,'2-1','school');add('스포츠 생활1',2,'2-1','school');add('미술',2,'2-1','school');
-  add('회계 정보 처리 시스템',4,'2-1','school',vb);
-  add('발명과 메이커',2,'2-1','school',{...V,tags:['stem','it'],why:'아이디어를 발명·제작으로 구현해 봐요'});
-  add('사무 행정',4,'2-1','school',vb);
-  add('독서와 작문',3,'2-2','school');add('확률과 통계',3,'2-2','school');add('영어Ⅱ',3,'2-2','school');add('한국사2',3,'2-2','school');
-  add('통합과학2',3,'2-2','school');add('스포츠 생활2',2,'2-2','school');add('미술 감상과 비평',2,'2-2','school');
-  add('창업 일반',2,'2-2','school',{...vb,why:'창업의 기초 지식을 배워요'});add('회계 실무',4,'2-2','school',vb);
-  add(d.dep22[0],4,'2-2','school',d.dep22[1]||vb);
-  // ── 3학년 (학교지정 + 선택군) ──
-  add('스포츠 문화',1,'3-1','school');
-  add('성공적인 직업 생활',3,'3-1','school',{...V,tags:['biz'],why:'취업 준비와 직장 생활 역량을 기르는 전문 공통 과목이에요'});
-  d.fix31.forEach(x=>add(x[0],x[1],'3-1','school',x[2]||vb));
-  add('스포츠 과학',1,'3-2','school');
-  add('노동 인권과 산업 안전 보건',3,'3-2','school',{...V,tags:['biz','law'],why:'일할 때 꼭 알아야 할 노동 인권과 안전을 배워요'});
-  d.fix32.forEach(x=>add(x[0],x[1],'3-2','school',x[2]||vb));
-  const groups={};let gi=0;
-  const grp=(sem,label,pick,items)=>{
-    const ids=items.map(x=>add(x[0],x[1],sem,'student',x[2]));
-    groups[id+'_g'+(++gi)]={label,note:'택'+pick,pick,ids};
-  };
-  grp('3-1','제2외국어 선택군',1,[['일본어',3],['중국어',3]]);
-  grp('3-1','학점제 선택군 (보통교과)',1,[['화법과 언어',3],['미적분Ⅰ',3],['영어 독해와 작문',3]]);
-  grp('3-1','전공 심화 선택군',1,d.sel31);
-  grp('3-2','제2외국어 회화 선택군',1,[['일본어 회화',3],['중국어 회화',3]]);
-  grp('3-2','학점제 선택군 (보통교과)',1,[['독서 토론과 글쓰기',3],['실용 통계',3],['미디어 영어',3]]);
-  grp('3-2','전공 심화 선택군',1,d.sel32);
-  return {
-    name:'제주여자상업고등학교 · '+deptName, short:'제주여상 '+deptName, emoji, location:'제주시',
-    desc:'특성화고 · 2026학년도 실제 편제표 반영',
-    semTarget:{'1-1':29,'1-2':29,'2-1':29,'2-2':29,'3-1':29,'3-2':29},
-    subjects:subs, groups, checkCfg:YEOSANG_CHECK,
-  };
-}
-{
-  const V={area:'전문교과',subtype:'vocational'};
-  const vb={...V,tags:['biz']}, vi={...V,tags:['it','biz']}, vm={...V,tags:['media','it','biz']};
-  SCHOOLS_DB.yeosang_acc=buildYeosang('yeosang_acc','회계금융과','💰',{
-    dep22:['세무 일반',{...vb,why:'세금 업무의 기초 — 세무·회계 사무 진로의 필수예요'}],
-    fix31:[['금융 일반',5,{...vb,why:'은행·금융권 취업의 기초 지식이에요'}],['기업자원통합관리',5,vb],['컴퓨터 그래픽',4,vm]],
-    fix32:[['빅데이터 엑셀',4,vi],['고객 관리',5,vb],['인사',5,vb]],
-    sel31:[['핀테크 기술 기획',5,{...vi,why:'금융+IT 융합(고시외 과목) — 핀테크 분야 진로 추천!'}],['세무 실무',5,{...vb,why:'세무 업무 실습 — 세무회계 자격증에 도움돼요'}]],
-    sel32:[['창구 사무',5,{...vb,why:'은행 창구 업무 실습 — 금융권 취업 준비!'}],['빅데이터 분석',5,{...vi,why:'데이터 분석 실무 — IT·데이터 진로 추천!'}]],
-  });
-  SCHOOLS_DB.yeosang_dist=buildYeosang('yeosang_dist','글로벌유통과','🌐',{
-    dep22:['유통 일반',{...vb,why:'상품이 소비자에게 가는 과정을 배워요 — 유통업 기초!'}],
-    fix31:[['전자 상거래 일반',5,{...vm,why:'온라인 쇼핑몰·이커머스의 기초를 배워요'}],['기업자원통합관리',5,vb],['컴퓨터 그래픽',4,vm]],
-    fix32:[['마케팅과 광고',4,vm],['전자 상거래 실무',5,vm],['유통 관리',5,vb]],
-    sel31:[['패션 마케팅',5,{...vm,why:'패션 산업의 마케팅 — 패션·유통 진로 추천!'}],['무역 일반',5,{...vb,why:'수출입·국제 무역의 기초 — 글로벌 비즈니스 진로!'}]],
-    sel32:[['패션 상품 유통 관리',5,{...vm,why:'패션 상품의 유통 실무를 배워요'}],['수출입 관리',5,{...vb,why:'무역 실무 — 국제 물류·무역 사무 진로 추천!'}]],
-  });
-  SCHOOLS_DB.yeosang_office=buildYeosang('yeosang_office','경영사무과','🗂️',{
-    dep22:['기업과 경영',{...vb,why:'기업 경영의 원리를 배워요 — 경영 사무의 기초!'}],
-    fix31:[['기업 자원 통합 관리',5,vb],['발명과 디자인',5,{...V,tags:['stem','arts'],why:'창의적 발명과 디자인 사고를 배워요'}],['컴퓨터 그래픽',4,vm]],
-    fix32:[['마케팅과 광고',4,vm],['전자상거래실무',5,vm],['광고 콘텐츠 제작',5,{...vm,why:'광고 콘텐츠를 직접 기획·제작해요'}]],
-    sel31:[['빅데이터 엑셀',5,{...vi,why:'엑셀로 데이터를 다루는 실무 능력 — 모든 사무직의 기본기!'}],['빅데이터 마케팅 4.0',5,{...vi,why:'데이터 기반 마케팅(고시외 과목) — 디지털 마케터 진로 추천!'}]],
-    sel32:[['캐릭터 제작',5,{...V,tags:['arts','media','it'],why:'캐릭터 디자인 실무 — 콘텐츠·디자인 진로 추천!'}],['스마트 문화 앱 콘텐츠 제작',5,{...vm,why:'앱 콘텐츠 기획·제작 — IT·콘텐츠 진로 추천!'}]],
-  });
-}
-
-// ════════════════════════════════════════════════════════════
-// 세화고등학교 — 2026학년도 실제 편제표 반영
-// 출처: 세화고 「2026학년도 학교교육과정 편성·운영·평가 계획」
-// 학기별 교과: 30·30·30·30·29·25 = 174 (+창체 18 = 192)
-// ※ 음악/미술·음악감상과비평/미술감상과비평은 실제로는 학기 교차 분반 운영
-// ※ 3-2 선택군의 역사로 탐구하는 현대 세계·사회문제 탐구·금융과 경제생활은
-//    3-1과 중복 개설이라 앱에서는 3-1에만 표시
-// ════════════════════════════════════════════════════════════
-function buildSehwaReal(){
-  const id='sehwa';
-  const subs=[];let n=0;
-  const add=(name,cr,sem,type,over)=>{
-    const c=SUBJECT_CATALOG[name]||{};const o=over||{};
-    subs.push({id:id+'_'+(++n),name,cr,sem,type,
-      area:o.area||c.a||'교양',subtype:o.subtype||c.t||'general',
-      tags:o.tags||c.tags||[],why:o.why||c.why||''});
-    return subs[subs.length-1].id;
-  };
-  // ── 1학년 (공통필수) ──
-  add('공통국어1',4,'1-1','mandatory');add('공통수학1',4,'1-1','mandatory');add('공통영어1',4,'1-1','mandatory');
-  add('한국사1',3,'1-1','mandatory');add('통합사회1',4,'1-1','mandatory');add('통합과학1',4,'1-1','mandatory');
-  add('과학탐구실험1',1,'1-1','mandatory');add('스포츠 문화',1,'1-1','mandatory');add('음악',2,'1-1','mandatory');add('정보',3,'1-1','mandatory');
-  add('공통국어2',4,'1-2','mandatory');add('공통수학2',4,'1-2','mandatory');add('공통영어2',4,'1-2','mandatory');
-  add('한국사2',3,'1-2','mandatory');add('통합사회2',4,'1-2','mandatory');add('통합과학2',4,'1-2','mandatory');
-  add('과학탐구실험2',1,'1-2','mandatory');add('스포츠 과학',1,'1-2','mandatory');add('미술',2,'1-2','mandatory');add('인공지능 기초',3,'1-2','mandatory');
-  // ── 2·3학년 학교지정 ──
-  add('문학',4,'2-1','school');add('대수',4,'2-1','school');add('영어Ⅰ',4,'2-1','school');
-  add('체육1',2,'2-1','school');add('음악 감상과 비평',3,'2-1','school');
-  add('화법과 언어',4,'2-2','school');add('미적분Ⅰ',4,'2-2','school');add('영어Ⅱ',4,'2-2','school');
-  add('체육2',2,'2-2','school');add('미술 감상과 비평',3,'2-2','school');
-  add('독서와 작문',4,'3-1','school');add('확률과 통계',4,'3-1','school');add('영어 독해와 작문',4,'3-1','school');add('운동과 건강',2,'3-1','school');
-  add('스포츠 생활1',2,'3-2','school');
-  // ── 선택군 (실제 편제표의 택N 그대로) ──
-  const groups={};let gi=0;
-  const grp=(sem,label,pick,cr,names)=>{
-    const ids=names.map(nm=>Array.isArray(nm)?add(nm[0],cr,sem,'student',nm[1]):add(nm,cr,sem,'student'));
-    groups[id+'_g'+(++gi)]={label,note:'택'+pick,pick,ids};
-  };
-  grp('2-1','탐구 선택군',3,3,['세계시민과 지리','세계사','사회와 문화','윤리와 사상','물리학','화학','생명과학','지구과학','인공지능 수학']);
-  grp('2-1','생활·교양 선택군',1,4,['기술·가정','데이터 과학','일본어','중국어']);
-  grp('2-2','탐구 선택군',3,3,['도시의 미래 탐구','동아시아 역사 기행','정치','경제','윤리문제 탐구','기후변화와 지속가능한 세계','역학과 에너지','물질과 에너지','세포와 물질대사','지구시스템과학','기하']);
-  grp('2-2','생활·교양 선택군',1,4,['창의 공학 설계','소프트웨어와 생활','일본어 회화','중국어 회화']);
-  grp('3-1','진로 심화 선택군',5,3,['언어생활 탐구','주제 탐구 독서','수학과제 탐구','미적분Ⅱ','경제 수학','영미 문학 읽기','영어 발표와 토론','현대사회와 윤리','한국지리 탐구','법과 사회','국제 관계의 이해','역사로 탐구하는 현대 세계','사회문제 탐구','금융과 경제생활','전자기와 양자','화학 반응의 세계','생물의 유전','행성우주과학','융합과학 탐구']);
-  grp('3-2','진로 융합 선택군',7,3,['매체 의사소통','문학과 영상','수학과 문화','실용 통계','실생활 영어 회화','미디어 영어','인문학과 윤리','여행지리',
-    ['고급 물리학',{area:'과학',subtype:'career',tags:['stem'],why:'물리학을 대학 수준으로 심화 — 물리·공학 계열 최상위 심화 과목이에요'}],
-    ['고급 생명과학',{area:'과학',subtype:'career',tags:['medical','stem'],why:'생명과학 최고 심화 — 의·생명 계열 진학 준비에 좋아요'}],
-    '기후변화와 환경생태','과학의 역사와 문화']);
-  grp('3-2','교양 선택군',1,2,['생태와 환경','논술','인간과 경제활동']);
-  return {
-    name:'세화고등학교', short:'세화고', emoji:'🌺', location:'제주시 구좌읍',
-    desc:'2026학년도 실제 편제표 반영',
-    semTarget:{'1-1':30,'1-2':30,'2-1':30,'2-2':30,'3-1':29,'3-2':25},
-    subjects:subs, groups,
-  };
-}
-SCHOOLS_DB.sehwa=buildSehwaReal();
-
 
 // Career-area hint matrix
 const CAT_WHY = {
@@ -1169,10 +993,9 @@ function rPdfUpload(){
       </p>
 
       <div class="info-box">
-        ✅ <strong>잘 되는 경우</strong> — 편제표(단위 배정표) <strong>표만 있는</strong> 텍스트 PDF<br>
-        ⚠️ <strong>잘 안 되는 경우</strong> — 스캔 이미지 PDF, 학사일정·평가규정 등이 섞인 긴 문서, 특성화고 편제표<br>
-        💡 긴 문서라면 편제표 페이지만 추려서 올리거나, 인식 후 표에서 잘못된 행을 삭제·수정하세요.<br>
-        💡 인식이 어려우면 아래 <strong>직접 입력</strong>을 이용하세요.
+        ✅ <strong>잘 되는 경우</strong> — 텍스트가 포함된 표 형식 편제표 PDF (워드·한글로 만든 PDF)<br>
+        ⚠️ <strong>잘 안 되는 경우</strong> — 스캔 이미지 PDF, 표가 없는 PDF<br>
+        💡 PDF 파싱이 어려운 경우 아래 <strong>직접 입력</strong> 기능을 이용하세요.
       </div>
 
       <label class="pdf-drop-zone" for="pdf-file-input" id="pdf-drop-zone">
@@ -1438,17 +1261,6 @@ function savePdfSchool(){
   if(!name){alert('학교 이름을 입력해 주세요!');return;}
   const subjects=pdfCollectData();
   if(subjects.length===0){alert('과목이 하나도 없어요. 과목을 추가해 주세요.');return;}
-  // 인식 결과 사전 점검 — 학기별 학점이 비정상이면 경고
-  const semSum={};subjects.forEach(s=>{semSum[s.sem]=(semSum[s.sem]||0)+s.cr;});
-  const weird=Object.entries(semSum).filter(([,c])=>c>36).map(([s,c])=>s+'학기 '+c+'학점');
-  const missing=SEMS.filter(s=>!(semSum[s]>0));
-  if(weird.length||missing.length){
-    const msg='⚠️ 인식 결과에 이상한 부분이 있어요!\n\n'
-      +(weird.length?'· 학점이 너무 많은 학기: '+weird.join(', ')+'\n  (한 학기는 보통 29~33학점이에요)\n':'')
-      +(missing.length?'· 과목이 하나도 없는 학기: '+missing.join(', ')+'\n':'')
-      +'\nPDF에 편제표 외의 내용(학사일정·평가 규정 등)이 섞여 있으면 인식이 엉킬 수 있어요.\n표에서 잘못된 행을 삭제·수정한 뒤 저장하는 것을 추천해요.\n\n그래도 이대로 저장할까요?';
-    if(!confirm(msg)) return;
-  }
   const id='pdf_'+Date.now();
   S.customSchools[id]={
     name,short:short||name,emoji:'📄',location:loc||'',
@@ -1627,9 +1439,8 @@ function rSchoolSelect(){
       </p>
       <div class="school-grid">
         ${schools.map((sc,i)=>`
-          <div class="school-card${S.schoolId===sc.id?' sel':''}" onclick="pickSchool('${sc.id}')" style="position:relative">
+          <div class="school-card${S.schoolId===sc.id?' sel':''}" onclick="pickSchool('${sc.id}')">
             ${S.schoolId===sc.id?'<div class="school-badge">선택됨 ✓</div>':''}
-            ${S.customSchools[sc.id]?`<div title="이 학교 삭제" onclick="event.stopPropagation();delSchool('${sc.id}')" style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:6px;background:#fee2e2;color:#b91c1c;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;z-index:2">✕</div>`:''}
             <div style="width:52px;height:52px;border-radius:50%;background:${SCHOOL_COLORS[i%4]};display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 4px;box-shadow:0 4px 12px rgba(0,0,0,.15)">${sc.emoji||'🏫'}</div>
             <div class="s-name">${sc.short||sc.name}</div>
             <div class="s-loc">📍 ${sc.location||'위치 미상'}</div>
@@ -1661,15 +1472,6 @@ function rSchoolSelect(){
       </div>
     </div>
   </div>`;
-}
-
-function delSchool(id){
-  const sc=S.customSchools[id];
-  if(!sc) return;
-  if(!confirm('「'+sc.name+'」 학교를 삭제할까요?\n(이 학교로 선택한 과목 기록도 함께 지워져요)')) return;
-  delete S.customSchools[id];
-  if(S.schoolId===id){S.schoolId=null;S.sel={};S.career=null;}
-  set({});
 }
 
 function pickSchool(id){
@@ -2145,8 +1947,8 @@ function renderSubRow(s,recIds,grade,grp=null){
   const canClick=!locked&&!school&&grade!==1;
   const isRec=recIds.has(s.id);
   const rowClass=locked?'mandatory-row':school?'school-row':isRec&&on?'rec-sel-row':isRec?'rec-row':on?'sel-row':'';
-  const typBadge=s.subtype==='vocational'?'badge-voc-t':s.subtype==='career'?'badge-career-t':s.subtype==='fusion'?'badge-fusion-t':'badge-common-t';
-  const typLabel=s.subtype==='common'?'공통':s.subtype==='career'?'진로':s.subtype==='fusion'?'융합':s.subtype==='special'?'학교특색':s.subtype==='vocational'?'전문':'일반';
+  const typBadge=s.subtype==='career'?'badge-career-t':s.subtype==='fusion'?'badge-fusion-t':'badge-common-t';
+  const typLabel=s.subtype==='common'?'공통':s.subtype==='career'?'진로':s.subtype==='fusion'?'융합':s.subtype==='special'?'학교특색':'일반';
   const why=getWhy(s);
 
   // 선택군 박스 테두리 스타일 (left·right + 첫행 top, 마지막행 bottom)
@@ -2291,38 +2093,18 @@ function rCreditCheck(){
   });
   const totalCr=totalCredits();
 
-  // ② 필수 이수영역 — 학교 유형별 기준 (특성화고는 자체 기준)
-  const cfg=(sc&&sc.checkCfg)||DEFAULT_CHECK;
-  const areaRows=cfg.rows.map(r=>{
-    const cr=r.areas.reduce((a,ar)=>a+getAreaCr(ar),0);
-    return {...r,cr,ok:cr>=r.min};
+  // ② 필수 이수영역
+  const areaRows=Object.entries(MIN_AREA).map(([area,min])=>{
+    const cr=getAreaCr(area);return {area,cr,min,ok:cr>=min};
   });
-  const reqTotal=areaRows.reduce((a,r)=>a+r.cr,0);
-  const reqOk=reqTotal>=cfg.minReq;
+  const selCr=['기술정보','제2외국어','교양'].reduce((a,area)=>a+getAreaCr(area),0);
+  const selOk=selCr>=MIN_SELECT;
+  const reqTotal=areaRows.reduce((a,r)=>a+r.cr,0)+selCr;
+  const reqOk=reqTotal>=MIN_REQ;
 
-  // ③ 국영수 합 (일반고만 — 특성화고는 상한 규정 미적용)
+  // ③ 국영수 합
   const kor=getAreaCr('국어'),eng=getAreaCr('영어'),mat=getAreaCr('수학');
-  const kem=kor+eng+mat;const kemOk=cfg.kemMax===null||kem<=cfg.kemMax;
-  const kemBox=cfg.kemMax===null?'':`
-    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px">
-      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:9px">
-        ③ 국어·영어·수학 합계 상한 체크 &nbsp; ${statusPill(kemOk,kemOk?`${kem}학점 (기준 이하 ✓)`:`${kem}학점 (${kem-cfg.kemMax}학점 초과!)`)}
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        ${[['국어',kor],['영어',eng],['수학',mat]].map(([l,v],i)=>`
-          <div style="background:#f5f3ff;border-radius:8px;padding:8px 12px;text-align:center;min-width:64px">
-            <div style="font-size:.7rem;color:#6b7280">${l}</div>
-            <div style="font-size:1.05rem;font-weight:800;color:#4f46e5">${v}학점</div>
-          </div>
-          ${i<2?'<span style="color:#9ca3af;font-weight:700">+</span>':''}`).join('')}
-        <span style="color:#9ca3af;font-weight:700">=</span>
-        <div style="background:${kemOk?'#f0fdf4':'#fef3c7'};border:2px solid ${kemOk?'#86efac':'#fcd34d'};border-radius:8px;padding:8px 12px;text-align:center;min-width:72px">
-          <div style="font-size:.7rem;color:#6b7280">합계</div>
-          <div style="font-size:1.05rem;font-weight:800;color:${kemOk?'#059669':'#d97706'}">${kem}학점</div>
-        </div>
-      </div>
-      <p style="font-size:.72rem;color:#6b7280;margin-top:7px">* 국어·영어·수학 총 이수학점은 <strong>${cfg.kemMax}학점</strong>을 초과할 수 없어요.</p>
-    </div>`;
+  const kem=kor+eng+mat;const kemOk=kem<=MAX_KEM;
 
   return `<div style="margin-bottom:14px">
     <div style="font-size:.9rem;font-weight:800;color:#1e1b4b;margin-bottom:8px">📋 학점 이수 자동 체크</div>
@@ -2362,14 +2144,20 @@ function rCreditCheck(){
           <thead><tr><th style="text-align:left">교과(군)</th><th>현재</th><th>국가 기준</th><th>상태</th></tr></thead>
           <tbody>
             ${areaRows.map(r=>`<tr>
-              <td style="text-align:left;font-weight:600">${r.label}${r.sub?`<br><span style="font-size:.62rem;font-weight:400;color:#9ca3af">${r.sub}</span>`:''}</td>
+              <td style="text-align:left;font-weight:600">${r.area}${r.area==='사회'?`<br><span style="font-size:.62rem;font-weight:400;color:#9ca3af">한국사 6학점 포함</span>`:''}</td>
               <td style="font-weight:700;color:${r.ok?'#059669':'#d97706'}">${r.cr}학점</td>
               <td>${r.min}학점 이상</td>
               <td>${statusPill(r.ok,r.ok?'충족':'부족')}</td>
             </tr>`).join('')}
+            <tr>
+              <td style="text-align:left;font-weight:600">생활·교양 영역<br><span style="font-size:.67rem;font-weight:400;color:#9ca3af">(기술·가정/정보+제2외국어+교양)</span></td>
+              <td style="font-weight:700;color:${selOk?'#059669':'#d97706'}">${selCr}학점</td>
+              <td>${MIN_SELECT}학점 이상</td>
+              <td>${statusPill(selOk,selOk?'충족':'부족')}</td>
+            </tr>
             <tr class="total-row">
               <td style="text-align:left">필수 이수 합계</td>
-              <td>${reqTotal}학점</td><td>${cfg.minReq}학점 이상</td>
+              <td>${reqTotal}학점</td><td>${MIN_REQ}학점 이상</td>
               <td>${statusPill(reqOk,reqOk?'충족':'부족')}</td>
             </tr>
           </tbody>
@@ -2377,8 +2165,27 @@ function rCreditCheck(){
       </div>
     </details>
 
-    ${kemBox}
-    <p style="font-size:.7rem;color:#9ca3af;margin-top:8px;line-height:1.6">${cfg.note}</p>
+    <!-- ③ 국영수 합 -->
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 13px">
+      <div style="font-size:.82rem;font-weight:700;color:#374151;margin-bottom:9px">
+        ③ 국어·영어·수학 합계 상한 체크 &nbsp; ${statusPill(kemOk,kemOk?`${kem}학점 (기준 이하 ✓)`:`${kem}학점 (${kem-MAX_KEM}학점 초과!)`)}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${[['국어',kor],['영어',eng],['수학',mat]].map(([l,v],i)=>`
+          <div style="background:#f5f3ff;border-radius:8px;padding:8px 12px;text-align:center;min-width:64px">
+            <div style="font-size:.7rem;color:#6b7280">${l}</div>
+            <div style="font-size:1.05rem;font-weight:800;color:#4f46e5">${v}학점</div>
+          </div>
+          ${i<2?'<span style="color:#9ca3af;font-weight:700">+</span>':''}`).join('')}
+        <span style="color:#9ca3af;font-weight:700">=</span>
+        <div style="background:${kemOk?'#f0fdf4':'#fef3c7'};border:2px solid ${kemOk?'#86efac':'#fcd34d'};border-radius:8px;padding:8px 12px;text-align:center;min-width:72px">
+          <div style="font-size:.7rem;color:#6b7280">합계</div>
+          <div style="font-size:1.05rem;font-weight:800;color:${kemOk?'#059669':'#d97706'}">${kem}학점</div>
+        </div>
+      </div>
+      <p style="font-size:.72rem;color:#6b7280;margin-top:7px">* 국어·영어·수학 총 이수학점은 <strong>${MAX_KEM}학점</strong>을 초과할 수 없어요.</p>
+    </div>
+    <p style="font-size:.7rem;color:#9ca3af;margin-top:8px;line-height:1.6">* 기준: 2022 개정 교육과정(교육부 고시) — 총 192학점, 필수이수 84학점. 체육은 매 학기 이수하며, 성취율 40% 미만 또는 출석 2/3 미만이면 미이수(I)가 될 수 있어요.</p>
   </div>`;
 }
 

@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤪 넌센스 퀴즈 아이스브레이킹</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+    min-height:100vh;
+    background:linear-gradient(135deg,#302b63,#0f0c29,#24243e);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:16px; overflow-x:hidden;
+  }
+
+  .particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+  .particle  { position:absolute; font-size:24px; animation:floatUp linear infinite; opacity:0.6; }
+  @keyframes floatUp {
+    0%   { transform:translateY(110vh) rotate(0deg); opacity:0.7; }
+    100% { transform:translateY(-10vh) rotate(360deg); opacity:0; }
+  }
+
+  .container { width:100%; max-width:580px; position:relative; z-index:1; }
+
+  /* 화면 전환 */
+  .screen { display:none; }
+
+  @keyframes fadeInUp {
+    from { opacity:0; transform:translateY(40px) scale(0.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .card {
+    background:rgba(255,255,255,0.06);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.15); border-radius:28px;
+    padding:32px 28px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+    color:white; text-align:center;
+  }
+
+  /* 시작 화면 */
+  .logo-emoji {
+    font-size:68px; display:block;
+    animation:logoBounce 1.8s ease-in-out infinite;
+    filter:drop-shadow(0 0 20px rgba(255,200,0,0.5));
+  }
+  @keyframes logoBounce {
+    0%,100% { transform:translateY(0) rotate(-5deg); }
+    50%     { transform:translateY(-14px) rotate(5deg); }
+  }
+  .title-main {
+    font-size:32px; font-weight:900; margin:10px 0 6px;
+    background:linear-gradient(90deg,#FFD93D,#FF6B6B,#FF6FB0,#845EC2,#4D96FF);
+    background-size:300%;
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    animation:shimmer 4s linear infinite;
+  }
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:300%} }
+  .title-sub { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:22px; line-height:1.6; }
+
+  /* 강사 패널 */
+  .teacher-panel {
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,215,61,0.25);
+    border-radius:18px; padding:18px 16px; margin-bottom:20px;
+  }
+  .teacher-panel-title {
+    font-size:12px; color:#FFD93D; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase;
+    margin-bottom:12px; display:flex; align-items:center; gap:6px;
+  }
+  .gen-btn-row { display:flex; gap:10px; align-items:center; margin-bottom:0; }
+
+  /* 미리보기 목록 */
+  .preview-list {
+    display:none; text-align:left;
+    max-height:260px; overflow-y:auto;
+    margin-top:14px;
+    scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;
+  }
+  .preview-list::-webkit-scrollbar { width:4px; }
+  .preview-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:4px; }
+  .preview-item {
+    padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.08);
+    font-size:13px; line-height:1.6;
+  }
+  .preview-item:last-child { border-bottom:none; }
+  .pi-num  { color:#FFD93D; font-weight:700; }
+  .pi-q    { color:rgba(255,255,255,0.9); font-weight:700; transition:filter .3s, background .3s; }
+  .pi-a    { color:#6BCB77; transition:filter .3s, background .3s; }
+  .pi-hint { color:rgba(255,255,255,0.45); font-size:11px; }
+
+  /* 질문 + 정답 마킹 처리 */
+  .pi-q.masked {
+    filter: blur(5px);
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 1px 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .pi-a.masked {
+    filter: blur(5px);
+    background: rgba(107,203,119,0.25);
+    border-radius: 4px;
+    padding: 1px 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* 미리보기 하단 툴바 */
+  .preview-toolbar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .preview-toolbar.show { display: flex; }
+  .preview-toolbar-hint { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+  .btn-mask-toggle {
+    background: rgba(255,107,107,0.2);
+    border: 1px solid rgba(255,107,107,0.4);
+    color: #FF6B6B;
+    font-size: 12px; font-weight: 700;
+    padding: 6px 14px; border-radius: 20px;
+    cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+    transition: background .2s;
+  }
+  .btn-mask-toggle:hover { background: rgba(255,107,107,0.35); }
+  .btn-mask-toggle.unmasked {
+    background: rgba(107,203,119,0.2);
+    border-color: rgba(107,203,119,0.4);
+    color: #6BCB77;
+  }
+
+  /* 아이스브레이킹 지침 */
+  .guide-section {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .guide-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .2s;
+  }
+  .guide-header:hover { background: rgba(255,255,255,0.06); }
+  .guide-header-left { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+  .guide-arrow { font-size: 11px; color: rgba(255,255,255,0.4); transition: transform .3s; }
+  .guide-arrow.open { transform: rotate(180deg); }
+  .guide-body { display: none; padding: 0 16px 16px; text-align: left; }
+  .guide-body.open { display: block; }
+
+  .guide-step {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .guide-step:last-child { border-bottom: none; padding-bottom: 0; }
+  .guide-step-icon {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0; margin-top: 1px;
+  }
+  .step-1 { background: rgba(255,217,61,0.2); border: 1px solid rgba(255,217,61,0.4); }
+  .step-2 { background: rgba(107,203,119,0.2); border: 1px solid rgba(107,203,119,0.4); }
+  .step-3 { background: rgba(255,107,107,0.2); border: 1px solid rgba(255,107,107,0.4); }
+  .step-4 { background: rgba(77,150,255,0.2); border: 1px solid rgba(77,150,255,0.4); }
+  .guide-step-text { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.6; }
+  .guide-step-text strong { color: white; font-size: 13px; display: block; margin-bottom: 2px; }
+
+  /* 버튼 공통 */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:13px 28px; border:none; border-radius:50px;
+    font-family:'Noto Sans KR',sans-serif; font-size:15px; font-weight:700;
+    cursor:pointer; transition:transform .2s, filter .2s;
+    letter-spacing:-0.3px;
+  }
+  .btn:hover  { transform:translateY(-3px) scale(1.03); filter:brightness(1.1); }
+  .btn:active { transform:translateY(0) scale(0.98); }
+
+  /* 생성 버튼 — flex:1 로 넓게 */
+  .btn-generate {
+    background:linear-gradient(135deg,#FFD93D,#FF8E53);
+    color:#1a1a2e; box-shadow:0 6px 20px rgba(255,217,61,0.35);
+    flex:1; justify-content:center;
+  }
+
+  /* 목록 복사 버튼 — 오른쪽 고정 크기 */
+  .btn-copy-preview {
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.3);
+    color:white; font-size:14px; padding:13px 18px;
+    flex-shrink:0; white-space:nowrap;
+    display:none;
+  }
+  .btn-copy-preview:hover { background:rgba(255,255,255,0.22); }
+
+  /* 게임 시작 버튼 */
+  .btn-start {
+    background:linear-gradient(135deg,#FF6B6B,#FF8E53);
+    color:white; box-shadow:0 8px 30px rgba(255,107,107,0.45);
+    font-size:17px; padding:15px 44px; width:100%;
+    transition:opacity .3s, transform .2s, filter .2s;
+  }
+
+  /* 퀴즈 화면 버튼 */
+  .btn-reveal {
+    background:linear-gradient(135deg,#4D96FF,#845EC2);
+    color:white; box-shadow:0 6px 20px rgba(77,150,255,0.4);
+  }
+  .btn-reveal:disabled { opacity:.5; cursor:not-allowed; transform:none !important; }
+  .btn-next {
+    background:linear-gradient(135deg,#FFD93D,#FF8E53);
+    color:#1a1a2e; box-shadow:0 6px 20px rgba(255,217,61,0.35);
+    width:100%; font-size:16px; padding:14px;
+  }
+  .btn-again {
+    background:linear-gradient(135deg,#FF6B6B,#FF6FB0);
+    color:white; box-shadow:0 8px 30px rgba(255,107,107,0.4);
+    font-size:17px; padding:15px 40px;
+  }
+
+  /* 퀴즈 화면 */
+  #quizScreen .card { padding:26px 22px; }
+  .q-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .q-label  { font-size:12px; color:rgba(255,255,255,0.5); font-weight:700; letter-spacing:1px; }
+  .q-number { font-size:12px; color:rgba(255,255,255,0.5); font-weight:700; }
+
+  .progress-track { height:8px; background:rgba(255,255,255,0.12); border-radius:8px; overflow:hidden; margin-bottom:20px; }
+  .progress-fill  { height:100%; border-radius:8px; background:linear-gradient(90deg,#FF6B6B,#FFD93D,#6BCB77); transition:width .6s cubic-bezier(.23,1,.32,1); }
+
+  .question-box {
+    background:linear-gradient(135deg,rgba(132,94,194,0.5),rgba(77,150,255,0.4));
+    border:1px solid rgba(255,255,255,0.18); border-radius:22px;
+    padding:24px 18px; margin-bottom:16px; min-height:125px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  }
+  .q-emoji { font-size:44px; }
+  .q-text  { font-size:21px; font-weight:900; line-height:1.4; }
+
+  @keyframes questionPop {
+    from { opacity:0; transform:scale(0.9) rotate(-2deg); }
+    to   { opacity:1; transform:scale(1) rotate(0deg); }
+  }
+
+  .countdown-wrap { min-height:76px; display:flex; align-items:center; justify-content:center; }
+  .countdown-num  { font-size:82px; font-weight:900; line-height:1; filter:drop-shadow(0 0 20px currentColor); }
+  @keyframes countPop {
+    from { opacity:0; transform:scale(2); }
+    to   { opacity:1; transform:scale(1); }
+  }
+  .count-3 { color:#FF6B6B; animation:countPop .4s cubic-bezier(.23,1,.32,1) both; }
+  .count-2 { color:#FFD93D; animation:countPop .4s cubic-bezier(.23,1,.32,1) both; }
+  .count-1 { color:#6BCB77; animation:countPop .4s cubic-bezier(.23,1,.32,1) both; }
+
+  /* 정답 박스 */
+  .answer-box {
+    background:linear-gradient(135deg,rgba(107,203,119,0.4),rgba(78,205,196,0.4));
+    border:1px solid rgba(107,203,119,0.4); border-radius:22px;
+    padding:20px 18px; margin-bottom:16px; display:none;
+  }
+  @keyframes answerReveal {
+    from { opacity:0; transform:scale(0.7) rotate(6deg); }
+    to   { opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  .answer-label { font-size:11px; color:rgba(255,255,255,0.6); letter-spacing:1px; font-weight:700; margin-bottom:7px; text-transform:uppercase; }
+  .answer-main  { font-size:25px; font-weight:900; line-height:1.3; margin-bottom:5px; }
+  .answer-hint  { font-size:13px; color:rgba(255,255,255,0.65); margin-bottom:14px; }
+
+  /* 정답 안 복사 버튼 */
+  .btn-copy-inside {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; padding:11px 20px;
+    border:2px solid rgba(255,255,255,0.35); border-radius:50px;
+    background:rgba(255,255,255,0.15); color:white;
+    font-family:'Noto Sans KR',sans-serif; font-size:14px; font-weight:700;
+    cursor:pointer; transition:background .2s, transform .15s;
+  }
+  .btn-copy-inside:hover  { background:rgba(255,255,255,0.28); transform:scale(1.02); }
+  .btn-copy-inside:active { transform:scale(0.98); }
+
+  .btn-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+
+  /* 토스트 */
+  .toast {
+    position:fixed; top:20px; left:50%;
+    transform:translateX(-50%) translateY(-70px);
+    background:#1a1a2e; border:1px solid rgba(107,203,119,0.5);
+    color:#6BCB77; padding:11px 26px; border-radius:50px;
+    font-size:14px; font-weight:700; z-index:9999;
+    transition:transform .35s cubic-bezier(.23,1,.32,1);
+    white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* 종료 화면 */
+  .trophy {
+    font-size:86px; display:block;
+    animation:trophySpin .8s cubic-bezier(.23,1,.32,1) both;
+    filter:drop-shadow(0 0 30px rgba(255,215,0,0.7));
+  }
+  @keyframes trophySpin {
+    from { transform:rotate(-360deg) scale(0); opacity:0; }
+    to   { transform:rotate(0) scale(1); opacity:1; }
+  }
+  .end-title { font-size:28px; font-weight:900; margin:12px 0 8px; background:linear-gradient(90deg,#FFD93D,#FF6B6B); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .end-sub   { font-size:14px; color:rgba(255,255,255,0.7); line-height:1.7; margin-bottom:22px; }
+  .score-badge {
+    display:inline-block; background:linear-gradient(135deg,#FFD93D,#FF8E53);
+    color:#1a1a2e; font-size:16px; font-weight:900;
+    padding:11px 28px; border-radius:50px; margin-bottom:24px;
+    box-shadow:0 6px 25px rgba(255,217,61,0.35);
+  }
+
+  /* 컨페티 */
+  .confetti-piece {
+    position:fixed; top:-20px; border-radius:2px;
+    animation:confettiFall linear forwards; z-index:9998; pointer-events:none;
+  }
+  @keyframes confettiFall {
+    0%  { transform:translateY(0) rotate(0deg); opacity:1; }
+    80% { opacity:1; }
+    100%{ transform:translateY(110vh) rotate(720deg); opacity:0; }
+  }
+
+  @media(max-width:480px) {
+    .title-main { font-size:26px; }
+    .q-text     { font-size:18px; }
+    .answer-main{ font-size:21px; }
+    .countdown-num{ font-size:68px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">📋 복사 완료!</div>
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- 시작 화면 -->
+  <div class="screen" id="startScreen">
+    <div class="card">
+      <span class="logo-emoji">🤪</span>
+      <h1 class="title-main">넌센스 퀴즈!</h1>
+      <p class="title-sub">아이스브레이킹 에디션 | 19개 중 랜덤 <strong style="color:#FFD93D">10문제</strong> 🎲</p>
+
+      <!-- 강사 미리보기 패널 -->
+      <div class="teacher-panel">
+        <div class="teacher-panel-title">👩‍🏫 강사 미리보기 — 랜덤 생성 후 정답 확인</div>
+        <div class="gen-btn-row">
+          <button class="btn btn-generate" id="generateBtn" onclick="generatePreview()">🎲 문제 랜덤 생성</button>
+          <button class="btn btn-copy-preview" id="copyPreviewBtn" onclick="copyPreview()">📋 목록 복사</button>
+        </div>
+        <div class="preview-list" id="previewList"></div>
+
+        <!-- 마킹 토글 툴바 (생성 후 표시) -->
+        <div class="preview-toolbar" id="previewToolbar">
+          <span class="preview-toolbar-hint">👆 클릭하면 개별 공개</span>
+          <button class="btn-mask-toggle" id="maskToggleBtn" onclick="toggleMask()">🙈 전체 마킹 중</button>
+        </div>
+      </div>
+
+      <!-- 아이스브레이킹 지침 -->
+      <div class="guide-section">
+        <div class="guide-header" onclick="toggleGuide()">
+          <div class="guide-header-left">📌 아이스브레이킹 진행 지침</div>
+          <span class="guide-arrow" id="guideArrow">▼</span>
+        </div>
+        <div class="guide-body" id="guideBody">
+          <div class="guide-step">
+            <div class="guide-step-icon step-1">🎲</div>
+            <div class="guide-step-text">
+              <strong>STEP 1 — 랜덤 생성</strong>
+              19개 퀴즈 중 10문제를 자동으로 추출합니다. 매번 새로운 조합이 나와요!
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-icon step-2">📋</div>
+            <div class="guide-step-text">
+              <strong>STEP 2 — 목록 복사</strong>
+              강사가 미리 정답을 확인하거나 메모장에 붙여넣기 해두세요.
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-icon step-3">🙈</div>
+            <div class="guide-step-text">
+              <strong>STEP 3 — 마킹 처리 확인</strong>
+              목록의 질문과 정답이 모두 가려져 있어요. 학생들이 화면을 봐도 내용이 안 보여요.
+              개별 항목을 클릭하면 하나씩 공개되고, 버튼으로 전체 공개/숨기기도 가능합니다.
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-icon step-4">🚀</div>
+            <div class="guide-step-text">
+              <strong>STEP 4 — 게임 시작!</strong>
+              학생들에게 화면을 보여주며 퀴즈를 진행하세요. ⏰ 3초 카운트다운 후 정답 공개!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-start" id="startBtn" onclick="startQuiz()">🚀 게임 시작!</button>
+    </div>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div class="screen" id="quizScreen">
+    <div class="card">
+      <div class="q-header">
+        <span class="q-label">🤔 문제</span>
+        <span class="q-number" id="qNumber">1 / 10</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:10%"></div>
+      </div>
+      <div class="question-box" id="questionBox">
+        <span class="q-emoji" id="qEmoji">🤔</span>
+        <div class="q-text" id="qText"></div>
+      </div>
+      <div class="countdown-wrap" id="countdownWrap"></div>
+      <div class="answer-box" id="answerBox">
+        <div class="answer-label">🎉 정답 공개!</div>
+        <div class="answer-main" id="answerMain"></div>
+        <div class="answer-hint" id="answerHint"></div>
+        <button class="btn-copy-inside" onclick="copyAnswer()">📋 이 정답 복사하기</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-reveal" id="revealBtn" onclick="startCountdown()">⏰ 3초 후 공개!</button>
+      </div>
+      <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()" style="display:none">다음 문제 →</button>
+    </div>
+  </div>
+
+  <!-- 종료 화면 -->
+  <div class="screen" id="endScreen">
+    <div class="card">
+      <span class="trophy">🏆</span>
+      <div class="end-title">10문제 완료!</div>
+      <p class="end-sub">
+        오늘 아이스브레이킹 성공! 🎉<br>
+        웃음 가득한 수업 시간이 되길 바라요 😄<br>
+        <span style="font-size:20px;margin-top:8px;display:block;">🎊 수고했어요! 🎊</span>
+      </p>
+      <div class="score-badge" id="scoreBadge">🌟 10문제 클리어!</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-again" onclick="goHome()">🔄 처음으로</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===== 퀴즈 데이터 19개 ===== */
+var ALL_QUIZZES = [
+  { q:"세상에서 가장 지루한 중학교는?",  a:"로딩중",     emoji:"🏫", hint:"아직도 기다리는 중... ⏳" },
+  { q:"우유가 넘어지면?",                a:"아야",        emoji:"🥛", hint:"우유 + 아야 = 우유가 아파요!" },
+  { q:"세상에서 가장 뜨거운 과일은?",   a:"천도복숭아",  emoji:"🍑", hint:"천도 = 천 도(℃)! 엄청 뜨겁죠!" },
+  { q:"세상에서 가장 착한 사자는?",     a:"자원봉사자",  emoji:"🦁", hint:"자원봉사 + 자 = 자원봉사자!" },
+  { q:"왕이 넘어지면?",                 a:"킹콩",        emoji:"👑", hint:"왕=킹, 넘어지다=콩! 킹콩!" },
+  { q:"비가 자기소개를 하면?",          a:"비입니다",    emoji:"🌧", hint:"안녕하세요, 비입니다!" },
+  { q:"오리를 생으로 먹으면?",          a:"회오리",      emoji:"🦆", hint:"회(날것) + 오리 = 회오리!" },
+  { q:"세상에서 가장 큰 코는?",         a:"멕시코",      emoji:"🌍", hint:"멕시 + 코 = 멕시코!" },
+  { q:"가장 비싼 새는?",               a:"백조",         emoji:"🦢", hint:"백(百) + 조(兆)원 = 백조!" },
+  { q:"차를 발로 차면?",               a:"카놀라유",     emoji:"🚗", hint:"차(car) + 놀라 + 유 = 카놀라유!" },
+  { q:"세상에서 가장 쉬운 숫자는?",    a:"190,000 (십구만)", emoji:"🔢", hint:"십구만 = 쉽구만!" },
+  { q:"소가 계단을 오르면?",           a:"소오름",       emoji:"🐄", hint:"소 + 오름 = 소오름 (닭살!)" },
+  { q:"세상에서 가장 억울한 도형은?",  a:"원통해",       emoji:"😤", hint:"원통(圓筒) + 해 = 원통해!" },
+  { q:"고기 먹을 때마다 따라오는 개는?",a:"이쑤시개",   emoji:"🥩", hint:"이쑤시 + 개 = 이쑤시개!" },
+  { q:"침대를 밀고 자면?",             a:"배드민턴",     emoji:"🛏", hint:"배드(bed) + 민턴 = 배드민턴!" },
+  { q:"세상에서 가장 지루한 버스는?",  a:"버스",         emoji:"🚌", hint:"기다리면 항상 지루하죠!" },
+  { q:"반성문을 영어로 하면?",         a:"글로벌",       emoji:"📝", hint:"글로 + 벌 = 글로벌!" },
+  { q:"세상에서 가장 빠른 닭은?",      a:"후다닥",       emoji:"🐔", hint:"후다닥 = 닭이 도망가는 소리!" },
+  { q:"바나나가 웃으면?",              a:"바나나킥",     emoji:"🍌", hint:"웃다가 발차기! 바나나 + 킥!" }
+];
+
+/* ===== 상태 ===== */
+var quizList = [];
+var currentIdx = 0;
+var countdownTimer = null;
+var startTime = null;
+var previewGenerated = false;
+var isMasked = true;
+
+/* ===== 파티클 ===== */
+var EMOJIS = ['🤣','😂','❓','💡','🎯','⭐','🌟','✨','🎉','🎊','🔥','💫'];
+function spawnParticles() {
+  var c = document.getElementById('particles');
+  c.innerHTML = '';
+  for (var i = 0; i < 18; i++) {
+    var el = document.createElement('div');
+    el.className = 'particle';
+    el.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.fontSize = (18 + Math.random() * 18) + 'px';
+    el.style.animationDuration = (8 + Math.random() * 14) + 's';
+    el.style.animationDelay = (Math.random() * 10) + 's';
+    c.appendChild(el);
+  }
+}
+
+/* ===== 컨페티 ===== */
+function launchConfetti() {
+  var colors = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#FF6FB0','#845EC2','#4ECDC4'];
+  for (var i = 0; i < 80; i++) {
+    var c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = (Math.random() * 100) + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.width  = (8 + Math.random() * 8) + 'px';
+    c.style.height = (8 + Math.random() * 8) + 'px';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.style.animationDuration = (2 + Math.random() * 3) + 's';
+    c.style.animationDelay    = (Math.random() * 1.2) + 's';
+    document.body.appendChild(c);
+    (function(el){ setTimeout(function(){ el.remove(); }, 6000); })(c);
+  }
+}
+
+/* ===== 사운드 ===== */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+function playBeep(freq, type, duration, vol) {
+  try {
+    var ctx  = getAudio();
+    var osc  = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+function soundTick()   { playBeep(880, 'square', 0.08, 0.15); }
+function soundReveal() {
+  playBeep(523, 'sine', 0.12, 0.2);
+  setTimeout(function(){ playBeep(659, 'sine', 0.12, 0.2); }, 120);
+  setTimeout(function(){ playBeep(784, 'sine', 0.25, 0.2); }, 240);
+}
+function soundCopy()   { playBeep(1046, 'sine', 0.1, 0.15); }
+function soundGen()    {
+  playBeep(660, 'sine', 0.15, 0.18);
+  setTimeout(function(){ playBeep(880, 'sine', 0.2, 0.18); }, 150);
+}
+function soundFinish() {
+  var notes = [523, 659, 784, 1046, 1319];
+  for (var i = 0; i < notes.length; i++) {
+    (function(freq, delay){ setTimeout(function(){ playBeep(freq,'sine',0.2,0.2); }, delay); })(notes[i], i*110);
+  }
+}
+
+/* ===== 셔플 ===== */
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+/* ===== 화면 전환 ===== */
+function showScreen(id) {
+  var ids = ['startScreen', 'quizScreen', 'endScreen'];
+  for (var i = 0; i < ids.length; i++) {
+    document.getElementById(ids[i]).style.display = 'none';
+  }
+  var t = document.getElementById(id);
+  t.style.display = 'block';
+  t.style.animation = 'none';
+  void t.offsetHeight;
+  t.style.animation = 'fadeInUp 0.45s cubic-bezier(.23,1,.32,1) both';
+}
+
+/* ===== 게임 시작 버튼 상태 ===== */
+function setStartBtnReady(ready) {
+  var sb = document.getElementById('startBtn');
+  if (ready) {
+    sb.style.opacity       = '1';
+    sb.style.pointerEvents = 'auto';
+    sb.style.cursor        = 'pointer';
+  } else {
+    sb.style.opacity       = '0.38';
+    sb.style.pointerEvents = 'none';
+    sb.style.cursor        = 'not-allowed';
+  }
+}
+
+/* ===== 강사 미리보기 생성 ===== */
+function generatePreview() {
+  quizList = shuffle(ALL_QUIZZES).slice(0, 10);
+  previewGenerated = true;
+  soundGen();
+
+  /* 목록 렌더링 — DOM 직접 조작, 정답은 기본 마킹 처리 */
+  var list = document.getElementById('previewList');
+  list.innerHTML = '';
+  isMasked = true; // 생성 시 항상 마킹 ON
+
+  for (var i = 0; i < quizList.length; i++) {
+    var q = quizList[i];
+
+    var row = document.createElement('div');
+    row.className = 'preview-item';
+
+    var numSpan = document.createElement('span');
+    numSpan.className = 'pi-num';
+    numSpan.textContent = (i + 1) + '. ';
+
+    /* 질문: masked 클래스 기본 적용, 클릭 시 개별 토글 */
+    var qSpan = document.createElement('span');
+    qSpan.className = 'pi-q masked';
+    qSpan.textContent = q.q + ' ';
+    qSpan.title = '클릭하면 질문 보기/숨기기';
+    qSpan.onclick = function() {
+      this.classList.toggle('masked');
+    };
+
+    /* 정답: masked 클래스 기본 적용, 클릭 시 개별 토글 */
+    var aSpan = document.createElement('span');
+    aSpan.className = 'pi-a masked';
+    aSpan.textContent = '→ ' + q.a;
+    aSpan.title = '클릭하면 정답 보기/숨기기';
+    aSpan.onclick = function() {
+      this.classList.toggle('masked');
+    };
+
+    var hSpan = document.createElement('span');
+    hSpan.className = 'pi-hint';
+    hSpan.textContent = ' (' + q.hint + ')';
+
+    row.appendChild(numSpan);
+    row.appendChild(qSpan);
+    row.appendChild(aSpan);
+    row.appendChild(hSpan);
+    list.appendChild(row);
+  }
+
+  list.style.display = 'block';
+  document.getElementById('copyPreviewBtn').style.display = 'inline-flex';
+
+  /* 마킹 툴바 표시 및 버튼 상태 초기화 */
+  document.getElementById('previewToolbar').style.display = 'flex';
+  var mtBtn = document.getElementById('maskToggleBtn');
+  mtBtn.textContent = '🙈 정답 마킹 중';
+  mtBtn.className = 'btn-mask-toggle';
+
+  setStartBtnReady(true);
+  document.getElementById('generateBtn').textContent = '🔄 다시 생성';
+}
+
+/* ===== 마킹 전체 토글 ===== */
+function toggleMask() {
+  isMasked = !isMasked;
+  var qSpans = document.querySelectorAll('#previewList .pi-q');
+  var aSpans = document.querySelectorAll('#previewList .pi-a');
+  for (var i = 0; i < qSpans.length; i++) {
+    if (isMasked) { qSpans[i].classList.add('masked'); }
+    else          { qSpans[i].classList.remove('masked'); }
+  }
+  for (var j = 0; j < aSpans.length; j++) {
+    if (isMasked) { aSpans[j].classList.add('masked'); }
+    else          { aSpans[j].classList.remove('masked'); }
+  }
+  var btn = document.getElementById('maskToggleBtn');
+  if (isMasked) {
+    btn.textContent = '🙈 전체 마킹 중';
+    btn.className = 'btn-mask-toggle';
+  } else {
+    btn.textContent = '👁 전체 공개 중';
+    btn.className = 'btn-mask-toggle unmasked';
+  }
+}
+
+/* ===== 지침 아코디언 토글 ===== */
+function toggleGuide() {
+  var body  = document.getElementById('guideBody');
+  var arrow = document.getElementById('guideArrow');
+  if (body.style.display === 'block') {
+    body.style.display = 'none';
+    arrow.className = 'guide-arrow';
+  } else {
+    body.style.display = 'block';
+    arrow.className = 'guide-arrow open';
+  }
+}
+
+/* ===== 미리보기 복사 ===== */
+function copyPreview() {
+  if (!previewGenerated) return;
+  var text = '[ 넌센스 퀴즈 — 오늘의 10문제 ]\n\n';
+  for (var i = 0; i < quizList.length; i++) {
+    var q = quizList[i];
+    text += (i+1) + '. Q: ' + q.q + '\n';
+    text += '   A: ' + q.a + '\n';
+    text += '   (' + q.hint + ')\n\n';
+  }
+  doClipboard(text);
+  soundCopy();
+  showToast('📋 10문제 목록 복사 완료!');
+}
+
+/* ===== 게임 시작 ===== */
+function startQuiz() {
+  if (!previewGenerated) {
+    showToast('먼저 랜덤 생성 버튼을 눌러주세요!');
+    return;
+  }
+  currentIdx = 0;
+  startTime  = Date.now();
+  showScreen('quizScreen');
+  renderQuestion();
+}
+
+/* ===== 처음으로 ===== */
+function goHome() {
+  previewGenerated = false;
+  quizList = [];
+  document.getElementById('previewList').innerHTML = '';
+  document.getElementById('previewList').style.display = 'none';
+  document.getElementById('copyPreviewBtn').style.display = 'none';
+  document.getElementById('previewToolbar').style.display = 'none';
+  isMasked = true;
+  document.getElementById('generateBtn').textContent = '🎲 문제 랜덤 생성';
+  setStartBtnReady(false);
+  showScreen('startScreen');
+  spawnParticles();
+}
+
+/* ===== 문제 렌더링 ===== */
+function renderQuestion() {
+  var q = quizList[currentIdx];
+  var pct = ((currentIdx + 1) / 10) * 100;
+
+  document.getElementById('qNumber').textContent      = (currentIdx + 1) + ' / 10';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  /* 문제 박스 애니메이션 재시작 */
+  var qbox = document.getElementById('questionBox');
+  qbox.style.animation = 'none';
+  void qbox.offsetHeight;
+  qbox.style.animation = 'questionPop 0.4s cubic-bezier(.23,1,.32,1) both';
+
+  document.getElementById('qEmoji').textContent = q.emoji;
+  document.getElementById('qText').textContent  = q.q;
+
+  document.getElementById('countdownWrap').innerHTML = '';
+
+  /* 정답 박스 숨기기 */
+  document.getElementById('answerBox').style.display = 'none';
+  document.getElementById('answerBox').style.animation = 'none';
+
+  /* 버튼 초기화 */
+  var revBtn = document.getElementById('revealBtn');
+  revBtn.style.display = 'inline-flex';
+  revBtn.disabled      = false;
+  revBtn.textContent   = '⏰ 3초 후 공개!';
+
+  document.getElementById('nextBtn').style.display = 'none';
+}
+
+/* ===== 카운트다운 ===== */
+function startCountdown() {
+  document.getElementById('revealBtn').disabled = true;
+  var count = 3;
+  showCount(count);
+  soundTick();
+  countdownTimer = setInterval(function() {
+    count--;
+    if (count > 0) {
+      showCount(count);
+      soundTick();
+    } else {
+      clearInterval(countdownTimer);
+      document.getElementById('countdownWrap').innerHTML = '';
+      revealAnswer();
+    }
+  }, 1000);
+}
+function showCount(n) {
+  var cls = ['', 'count-1', 'count-2', 'count-3'][n] || '';
+  document.getElementById('countdownWrap').innerHTML =
+    '<div class="countdown-num ' + cls + '">' + n + '</div>';
+}
+
+/* ===== 정답 공개 ===== */
+function revealAnswer() {
+  var q = quizList[currentIdx];
+  soundReveal();
+
+  document.getElementById('answerMain').textContent = q.a;
+  document.getElementById('answerHint').textContent = q.hint;
+
+  /* 정답 박스 표시 + 애니메이션 */
+  var box = document.getElementById('answerBox');
+  box.style.display   = 'block';
+  box.style.animation = 'none';
+  void box.offsetHeight;
+  box.style.animation = 'answerReveal 0.5s cubic-bezier(.23,1,.32,1) both';
+
+  document.getElementById('revealBtn').style.display = 'none';
+
+  var nextBtn = document.getElementById('nextBtn');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = currentIdx < 9
+    ? '다음 문제 → (Q' + (currentIdx + 2) + '/10)'
+    : '🏆 결과 보기!';
+}
+
+/* ===== 정답 복사 ===== */
+function copyAnswer() {
+  var q = quizList[currentIdx];
+  var text = '[넌센스 퀴즈] ' + q.q + '\n정답: ' + q.a + '\n' + q.hint;
+  doClipboard(text);
+  soundCopy();
+  showToast('📋 정답 복사 완료!');
+}
+
+/* ===== 다음 문제 ===== */
+function nextQuestion() {
+  if (currentIdx < 9) {
+    currentIdx++;
+    renderQuestion();
+  } else {
+    showScreen('endScreen');
+    launchConfetti();
+    soundFinish();
+    var elapsed = Math.round((Date.now() - startTime) / 1000);
+    var min = Math.floor(elapsed / 60);
+    var sec = elapsed % 60;
+    document.getElementById('scoreBadge').textContent =
+      '🌟 10문제 완료! (' + (min > 0 ? min + '분 ' : '') + sec + '초)';
+  }
+}
+
+/* ===== 클립보드 ===== */
+function doClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(function() { fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+/* ===== 토스트 ===== */
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.className = 'toast'; }, 2300);
+}
+
+/* ===== 초기화 ===== */
+setStartBtnReady(false);
+showScreen('startScreen');
+spawnParticles();
+</script>
+</body>
+</html>

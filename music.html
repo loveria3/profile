@@ -1,0 +1,1612 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎵 3초 듣고 맞춰봐!</title>
+
+    <script>
+      /* ═══════════════════════════════════════════════════════════
+       ★ 핵심 전략 (v3 - src 직접변경 방식) ★
+       postMessage 완전 제거 → file:// null origin 문제 해결
+
+       원리:
+       1. "게임 시작" 클릭 (user gesture) 시 iframe 엘리먼트 생성
+          → 브라우저가 sticky user activation 부여
+       2. 재생 시점에 iframe.src 를 직접 변경 (postMessage 없음)
+          → sticky activation 덕분에 autoplay 허용
+          → file:// 환경에서도 100% 작동!
+    ═══════════════════════════════════════════════════════════ */
+      var songs = [];
+      var currentIdx = 0;
+      var _stopTimer = null;
+      var _cdTimer = null;
+      var START_SEC = 30; // 재생 시작 지점(초)
+      var PLAY_SECS = 3; // 재생 시간(초)
+      var _ytIframe = null; // 현재 YouTube iframe 요소
+
+      /* ── iframe src 변경으로 재생 (postMessage 불필요) ── */
+      function playYoutube(ytId) {
+        if (!_ytIframe) return false;
+        _ytIframe.src =
+          "https://www.youtube.com/embed/" +
+          ytId +
+          "?autoplay=1&mute=0&start=" +
+          START_SEC +
+          "&controls=0&rel=0&playsinline=1&fs=0&iv_load_policy=3&modestbranding=1";
+        return true;
+      }
+
+      /* ── iframe 새로 생성 (user gesture 안에서 호출 시 100% 보장) ── */
+      function createIframe(ytId, muteFlag) {
+        var mute = muteFlag !== false ? 1 : 0;
+        var wrap = document.getElementById("yt-wrap");
+        if (!wrap) return null;
+        wrap.innerHTML = "";
+        var f = document.createElement("iframe");
+        f.src =
+          "https://www.youtube.com/embed/" +
+          ytId +
+          "?autoplay=1&mute=" +
+          mute +
+          "&start=" +
+          START_SEC +
+          "&controls=0&rel=0&playsinline=1&fs=0&iv_load_policy=3&modestbranding=1";
+        f.width = "160";
+        f.height = "90";
+        f.setAttribute("frameborder", "0");
+        f.setAttribute(
+          "allow",
+          "autoplay; encrypted-media; picture-in-picture",
+        );
+        f.setAttribute("allowfullscreen", "");
+        wrap.appendChild(f);
+        _ytIframe = f;
+        return f;
+      }
+    </script>
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --primary: #8b5cf6;
+        --secondary: #ec4899;
+        --accent: #06b6d4;
+        --bg: #0d0d1f;
+        --card: rgba(255, 255, 255, 0.06);
+        --text: #ffffff;
+        --muted: rgba(255, 255, 255, 0.55);
+      }
+      html,
+      body {
+        font-family: "Noto Sans KR", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse at 15% 50%,
+            rgba(139, 92, 246, 0.25) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            ellipse at 85% 20%,
+            rgba(236, 72, 153, 0.22) 0%,
+            transparent 55%
+          ),
+          radial-gradient(
+            ellipse at 55% 85%,
+            rgba(6, 182, 212, 0.18) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
+        z-index: 0;
+      }
+      .floating-notes {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+      }
+      .note {
+        position: absolute;
+        animation: floatNote linear infinite;
+        opacity: 0;
+      }
+      @keyframes floatNote {
+        0% {
+          transform: translateY(110vh) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.35;
+        }
+        90% {
+          opacity: 0.35;
+        }
+        100% {
+          transform: translateY(-10vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+      .container {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+      .screen {
+        display: none;
+        width: 100%;
+        max-width: 860px;
+      }
+      .screen.active {
+        display: block;
+      }
+
+      /* ── SETUP ── */
+      .setup-header {
+        text-align: center;
+        margin-bottom: 22px;
+      }
+      .setup-header h1 {
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+        line-height: 1.2;
+      }
+      .setup-header p {
+        color: var(--muted);
+        font-size: 1rem;
+      }
+      .ready-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        font-size: 0.88rem;
+      }
+      #ready-indicator {
+        color: #f59e0b;
+        font-weight: 700;
+        animation: blink 1s ease-in-out infinite alternate;
+      }
+      @keyframes blink {
+        from {
+          opacity: 0.5;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .btn-random {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 15px;
+        background: linear-gradient(135deg, #7c3aed, #ec4899);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-random:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.5);
+      }
+      .btn-copy {
+        padding: 15px 18px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+      .btn-copy:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+      .copy-toast {
+        text-align: center;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #10b981;
+        margin-bottom: 8px;
+        min-height: 22px;
+        transition: opacity 0.4s;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 8px;
+        padding: 6px 12px;
+      }
+
+      /* QR 코드 모달 */
+      #qr-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+      }
+      #qr-modal.show {
+        display: flex;
+      }
+      .qr-box {
+        background: #1a1135;
+        border: 1.5px solid rgba(139, 92, 246, 0.55);
+        border-radius: 26px;
+        padding: 36px 32px;
+        text-align: center;
+        max-width: 320px;
+        width: 90%;
+        position: relative;
+      }
+      .qr-box-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #a78bfa;
+        margin-bottom: 20px;
+      }
+      .qr-box-inner {
+        display: inline-block;
+        background: white;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+      .qr-box-inner canvas,
+      .qr-box-inner img {
+        display: block;
+      }
+      .qr-box-hint {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+      .qr-btn-close {
+        width: 100%;
+        padding: 13px;
+        background: rgba(139, 92, 246, 0.25);
+        border: 1px solid rgba(139, 92, 246, 0.5);
+        border-radius: 12px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .qr-btn-close:hover {
+        background: rgba(139, 92, 246, 0.45);
+      }
+      .qr-x {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 1.3rem;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+      }
+      .qr-x:hover {
+        color: white;
+      }
+      .table-wrap {
+        background: var(--card);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 14px;
+        backdrop-filter: blur(8px);
+      }
+      .table-head {
+        display: grid;
+        grid-template-columns: 42px 1fr 1fr;
+        gap: 12px;
+        padding: 11px 16px;
+        background: rgba(139, 92, 246, 0.18);
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.65);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .song-row {
+        display: grid;
+        grid-template-columns: 42px 1fr 1fr;
+        gap: 12px;
+        padding: 9px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        align-items: center;
+        transition: background 0.2s;
+      }
+      .song-row:last-child {
+        border-bottom: none;
+      }
+      .song-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .num-badge {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .inp {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 10px;
+        padding: 9px 12px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 0.86rem;
+        width: 100%;
+        transition: all 0.2s;
+      }
+      .inp:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.12);
+      }
+      .inp::placeholder {
+        color: rgba(255, 255, 255, 0.28);
+        font-size: 0.76rem;
+      }
+      .inp.masked {
+        -webkit-text-security: disc;
+        text-security: disc;
+        letter-spacing: 3px;
+        cursor: default;
+        background: rgba(139, 92, 246, 0.18);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .start-hint {
+        color: var(--muted);
+        font-size: 0.8rem;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .err-msg {
+        color: #f87171;
+        font-size: 0.85rem;
+        text-align: center;
+        padding: 10px;
+        background: rgba(248, 113, 113, 0.1);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        display: none;
+      }
+      .btn-start {
+        display: block;
+        width: 100%;
+        padding: 19px;
+        background: linear-gradient(135deg, #06b6d4, #7c3aed);
+        border: none;
+        border-radius: 16px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1.2rem;
+        font-weight: 900;
+        cursor: pointer;
+        transition: all 0.3s;
+        letter-spacing: 1px;
+      }
+      .btn-start:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 45px rgba(6, 182, 212, 0.45);
+      }
+
+      /* ── GAME ── */
+      .progress-wrap {
+        margin-bottom: 20px;
+      }
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin-bottom: 8px;
+      }
+      .progress-track {
+        width: 100%;
+        height: 7px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7c3aed, #ec4899, #06b6d4);
+        border-radius: 4px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .game-card {
+        position: relative;
+        background: rgba(13, 13, 31, 0.93);
+        border-radius: 28px;
+        padding: 50px 40px;
+        text-align: center;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(16px);
+      }
+      .game-card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4, #8b5cf6);
+        border-radius: 30px;
+        z-index: -1;
+        background-size: 300% 300%;
+        animation: borderAnim 4s linear infinite;
+      }
+      @keyframes borderAnim {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+      .q-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        padding: 8px 22px;
+        border-radius: 50px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        margin-bottom: 28px;
+      }
+      .phase {
+        display: none;
+        width: 100%;
+      }
+      .phase.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* COUNTDOWN */
+      .cd-label {
+        font-size: 1.15rem;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .cd-num {
+        font-size: clamp(7rem, 18vw, 11rem);
+        font-weight: 900;
+        line-height: 1;
+        background: linear-gradient(135deg, #a78bfa, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: cdPop 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes cdPop {
+        0% {
+          transform: scale(2);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(0.95);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .cd-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        margin-top: 14px;
+      }
+
+      /* PLAYING */
+      .playing-label {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 24px;
+        animation: glow 0.6s ease-in-out infinite alternate;
+      }
+      @keyframes glow {
+        from {
+          text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        to {
+          text-shadow:
+            0 0 30px rgba(6, 182, 212, 1),
+            0 0 60px rgba(139, 92, 246, 0.5);
+        }
+      }
+      .wave {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 100px;
+        margin-bottom: 20px;
+      }
+      .wbar {
+        width: 7px;
+        border-radius: 4px;
+        background: linear-gradient(to top, #7c3aed, #ec4899, #06b6d4);
+        animation: waveAnim 0.55s ease-in-out infinite alternate;
+      }
+      .wbar:nth-child(1) {
+        height: 22px;
+        animation-delay: 0s;
+      }
+      .wbar:nth-child(2) {
+        height: 40px;
+        animation-delay: 0.07s;
+      }
+      .wbar:nth-child(3) {
+        height: 65px;
+        animation-delay: 0.03s;
+      }
+      .wbar:nth-child(4) {
+        height: 85px;
+        animation-delay: 0.1s;
+      }
+      .wbar:nth-child(5) {
+        height: 55px;
+        animation-delay: 0.05s;
+      }
+      .wbar:nth-child(6) {
+        height: 75px;
+        animation-delay: 0.12s;
+      }
+      .wbar:nth-child(7) {
+        height: 90px;
+        animation-delay: 0.08s;
+      }
+      .wbar:nth-child(8) {
+        height: 60px;
+        animation-delay: 0.15s;
+      }
+      .wbar:nth-child(9) {
+        height: 80px;
+        animation-delay: 0.02s;
+      }
+      .wbar:nth-child(10) {
+        height: 45px;
+        animation-delay: 0.09s;
+      }
+      .wbar:nth-child(11) {
+        height: 30px;
+        animation-delay: 0.06s;
+      }
+      .wbar:nth-child(12) {
+        height: 50px;
+        animation-delay: 0.11s;
+      }
+      @keyframes waveAnim {
+        from {
+          transform: scaleY(0.18);
+        }
+        to {
+          transform: scaleY(1);
+        }
+      }
+      .playing-sub {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+      }
+      .btn-manual-play {
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: none;
+        animation: pulse 1s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
+        to {
+          box-shadow: 0 0 30px rgba(245, 158, 11, 0.9);
+        }
+      }
+      .btn-manual-play:hover {
+        transform: translateY(-2px);
+      }
+
+      /* GUESS */
+      .guess-icon {
+        font-size: 4.5rem;
+        margin-bottom: 16px;
+      }
+      .guess-title {
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+      .guess-sub {
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+      }
+      .btn-reveal {
+        padding: 17px 45px;
+        background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 14px;
+        width: 100%;
+        max-width: 300px;
+      }
+      .btn-reveal:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(236, 72, 153, 0.45);
+      }
+      .btn-replay {
+        padding: 12px 30px;
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.65);
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-replay:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .vid-err {
+        margin-top: 14px;
+        padding: 10px 16px;
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 10px;
+        color: #fbbf24;
+        font-size: 0.85rem;
+        display: none;
+      }
+
+      /* ANSWER */
+      .ans-icon {
+        font-size: 3.5rem;
+        margin-bottom: 14px;
+        animation: spin 0.6s ease-out;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(-20deg) scale(0.5);
+        }
+        to {
+          transform: rotate(0deg) scale(1);
+        }
+      }
+      .ans-label {
+        font-size: 1.1rem;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .ans-title {
+        font-size: clamp(1.8rem, 5vw, 3rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.25;
+        margin-bottom: 32px;
+        animation: reveal 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes reveal {
+        0% {
+          opacity: 0;
+          transform: scale(0.4) translateY(30px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      .btn-next {
+        padding: 17px 50px;
+        background: linear-gradient(135deg, #06b6d4, #7c3aed);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-next:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(6, 182, 212, 0.45);
+      }
+
+      /* FINAL */
+      .final-card {
+        position: relative;
+        background: rgba(13, 13, 31, 0.93);
+        border-radius: 28px;
+        padding: 60px 40px;
+        text-align: center;
+        backdrop-filter: blur(16px);
+        max-width: 580px;
+        margin: 0 auto;
+      }
+      .final-card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899, #06b6d4);
+        border-radius: 30px;
+        z-index: -1;
+        background-size: 300% 300%;
+        animation: borderAnim 4s linear infinite;
+      }
+      .final-trophy {
+        font-size: 5.5rem;
+        margin-bottom: 18px;
+        display: block;
+        animation: trophyBounce 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes trophyBounce {
+        from {
+          transform: translateY(0) rotate(-5deg);
+        }
+        to {
+          transform: translateY(-18px) rotate(5deg);
+        }
+      }
+      .final-title {
+        font-size: clamp(2.5rem, 7vw, 4rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 12px;
+      }
+      .final-sub {
+        color: var(--muted);
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+      }
+      .btn-restart {
+        padding: 18px 55px;
+        background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-restart:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(139, 92, 246, 0.45);
+      }
+
+      /* CONFETTI */
+      .confetti-wrap {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 999;
+        overflow: hidden;
+      }
+      .c-piece {
+        position: absolute;
+        top: -20px;
+        animation: cFall linear forwards;
+      }
+      @keyframes cFall {
+        to {
+          transform: translateY(110vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      /* ★ YouTube iframe: 화면 밖 오른쪽에 완전히 숨김 (opacity:0.01 = 브라우저가 visible 인식) */
+      #yt-wrap {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        width: 160px;
+        height: 90px;
+        overflow: hidden;
+        opacity: 0.01;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      @media (max-width: 600px) {
+        .game-card {
+          padding: 35px 20px;
+        }
+        .table-head,
+        .song-row {
+          grid-template-columns: 38px 1fr;
+        }
+        .table-head span:last-child,
+        .song-row .inp:last-child {
+          display: none;
+        }
+        .btn-row {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- QR 코드 팝업 모달 -->
+    <div id="qr-modal" onclick="handleModalClick(event)">
+      <div class="qr-box">
+        <button class="qr-x" onclick="closeQr()">✕</button>
+        <div class="qr-box-title">📱 강사용 정답 QR코드</div>
+        <div class="qr-box-inner">
+          <div id="qr-canvas"></div>
+        </div>
+        <div class="qr-box-hint">
+          폰 카메라로 스캔하면<br />정답 목록을 확인할 수 있어요!
+        </div>
+        <button class="qr-btn-close" onclick="closeQr()">닫기</button>
+      </div>
+    </div>
+
+    <div class="floating-notes" id="floatNotes"></div>
+
+    <!-- YouTube iframe 컨테이너 (JS가 여기에 iframe 삽입) -->
+    <div id="yt-wrap"></div>
+
+    <!-- Confetti -->
+    <div class="confetti-wrap" id="confettiWrap"></div>
+
+    <div class="container">
+      <!-- ════ SETUP ════ -->
+      <div id="setup-screen" class="screen active">
+        <div class="setup-header">
+          <h1>🎵 3초 듣고 맞춰봐!</h1>
+          <p>노래를 딱 3초 듣고 제목을 맞추는 아이스브레이킹 게임 🔥</p>
+        </div>
+
+        <div class="ready-row">
+          <span style="color: var(--muted); font-size: 0.85rem">상태:</span>
+          <span id="ready-indicator">▶ 게임 시작 버튼을 눌러주세요</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-random" onclick="fillRandom()">
+            🎲 최신 인기곡 10개 자동 구성
+          </button>
+          <button
+            class="btn-copy"
+            onclick="copySongList()"
+            title="목록 클립보드 복사"
+          >
+            📋 목록 복사
+          </button>
+        </div>
+        <div class="copy-toast" id="copy-toast"></div>
+
+        <div class="table-wrap">
+          <div class="table-head">
+            <span>#</span>
+            <span>노래 제목</span>
+            <span>YouTube URL 또는 영상 ID</span>
+          </div>
+          <div id="song-list"></div>
+        </div>
+
+        <p class="start-hint">
+          📌 YouTube URL 전체 또는 11자리 ID 입력 · 없으면 제목만 입력해도 진행
+          가능
+        </p>
+        <div class="err-msg" id="err-msg">
+          ⚠️ 최소 1개 이상의 노래 제목을 입력해주세요!
+        </div>
+        <button class="btn-start" onclick="startGame()">▶ 게임 시작!</button>
+      </div>
+
+      <!-- ════ GAME ════ -->
+      <div id="game-screen" class="screen">
+        <div class="progress-wrap">
+          <div class="progress-info">
+            <span id="prog-text">1 / 10</span>
+            <span>🎵 3초 듣고 맞추기</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="game-card">
+          <div class="q-badge" id="q-badge">🎵 1번 문제</div>
+
+          <!-- 카운트다운 -->
+          <div id="phase-countdown" class="phase active">
+            <div class="cd-label">📣 준비하세요!</div>
+            <div class="cd-num" id="cd-num">3</div>
+            <div class="cd-sub">잠시 후 3초 재생됩니다!</div>
+          </div>
+
+          <!-- 재생 중 -->
+          <div id="phase-playing" class="phase">
+            <div class="playing-label">🎵 재생 중...</div>
+            <div class="wave">
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+              <div class="wbar"></div>
+            </div>
+            <div class="playing-sub">👂 잘 들어보세요!</div>
+            <button
+              class="btn-manual-play"
+              id="btn-manual-play"
+              onclick="manualPlay()"
+            >
+              🔊 소리가 없으면 여기 클릭!
+            </button>
+          </div>
+
+          <!-- 맞추기 -->
+          <div id="phase-guess" class="phase">
+            <div class="guess-icon">🤔</div>
+            <div class="guess-title">이 노래는 무엇일까요?</div>
+            <div class="guess-sub">팀과 함께 정답을 외쳐보세요! 🙌</div>
+            <button class="btn-reveal" onclick="revealAnswer()">
+              🔍 정답 공개!
+            </button>
+            <button class="btn-replay" onclick="replayAudio()">
+              🔁 다시 듣기
+            </button>
+            <div class="vid-err" id="vid-err">
+              ⚠️ 오디오를 불러올 수 없습니다. YouTube ID를 확인해주세요.
+            </div>
+          </div>
+
+          <!-- 정답 -->
+          <div id="phase-answer" class="phase">
+            <div class="ans-icon">🎊</div>
+            <div class="ans-label">정답은...</div>
+            <div class="ans-title" id="ans-title">노래 제목</div>
+            <button class="btn-next" id="btn-next" onclick="nextSong()">
+              다음 문제 →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ FINAL ════ -->
+      <div id="final-screen" class="screen">
+        <div class="final-card">
+          <span class="final-trophy">🏆</span>
+          <div class="final-title">게임 완료!</div>
+          <div class="final-sub">모두 수고하셨습니다! 다함께 박수! 👏👏👏</div>
+          <button class="btn-restart" onclick="restartGame()">
+            🔄 처음부터 다시
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- /container -->
+
+    <script>
+      /* ══════════════════════════════════════════════════════════
+   데이터
+══════════════════════════════════════════════════════════ */
+      var RANDOM_SONGS = [
+        { name: "BLACKPINK - 뛰어 (JUMP)", ytId: "CgCVZdcKcqY" },
+        { name: "IVE (아이브) - REBEL HEART", ytId: "g36q0ZLvygQ" },
+        { name: "G-DRAGON - HOME SWEET HOME", ytId: "K6X38sM_WSo" },
+        { name: "BOYNEXTDOOR - 오늘만 I LOVE YOU", ytId: "B4mLKcVIERs" },
+        { name: "SEVENTEEN (세븐틴) - MAESTRO", ytId: "ThI0pBAbFnk" },
+        { name: "aespa (에스파) - Supernova", ytId: "phuiiNCxRMg" },
+        { name: "aespa (에스파) - Better Things", ytId: "gfk3QLU1x0E" },
+        { name: "LE SSERAFIM (르세라핌) - EASY", ytId: "bNKXxwOQYB8" },
+        { name: "STAYC (스테이씨) - Bubble", ytId: "5cJHNBRGWQM" },
+        { name: "NewJeans - Supernatural", ytId: "ArmDp-zijuc" },
+        { name: "V - FRI(END)S", ytId: "62peQdQv4uo" },
+        { name: "Jung Kook - Never Let Go", ytId: "BVvq-u_xzHw" },
+        { name: "Jin - Running Wild", ytId: "uoHol5Dr_go" },
+        { name: "IVE (아이브) - HEYA", ytId: "07EzMbVH3QE" },
+        { name: "LE SSERAFIM (르세라핌) - CRAZY", ytId: "n6B5gQXlB-0" },
+        { name: "ILLIT - Magnetic", ytId: "Vk5-c_v4gMU" },
+        { name: "BABYMONSTER - SHEESH", ytId: "2wA_b6YHjqQ" },
+        { name: "ROSÉ & Bruno Mars - APT.", ytId: "ekr2nIex040" },
+        { name: "LISA - ROCKSTAR", ytId: "hbcGx4MGUMg" },
+        { name: "Stray Kids - Chk Chk Boom", ytId: "0P0aQreFs8w" },
+        { name: "TXT - Deja Vu", ytId: "DiHUEWBRQEI" },
+        { name: "ENHYPEN - XO (Only If You Say Yes)", ytId: "FPDYeRk2PO8" },
+        { name: "KISS OF LIFE - Get Loud", ytId: "yXRlrix-pPk" },
+        { name: "(G)I-DLE - Super Lady", ytId: "6f3RzjXPQwA" },
+        { name: "G-DRAGON - POWER", ytId: "NMjhjrBIrG8" },
+        { name: "TAEYEON - INVU", ytId: "AbZH7XWDW_k" },
+        { name: "IVE (아이브) - Baddie", ytId: "Da4P2uT4mVc" },
+        { name: "BTS - Butter", ytId: "WMweEpGlu_U" },
+        { name: "TWICE - FANCY", ytId: "R84GrF9bYgc" },
+        { name: "BLACKPINK - How You Like That", ytId: "tyeJ55aqgKE" },
+      ];
+
+      /* ══════════════════════════════════════════════════════════
+   셋업 UI
+══════════════════════════════════════════════════════════ */
+      function buildList() {
+        var wrap = document.getElementById("song-list");
+        wrap.innerHTML = "";
+        for (var i = 0; i < 10; i++) {
+          var row = document.createElement("div");
+          row.className = "song-row";
+          row.innerHTML =
+            '<div class="num-badge">' +
+            (i + 1) +
+            "</div>" +
+            '<input class="inp" id="n' +
+            i +
+            '" type="text" placeholder="노래 제목을 입력하세요..."' +
+            " oninput=\"this.classList.remove('masked');this.readOnly=false;delete this.dataset.actual;\" />" +
+            '<input class="inp" id="y' +
+            i +
+            '" type="text" placeholder="YouTube URL 또는 11자리 ID" />';
+          wrap.appendChild(row);
+        }
+      }
+
+      function fillRandom() {
+        var shuffled = RANDOM_SONGS.slice().sort(function () {
+          return Math.random() - 0.5;
+        });
+        for (var i = 0; i < 10; i++) {
+          var ni = document.getElementById("n" + i);
+          var yi = document.getElementById("y" + i);
+          if (ni) {
+            ni.dataset.actual = shuffled[i].name;
+            ni.value = shuffled[i].name;
+            ni.classList.add("masked");
+            ni.readOnly = true;
+          }
+          if (yi) yi.value = shuffled[i].ytId;
+        }
+        copySongList(true);
+        generateQR();
+      }
+
+      var _qrText = "";
+
+      function generateQR() {
+        var lines = ["[3초 듣고 맞추기 - 오늘의 정답]"];
+        for (var i = 0; i < 10; i++) {
+          var ni = document.getElementById("n" + i);
+          if (!ni) continue;
+          var name = (ni.dataset.actual || ni.value || "").trim();
+          if (name) lines.push(i + 1 + ". " + name);
+        }
+        if (lines.length <= 1) return;
+        _qrText = lines.join("\n");
+
+        var canvasDiv = document.getElementById("qr-canvas");
+        if (canvasDiv) {
+          var src =
+            "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+            encodeURIComponent(_qrText);
+          var img = document.createElement("img");
+          img.src = src;
+          img.width = 220;
+          img.height = 220;
+          img.alt = "QR코드";
+          img.onerror = function () {
+            canvasDiv.innerHTML =
+              '<div style="width:220px;height:220px;display:flex;align-items:center;justify-content:center;color:#c00;font-size:12px;text-align:center;padding:16px">QR 생성 실패<br>인터넷 연결을 확인하세요</div>';
+          };
+          canvasDiv.innerHTML = "";
+          canvasDiv.appendChild(img);
+        }
+
+        var modal = document.getElementById("qr-modal");
+        if (modal) modal.classList.add("show");
+      }
+
+      function closeQr() {
+        var modal = document.getElementById("qr-modal");
+        if (modal) modal.classList.remove("show");
+      }
+
+      function handleModalClick(e) {
+        if (e.target === document.getElementById("qr-modal")) closeQr();
+      }
+
+      function copySongList(fromAuto) {
+        var lines = ["🎵 3초 듣고 맞추기 — 오늘의 10곡"];
+        var any = false;
+        for (var i = 0; i < 10; i++) {
+          var ni = document.getElementById("n" + i);
+          if (!ni) continue;
+          var name = (ni.dataset.actual || ni.value || "").trim();
+          if (name) {
+            lines.push(i + 1 + ". " + name);
+            any = true;
+          }
+        }
+        if (!any) {
+          showToast("먼저 노래를 입력해주세요!");
+          return;
+        }
+        var text = lines.join("\n");
+        var msg = fromAuto
+          ? '📋 카카오톡 목록 복사 완료! → 카카오톡 "나에게 보내기"에 Ctrl+V 하세요 🎵'
+          : "✅ 클립보드에 복사됐어요! 카카오톡에 붙여넣기 하세요.";
+
+        /* ① execCommand (가장 호환성 높음 - file:// 포함) */
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;left:-9999px;top:-9999px;opacity:0;";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = false;
+        try {
+          ok = document.execCommand("copy");
+        } catch (_) {}
+        document.body.removeChild(ta);
+
+        /* ② 실패 시 Clipboard API 시도 */
+        if (!ok && navigator.clipboard) {
+          navigator.clipboard.writeText(text).catch(function () {});
+        }
+        showToast(msg);
+      }
+
+      function showToast(msg) {
+        var el = document.getElementById("copy-toast");
+        if (!el) return;
+        el.textContent = msg;
+        el.style.opacity = "1";
+        setTimeout(function () {
+          el.style.opacity = "0";
+          setTimeout(function () {
+            el.textContent = "";
+          }, 400);
+        }, 5000);
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   YouTube ID 추출
+══════════════════════════════════════════════════════════ */
+      function extractId(raw) {
+        if (!raw) return null;
+        raw = raw.trim();
+        var m = raw.match(
+          /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        );
+        if (m) return m[1];
+        if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+        return null;
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   게임 시작  ★ 핵심 ★
+   이 함수는 반드시 사용자 클릭으로만 호출됨
+   → user gesture 컨텍스트 안에서 iframe 생성 → 자동재생 허용
+══════════════════════════════════════════════════════════ */
+      function startGame() {
+        songs = [];
+        for (var i = 0; i < 10; i++) {
+          var ni = document.getElementById("n" + i);
+          var yi = document.getElementById("y" + i);
+          var nm = ((ni && ni.dataset.actual) || (ni && ni.value) || "").trim();
+          var raw = ((yi && yi.value) || "").trim();
+          if (nm) songs.push({ name: nm, ytId: extractId(raw) });
+        }
+        if (songs.length === 0) {
+          var e = document.getElementById("err-msg");
+          e.style.display = "block";
+          setTimeout(function () {
+            e.style.display = "none";
+          }, 3000);
+          return;
+        }
+        currentIdx = 0;
+
+        /* ★★★ user gesture 안에서 iframe 엘리먼트 생성
+         → 브라우저가 sticky user activation 부여
+         → 이후 src 변경만으로도 autoplay 허용됨! ★★★ */
+        var wrap = document.getElementById("yt-wrap");
+        if (wrap) {
+          wrap.innerHTML = "";
+          var f = document.createElement("iframe");
+          f.src = "about:blank";
+          f.width = "160";
+          f.height = "90";
+          f.setAttribute("frameborder", "0");
+          f.setAttribute(
+            "allow",
+            "autoplay; encrypted-media; picture-in-picture",
+          );
+          f.setAttribute("allowfullscreen", "");
+          wrap.appendChild(f);
+          _ytIframe = f;
+        }
+
+        showScreen("game-screen");
+        setTimeout(function () {
+          loadQuestion();
+        }, 600);
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   화면 / Phase 전환
+══════════════════════════════════════════════════════════ */
+      function showScreen(id) {
+        document.querySelectorAll(".screen").forEach(function (s) {
+          s.classList.remove("active");
+        });
+        document.getElementById(id).classList.add("active");
+      }
+
+      function showPhase(name) {
+        document.querySelectorAll(".phase").forEach(function (p) {
+          p.classList.remove("active");
+        });
+        var el = document.getElementById("phase-" + name);
+        if (el) el.classList.add("active");
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   문제 로드
+══════════════════════════════════════════════════════════ */
+      function loadQuestion() {
+        clearTimeout(_stopTimer);
+        clearTimeout(_cdTimer);
+        safeStop(); /* 항상 현재 재생 중지 */
+
+        var total = songs.length;
+        document.getElementById("prog-text").textContent =
+          currentIdx + 1 + " / " + total;
+        document.getElementById("prog-fill").style.width =
+          (currentIdx / total) * 100 + "%";
+        document.getElementById("q-badge").textContent =
+          "🎵 " + (currentIdx + 1) + "번 문제";
+        document.getElementById("vid-err").style.display = "none";
+        document.getElementById("btn-manual-play").style.display = "none";
+
+        showPhase("countdown");
+        doCountdown(3);
+      }
+
+      function safeStop() {
+        /* iframe src를 about:blank로 설정 → YouTube 재생 즉시 중단 */
+        if (_ytIframe) {
+          _ytIframe.src = "about:blank";
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   카운트다운
+══════════════════════════════════════════════════════════ */
+      function doCountdown(n) {
+        var el = document.getElementById("cd-num");
+        el.textContent = n > 0 ? n : "🎵";
+        el.style.animation = "none";
+        void el.offsetWidth;
+        el.style.animation = "cdPop 0.85s cubic-bezier(0.34,1.56,0.64,1)";
+
+        if (n > 0) {
+          _cdTimer = setTimeout(function () {
+            doCountdown(n - 1);
+          }, 950);
+        } else {
+          _cdTimer = setTimeout(function () {
+            showPhase("playing");
+            playOneSec();
+          }, 450);
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   ★★★ 재생 핵심 함수 (v3: src 직접변경, postMessage 없음) ★★★
+══════════════════════════════════════════════════════════ */
+      function playOneSec() {
+        clearTimeout(_stopTimer);
+        var song = songs[currentIdx];
+
+        /* 항상 백업 타이머 설정 (stuck 절대 방지) */
+        _stopTimer = setTimeout(
+          function () {
+            safeStop();
+            showPhase("guess");
+          },
+          (PLAY_SECS + 4) * 1000,
+        );
+
+        if (!song || !song.ytId) {
+          showVidErr();
+          return;
+        }
+
+        /* ★★★ 핵심: postMessage 대신 iframe.src 직접 변경!
+     - file:// 환경의 null origin 문제 완전 해결
+     - startGame()에서 생성된 iframe의 sticky activation 활용
+     - autoplay=1 + mute=0 으로 소리와 함께 재생 ★★★ */
+        if (_ytIframe) {
+          _ytIframe.src =
+            "https://www.youtube.com/embed/" +
+            song.ytId +
+            "?autoplay=1&mute=0&start=" +
+            START_SEC +
+            "&controls=0&rel=0&playsinline=1&fs=0&iv_load_policy=3&modestbranding=1";
+
+          /* 정확한 종료 타이머 (로딩 시간 고려해 +2초 여유) */
+          clearTimeout(_stopTimer);
+          _stopTimer = setTimeout(
+            function () {
+              safeStop();
+              showPhase("guess");
+            },
+            (PLAY_SECS + 2) * 1000,
+          );
+        } else {
+          /* iframe 없는 경우 (비정상) → 수동 버튼 표시 */
+          document.getElementById("btn-manual-play").style.display = "block";
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   수동 재생 버튼 (user gesture → 새 iframe 생성, 100% 보장)
+══════════════════════════════════════════════════════════ */
+      function manualPlay() {
+        document.getElementById("btn-manual-play").style.display = "none";
+        var song = songs[currentIdx];
+
+        if (song && song.ytId) {
+          /* user gesture 안 → 새 iframe 직접 생성 (절대 확실) */
+          createIframe(song.ytId, false); /* false = 소리 있음 */
+        }
+
+        clearTimeout(_stopTimer);
+        _stopTimer = setTimeout(
+          function () {
+            safeStop();
+            showPhase("guess");
+          },
+          (PLAY_SECS + 2) * 1000,
+        );
+      }
+
+      function replayAudio() {
+        clearTimeout(_stopTimer);
+        document.getElementById("vid-err").style.display = "none";
+        document.getElementById("btn-manual-play").style.display = "none";
+        showPhase("playing");
+
+        var song = songs[currentIdx];
+        if (song && song.ytId) {
+          /* 다시 듣기 = user gesture → src 변경 or 새 iframe */
+          if (_ytIframe) {
+            _ytIframe.src =
+              "https://www.youtube.com/embed/" +
+              song.ytId +
+              "?autoplay=1&mute=0&start=" +
+              START_SEC +
+              "&controls=0&rel=0&playsinline=1&fs=0&iv_load_policy=3&modestbranding=1";
+          } else {
+            createIframe(song.ytId, false);
+          }
+          clearTimeout(_stopTimer);
+          _stopTimer = setTimeout(
+            function () {
+              safeStop();
+              showPhase("guess");
+            },
+            (PLAY_SECS + 2) * 1000,
+          );
+        }
+      }
+
+      function showVidErr() {
+        document.getElementById("vid-err").style.display = "block";
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   정답 공개
+══════════════════════════════════════════════════════════ */
+      function revealAnswer() {
+        clearTimeout(_stopTimer);
+        safeStop();
+        document.getElementById("ans-title").textContent =
+          songs[currentIdx].name;
+        document.getElementById("vid-err").style.display = "none";
+        var isLast = currentIdx === songs.length - 1;
+        document.getElementById("btn-next").textContent = isLast
+          ? "🏆 결과 보기"
+          : "다음 문제 →";
+        showPhase("answer");
+        launchConfetti();
+        /* 다음 곡 preload 불필요 — src 변경 방식은 재생 시점에 바로 로드 */
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   다음 문제 / 종료
+══════════════════════════════════════════════════════════ */
+      function nextSong() {
+        currentIdx++;
+        if (currentIdx >= songs.length) showFinal();
+        else loadQuestion();
+      }
+
+      function showFinal() {
+        document.getElementById("prog-fill").style.width = "100%";
+        showScreen("final-screen");
+        launchConfetti(120);
+      }
+
+      function restartGame() {
+        safeStop();
+        _ytIframe = null;
+        showScreen("setup-screen");
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   컨페티
+══════════════════════════════════════════════════════════ */
+      function launchConfetti(count) {
+        count = count || 80;
+        var colors = [
+          "#8b5cf6",
+          "#ec4899",
+          "#06b6d4",
+          "#f59e0b",
+          "#10b981",
+          "#f97316",
+          "#ffffff",
+        ];
+        var wrap = document.getElementById("confettiWrap");
+        for (var i = 0; i < count; i++) {
+          (function (idx) {
+            setTimeout(function () {
+              var p = document.createElement("div");
+              p.className = "c-piece";
+              var size = Math.random() * 13 + 5;
+              p.style.cssText =
+                "left:" +
+                Math.random() * 100 +
+                "vw;" +
+                "background:" +
+                colors[Math.floor(Math.random() * colors.length)] +
+                ";" +
+                "width:" +
+                size +
+                "px;height:" +
+                size +
+                "px;" +
+                "border-radius:" +
+                (Math.random() > 0.5 ? "50%" : "3px") +
+                ";" +
+                "animation-duration:" +
+                (Math.random() * 2.5 + 1.8) +
+                "s;" +
+                "animation-delay:" +
+                Math.random() * 0.4 +
+                "s;opacity:0.95;";
+              wrap.appendChild(p);
+              setTimeout(function () {
+                p.remove();
+              }, 5000);
+            }, idx * 18);
+          })(i);
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   음표 배경
+══════════════════════════════════════════════════════════ */
+      function spawnNotes() {
+        var notes = ["🎵", "🎶", "🎼", "🎸", "🎹", "🎺", "🎻"];
+        var wrap = document.getElementById("floatNotes");
+        setInterval(function () {
+          var note = document.createElement("div");
+          note.className = "note";
+          note.textContent = notes[Math.floor(Math.random() * notes.length)];
+          note.style.cssText =
+            "left:" +
+            Math.random() * 95 +
+            "vw;" +
+            "font-size:" +
+            (Math.random() * 1.5 + 1) +
+            "rem;" +
+            "animation-duration:" +
+            (Math.random() * 8 + 8) +
+            "s;";
+          wrap.appendChild(note);
+          setTimeout(function () {
+            note.remove();
+          }, 17000);
+        }, 1200);
+      }
+
+      /* ══════════════════════════════════════════════════════════
+   초기화
+══════════════════════════════════════════════════════════ */
+      buildList();
+      spawnNotes();
+    </script>
+  </body>
+</html>
