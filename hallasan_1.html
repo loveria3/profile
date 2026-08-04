@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>한라산 등반 · Hallasan Climb</title>
+<style>
+  :root{
+    --basalt:#141a1c;
+    --basalt-2:#1e2629;
+    --ash:#8d9aa0;
+    --paper:#eef2f1;
+    --ribbon:#ff7a29;   /* 등산로 리본 */
+    --moss:#7fb069;
+    --line:rgba(238,242,241,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#0b0f10}
+  body{
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    color:var(--paper);-webkit-font-smoothing:antialiased;
+  }
+  canvas{display:block;position:fixed;inset:0}
+  .mono{font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  /* ---------- 좌측 상단: 고도 게이지 ---------- */
+  #gauge{
+    position:fixed;left:18px;top:18px;display:flex;gap:12px;align-items:stretch;
+    pointer-events:none;user-select:none;
+  }
+  #gauge .bar{
+    width:10px;border-radius:6px;background:rgba(20,26,28,.72);
+    border:1px solid var(--line);position:relative;overflow:hidden;height:230px;
+    backdrop-filter:blur(6px);
+  }
+  #gauge .fill{
+    position:absolute;left:0;right:0;bottom:0;height:0%;
+    background:linear-gradient(0deg,#3d6b4a,#7fb069 60%,#e9f1ec);
+    transition:height .12s linear;
+  }
+  #gauge .ticks{position:relative;height:230px;font-size:10px;letter-spacing:.06em;color:var(--ash)}
+  #gauge .tick{position:absolute;left:0;transform:translateY(50%);white-space:nowrap}
+  #gauge .tick b{color:var(--paper);font-weight:600}
+  #gauge .tick.me{color:var(--ribbon)}
+  #gauge .tick.me b{color:var(--ribbon)}
+
+  /* ---------- 우측 하단: 위치 패널 ---------- */
+  #pos{
+    position:fixed;right:18px;bottom:18px;width:268px;
+    background:rgba(20,26,28,.78);border:1px solid var(--line);border-radius:14px;
+    backdrop-filter:blur(10px);overflow:hidden;user-select:none;
+    box-shadow:0 18px 40px rgba(0,0,0,.45);
+  }
+  #pos header{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:10px 13px 8px;border-bottom:1px solid var(--line);
+  }
+  #pos header .t{font-size:11px;letter-spacing:.18em;color:var(--ash)}
+  #pos header .h{font-size:11px;letter-spacing:.1em;color:var(--ribbon)}
+  #map{display:block;width:100%;height:190px;background:rgba(8,12,13,.5)}
+  #grid{padding:11px 13px 13px;display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+  #grid .k{font-size:10px;letter-spacing:.1em;color:var(--ash);margin-bottom:2px}
+  #grid .v{font-size:15px;font-weight:600;line-height:1.1}
+  #grid .v small{font-size:10px;font-weight:400;color:var(--ash);margin-left:2px}
+  #grid .wide{grid-column:1/-1}
+  #grid .wide .v{font-size:12px;font-weight:500;color:#cdd8d5}
+
+  /* ---------- 좌측 하단: 조작 ---------- */
+  #keys{
+    position:fixed;left:18px;bottom:18px;font-size:11px;line-height:1.85;color:var(--ash);
+    background:rgba(20,26,28,.6);border:1px solid var(--line);border-radius:12px;
+    padding:11px 14px;backdrop-filter:blur(6px);user-select:none;
+  }
+  #keys b{
+    display:inline-block;min-width:20px;text-align:center;color:var(--paper);
+    background:rgba(238,242,241,.1);border:1px solid var(--line);border-radius:4px;
+    padding:0 5px;margin-right:5px;font-size:10px;font-weight:600;
+  }
+  #keys .hide{display:none}
+
+  /* ---------- 스태미나 ---------- */
+  #stam{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    width:180px;height:5px;border-radius:4px;background:rgba(20,26,28,.7);
+    border:1px solid var(--line);overflow:hidden;user-select:none;
+  }
+  #stam i{display:block;height:100%;width:100%;background:var(--moss);transition:width .1s linear}
+  #stam.low i{background:var(--ribbon)}
+
+  /* ---------- 안내 토스트 ---------- */
+  #toast{
+    position:fixed;left:50%;top:12%;transform:translate(-50%,-8px);
+    text-align:center;pointer-events:none;opacity:0;transition:opacity .5s,transform .5s;
+  }
+  #toast.on{opacity:1;transform:translate(-50%,0)}
+  #toast .a{font-size:11px;letter-spacing:.3em;color:var(--ribbon)}
+  #toast .b{font-size:26px;font-weight:700;letter-spacing:-.01em;text-shadow:0 3px 18px rgba(0,0,0,.6)}
+  #toast .c{font-size:12px;color:#d5dedb;margin-top:3px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+
+  /* ---------- 시작 화면 ---------- */
+  #intro{
+    position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background:radial-gradient(120% 90% at 50% 100%,#1d3a3f 0%,#0b1214 60%,#070b0c 100%);
+    z-index:20;text-align:center;padding:24px;
+  }
+  #intro .eyebrow{font-size:11px;letter-spacing:.42em;color:var(--ribbon);margin-bottom:14px}
+  #intro h1{font-size:clamp(38px,8vw,74px);font-weight:800;letter-spacing:-.03em;line-height:.95}
+  #intro h1 span{display:block;font-size:.26em;font-weight:500;letter-spacing:.34em;color:var(--ash);margin-top:12px}
+  #intro p{margin-top:22px;font-size:13px;color:#a9b6b4;line-height:1.8;max-width:430px}
+  #intro button{
+    margin-top:30px;padding:14px 34px;border:0;border-radius:999px;cursor:pointer;
+    background:var(--ribbon);color:#1a0d04;font-weight:700;font-size:14px;letter-spacing:.06em;
+    font-family:inherit;transition:transform .15s, box-shadow .15s;
+    box-shadow:0 10px 30px rgba(255,122,41,.3);
+  }
+  #intro button:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(255,122,41,.42)}
+  #intro button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+  #intro .load{margin-top:18px;font-size:11px;letter-spacing:.2em;color:var(--ash)}
+  #intro.gone{opacity:0;pointer-events:none;transition:opacity .8s}
+
+  /* ---------- 정상 배너 ---------- */
+  #summit{
+    position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;
+    background:rgba(7,11,12,.62);backdrop-filter:blur(3px);z-index:15;text-align:center;
+  }
+  #summit.on{display:flex;animation:fade .9s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  #summit .a{font-size:12px;letter-spacing:.4em;color:var(--ribbon)}
+  #summit .b{font-size:clamp(36px,7vw,64px);font-weight:800;letter-spacing:-.02em;margin:8px 0}
+  #summit .c{font-size:14px;color:#c6d2cf}
+  #summit .d{margin-top:20px;font-size:11px;color:var(--ash);letter-spacing:.14em}
+  @media (max-width:560px){
+    #keys{display:none}
+    #pos{width:210px;right:10px;bottom:10px}
+    #map{height:150px}
+    #gauge{left:10px;top:10px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<div id="gauge">
+  <div class="bar"><div class="fill" id="gfill"></div></div>
+  <div class="ticks" id="gticks"></div>
+</div>
+
+<div id="pos">
+  <header><span class="t">현재 위치</span><span class="h mono" id="pHeading">N 0°</span></header>
+  <canvas id="map" width="536" height="380"></canvas>
+  <div id="grid">
+    <div><div class="k">해발고도</div><div class="v mono"><span id="pAlt">0</span><small>m</small></div></div>
+    <div><div class="k">정상까지</div><div class="v mono"><span id="pDist">0</span><small>m</small></div></div>
+    <div><div class="k">X 좌표</div><div class="v mono"><span id="pX">0</span><small>m</small></div></div>
+    <div><div class="k">Z 좌표</div><div class="v mono"><span id="pZ">0</span><small>m</small></div></div>
+    <div><div class="k">경사도</div><div class="v mono"><span id="pSlope">0</span><small>%</small></div></div>
+    <div><div class="k">경과시간</div><div class="v mono" id="pTime">00:00</div></div>
+    <div class="wide"><div class="k">위도 · 경도</div><div class="v mono" id="pGeo">33.36170 N, 126.52920 E</div></div>
+  </div>
+</div>
+
+<div id="keys">
+  <div><b>W</b><b>S</b> 앞뒤 이동 &nbsp; <b>A</b><b>D</b> 좌우 이동</div>
+  <div><b>←</b><b>→</b> 시선 회전 &nbsp; <b>↑</b><b>↓</b> 시선 위아래</div>
+  <div><b>⇧</b> 달리기 &nbsp; <b>space</b> 점프 &nbsp; <b>V</b> 시점 전환</div>
+  <div><b>M</b> 마우스로 둘러보기 &nbsp; <b>H</b> 도움말 숨기기</div>
+</div>
+
+<div id="stam"><i id="stamFill"></i></div>
+
+<div id="toast"><div class="a" id="tA"></div><div class="b" id="tB"></div><div class="c" id="tC"></div></div>
+
+<div id="summit">
+  <div class="a">등정 완료</div>
+  <div class="b">백록담 1,950m</div>
+  <div class="c" id="sTime"></div>
+  <div class="d">계속 걸어서 분화구를 둘러보세요</div>
+</div>
+
+<div id="intro">
+  <div class="eyebrow">H A L L A S A N &nbsp; 1 9 5 0 m</div>
+  <h1>한라산 등반<span id="startAlt">성판악 코스</span></h1>
+  <p>키보드로 직접 걸어서 정상 백록담까지 올라갑니다. 오르막에서는 속도가 느려지고 체력이 줄어듭니다. 우측 하단 지도에서 현재 위치와 고도를 확인하세요.</p>
+  <button id="startBtn" disabled>지형 생성 중…</button>
+  <div class="load" id="loadTxt">화산체 · 오름 · 구상나무 배치</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =========================================================================
+   한라산 등반 시뮬레이터 — Three.js r128
+   좌표계: 1 world unit = 1 m. 원점(0,0) = 백록담 중심.
+   ========================================================================= */
+
+const W = { R: 6200, H: 1950, PLATEAU: 620, RINGS: 176, SEGS: 288 };
+const EYE = 1.7, GRAV = 22, JUMP = 7.5;
+const ORIGIN = { lat: 33.36170, lon: 126.52920 };
+
+/* ---------- 수학 유틸 ---------- */
+const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+function smoothstep(e0,e1,x){ const t=clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); }
+function hash2(x,y){ const n=Math.sin(x*127.1+y*311.7)*43758.5453; return n-Math.floor(n); }
+function vnoise(x,y){
+  const xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi;
+  const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+  const a=hash2(xi,yi), b=hash2(xi+1,yi), c=hash2(xi,yi+1), d=hash2(xi+1,yi+1);
+  return (a*(1-u)+b*u)*(1-v)+(c*(1-u)+d*u)*v;
+}
+function fbm(x,y,oct){
+  let s=0,a=0.5,f=1;
+  for(let i=0;i<oct;i++){ s+=a*(vnoise(x*f,y*f)*2-1); f*=2.03; a*=0.5; }
+  return s;
+}
+/* 시드 난수 */
+let _seed = 20250801;
+function rnd(){ _seed=(_seed*1664525+1013904223)%4294967296; return _seed/4294967296; }
+
+/* ---------- 오름(기생화산) ---------- */
+const OREUM = [];
+(function(){
+  for(let i=0;i<18;i++){
+    const a = rnd()*Math.PI*2;
+    const r = 1700 + rnd()*3300;
+    OREUM.push({ x:Math.cos(a)*r, z:Math.sin(a)*r, h:70+rnd()*130, s:170+rnd()*250 });
+  }
+})();
+
+/* ---------- 지형 높이 함수 ---------- */
+function heightAt(x,z){
+  const r = Math.sqrt(x*x+z*z);
+  const s = smoothstep(W.PLATEAU, W.R, r);
+  let h = W.H * Math.pow(1-s, 1.35);
+  h -= 70 * Math.pow(s, 7);                              // 해안선
+
+  const mask = smoothstep(W.PLATEAU-60, W.PLATEAU+900, r) * (1-s*0.55);
+  h += fbm(x/1900, z/1900, 4) * 235 * mask;              // 계곡·능선
+  h += fbm(x/360,  z/360,  3) * 19  * mask;              // 잔디테일
+
+  for(let i=0;i<OREUM.length;i++){                        // 오름
+    const o=OREUM[i], dx=x-o.x, dz=z-o.z, d2=dx*dx+dz*dz;
+    const g = Math.exp(-d2/(2*o.s*o.s));
+    h += o.h * g * (1 - 0.55*Math.exp(-d2/(2*(o.s*0.3)*(o.s*0.3))));
+  }
+
+  if(r < 620){                                            // 백록담 분화구
+    h += 27 * Math.exp(-(r-330)*(r-330)/(2*95*95));       // 화구륜
+    if(r < 330) h -= 110 * smoothstep(0, 0.62, 1 - r/330);
+  }
+  return h;
+}
+function slopeAt(x,z,d){
+  d = d||14;
+  const hx = heightAt(x+d,z)-heightAt(x-d,z);
+  const hz = heightAt(x,z+d)-heightAt(x,z-d);
+  return Math.sqrt(hx*hx+hz*hz)/(2*d);
+}
+
+/* ---------- 고도별 색 ---------- */
+const C = {
+  farm:[0.29,0.40,0.20], low:[0.14,0.29,0.16], mid:[0.11,0.24,0.16],
+  shrub:[0.40,0.44,0.23], rock:[0.36,0.34,0.32], high:[0.47,0.45,0.43],
+  snow:[0.91,0.94,0.96], scoria:[0.28,0.21,0.19], sand:[0.62,0.58,0.48]
+};
+const mix3=(a,b,t)=>[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+function colorAt(h, slope, x, z){
+  const n = fbm(x/760, z/760, 2)*0.5+0.5;
+  const hh = h + (n-0.5)*110;
+  let c = C.farm;
+  c = mix3(c, C.low,   smoothstep(40,320,hh));
+  c = mix3(c, C.mid,   smoothstep(420,1050,hh));
+  c = mix3(c, C.shrub, smoothstep(1220,1540,hh));
+  c = mix3(c, C.rock,  smoothstep(1580,1810,hh));
+  c = mix3(c, C.high,  smoothstep(1810,1935,hh));
+  c = mix3(c, C.sand,  smoothstep(60,10,h)*0.7);                       // 해안
+  c = mix3(c, C.scoria, smoothstep(0.62,1.15,slope)*0.75);             // 급사면 암반
+  const snow = smoothstep(1815,1930,h)*(1-smoothstep(0.34,0.8,slope))*smoothstep(0.34,0.72,n);
+  c = mix3(c, C.snow, snow*0.85);
+  const v = 0.9+n*0.2;
+  return [c[0]*v, c[1]*v, c[2]*v];
+}
+
+/* ---------- 등산로(성판악 코스 모사) ---------- */
+const ROUTE = [];
+for(let i=0;i<=72;i++){
+  const t=i/72;
+  const r = 3320*(1-t) + 400*t;
+  const a = Math.sin(t*4.6)*0.14 + t*0.22;
+  ROUTE.push(new THREE.Vector3(Math.cos(a)*r, 0, Math.sin(a)*r));
+}
+ROUTE.forEach(p=>{ p.y = heightAt(p.x,p.z); });
+
+/* =========================== 씬 구성 =========================== */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+const FOGC = 0xc3d8e6;
+scene.fog = new THREE.Fog(FOGC, 2600, 13500);
+
+const camera = new THREE.PerspectiveCamera(66, innerWidth/innerHeight, 1, 26000);
+camera.rotation.order = 'YXZ';
+
+/* 하늘 */
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(16000, 32, 18),
+  new THREE.ShaderMaterial({
+    uniforms:{ top:{value:new THREE.Color(0x2c6db3)}, bot:{value:new THREE.Color(FOGC)} },
+    vertexShader:'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader:'uniform vec3 top; uniform vec3 bot; varying vec3 vP; void main(){ float h=normalize(vP).y; float t=pow(clamp(h,0.0,1.0),0.42); gl_FragColor=vec4(mix(bot,top,t),1.0); }',
+    side:THREE.BackSide, depthWrite:false, fog:false
+  })
+);
+scene.add(sky);
+
+/* 조명 */
+scene.add(new THREE.HemisphereLight(0xbcd8f2, 0x4a5540, 0.62));
+scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+const sun = new THREE.DirectionalLight(0xfff2df, 1.05);
+sun.position.set(4200, 5200, 2400);
+scene.add(sun);
+
+/* ---------- 지형(폴라 디스크 : 정상부 고해상도) ---------- */
+function buildTerrain(){
+  const N=W.RINGS, S=W.SEGS;
+  const cnt=(N+1)*(S+1);
+  const pos=new Float32Array(cnt*3), col=new Float32Array(cnt*3);
+  const idx=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N;
+    const r = W.R*(0.22*t + 0.78*t*t);
+    for(let j=0;j<=S;j++){
+      const a=j/S*Math.PI*2;
+      const x=Math.cos(a)*r, z=Math.sin(a)*r;
+      const k=(i*(S+1)+j)*3;
+      pos[k]=x; pos[k+1]=heightAt(x,z); pos[k+2]=z;
+    }
+  }
+  for(let i=0;i<N;i++) for(let j=0;j<S;j++){
+    const a=i*(S+1)+j, b=a+1, c=(i+1)*(S+1)+j, d=c+1;
+    idx.push(a,c,b, b,c,d);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const nrm=g.attributes.normal.array;
+  for(let i=0;i<cnt;i++){
+    const k=i*3;
+    const ny=Math.abs(nrm[k+1]) || 1e-4;
+    const sl=Math.sqrt(Math.max(0,1-ny*ny))/ny;
+    const c=colorAt(pos[k+1], sl, pos[k], pos[k+2]);
+    col[k]=c[0]; col[k+1]=c[1]; col[k+2]=c[2];
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col,3));
+  const m=new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.95, metalness:0.0, side:THREE.DoubleSide, flatShading:false});
+  const mesh=new THREE.Mesh(g,m);
+  mesh.frustumCulled=false;
+  return mesh;
+}
+scene.add(buildTerrain());
+
+/* 바다 */
+const sea = new THREE.Mesh(
+  new THREE.PlaneGeometry(60000,60000),
+  new THREE.MeshStandardMaterial({color:0x1d5580, roughness:0.28, metalness:0.15})
+);
+sea.rotation.x=-Math.PI/2; sea.position.y=-8;
+scene.add(sea);
+
+/* 백록담 호수 */
+const lake = new THREE.Mesh(
+  new THREE.CircleGeometry(112, 48),
+  new THREE.MeshStandardMaterial({color:0x2f7fa8, roughness:0.1, metalness:0.2, transparent:true, opacity:0.88})
+);
+lake.rotation.x=-Math.PI/2; lake.position.y=1847;
+scene.add(lake);
+
+/* ---------- 식생 ---------- */
+function scatter(count, test, place){
+  let n=0, guard=0;
+  while(n<count && guard<count*60){
+    guard++;
+    const a=rnd()*Math.PI*2, r=Math.sqrt(rnd())*W.R*0.98;
+    const x=Math.cos(a)*r, z=Math.sin(a)*r;
+    const h=heightAt(x,z);
+    if(!test(h, slopeAt(x,z,26), r)) continue;
+    place(x,h,z,n); n++;
+  }
+  return n;
+}
+const dummy=new THREE.Object3D();
+
+/* 나무: 저지대 활엽수 + 고지대 구상나무 */
+function plantTrees(N, leafGeo, leafColor, trunkH, test){
+  const trunkG=new THREE.CylinderGeometry(0.26,0.5,trunkH,5); trunkG.translate(0,trunkH/2,0);
+  const trunk=new THREE.InstancedMesh(trunkG,new THREE.MeshStandardMaterial({color:0x4b3a2b,roughness:1}),N);
+  const leaf =new THREE.InstancedMesh(leafGeo,new THREE.MeshStandardMaterial({color:leafColor,roughness:0.92,flatShading:true}),N);
+  let put=0;
+  scatter(N,test,(x,y,z,i)=>{
+    const sc=0.7+rnd()*0.85;
+    dummy.position.set(x,y-0.3,z);
+    dummy.rotation.set(0,rnd()*6.28,0);
+    dummy.scale.set(sc*(0.85+rnd()*0.35), sc, sc*(0.85+rnd()*0.35));
+    dummy.updateMatrix();
+    trunk.setMatrixAt(i,dummy.matrix); leaf.setMatrixAt(i,dummy.matrix);
+    put=i+1;
+  });
+  trunk.count=put; leaf.count=put;
+  trunk.frustumCulled=false; leaf.frustumCulled=false;
+  trunk.instanceMatrix.needsUpdate=true; leaf.instanceMatrix.needsUpdate=true;
+  scene.add(trunk,leaf);
+}
+(function(){
+  const broad=new THREE.IcosahedronGeometry(2.6,0); broad.scale(1,0.85,1); broad.translate(0,5.4,0);
+  plantTrees(2600, broad, 0x2f6030, 4.2, (h,sl)=> h>80 && h<1150 && sl<0.75);
+  const fir=new THREE.ConeGeometry(1.9,9.8,7); fir.translate(0,6.6,0);
+  plantTrees(2000, fir, 0x1b4029, 2.6, (h,sl)=> h>=1050 && h<1640 && sl<0.7);
+})();
+
+/* 구상나무 고사목 */
+(function deadTrees(){
+  const N=420;
+  const g=new THREE.ConeGeometry(0.9,7.5,5); g.translate(0,3.7,0);
+  const m=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:0xcfc7b6,roughness:1,flatShading:true}),N);
+  let put=0;
+  scatter(N,(h,sl)=> h>1420 && h<1780 && sl<0.6, (x,y,z,i)=>{
+    const sc=0.6+rnd()*0.7;
+    dummy.position.set(x,y,z);
+    dummy.rotation.set((rnd()-0.5)*0.12, rnd()*6.28, (rnd()-0.5)*0.12);
+    dummy.scale.setScalar(sc); dummy.updateMatrix();
+    m.setMatrixAt(i,dummy.matrix); put=i+1;
+  });
+  m.count=put; m.frustumCulled=false; m.instanceMatrix.needsUpdate=true;
+  scene.add(m);
+})();
+
+/* 현무암 바위 */
+(function rocks(){
+  const N=1500;
+  const g=new THREE.DodecahedronGeometry(1,0);
+  const m=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:0x6a655f,roughness:0.98,flatShading:true}),N);
+  let put=0;
+  scatter(N,(h)=> h>1250 || (h>20&&h<160), (x,y,z,i)=>{
+    const sc=0.8+rnd()*3.4;
+    dummy.position.set(x,y+sc*0.25,z);
+    dummy.rotation.set(rnd()*6.28,rnd()*6.28,rnd()*6.28);
+    dummy.scale.set(sc*1.3,sc*0.8,sc*1.15); dummy.updateMatrix();
+    m.setMatrixAt(i,dummy.matrix); put=i+1;
+  });
+  m.count=put; m.frustumCulled=false; m.instanceMatrix.needsUpdate=true;
+  scene.add(m);
+})();
+
+/* ---------- 등산로 리본 표지 ---------- */
+(function markers(){
+  const postG=new THREE.CylinderGeometry(0.09,0.09,2.1,6); postG.translate(0,1.05,0);
+  const postM=new THREE.MeshStandardMaterial({color:0x3a332c,roughness:1});
+  const capG=new THREE.BoxGeometry(0.7,0.42,0.09); capG.translate(0,1.95,0);
+  const capM=new THREE.MeshStandardMaterial({color:0xff7a29,roughness:0.7,emissive:0x3a1300});
+  for(let i=0;i<ROUTE.length;i+=3){
+    const p=ROUTE[i];
+    const a=new THREE.Mesh(postG,postM), b=new THREE.Mesh(capG,capM);
+    a.position.set(p.x,p.y,p.z); b.position.set(p.x,p.y,p.z);
+    b.rotation.y=Math.atan2(p.x,p.z);
+    scene.add(a,b);
+  }
+})();
+
+/* ---------- 정상 표지석 ---------- */
+(function summitSign(){
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=256;
+  const g=cv.getContext('2d');
+  g.fillStyle='#39413f'; g.fillRect(0,0,512,256);
+  g.fillStyle='#eef2f1'; g.textAlign='center';
+  g.font='bold 92px "Malgun Gothic",sans-serif'; g.fillText('백록담',256,120);
+  g.font='500 46px "Malgun Gothic",sans-serif'; g.fillStyle='#ff7a29';
+  g.fillText('해발 1950m',256,190);
+  const tex=new THREE.CanvasTexture(cv);
+  const sg=new THREE.BoxGeometry(24,12,2.4);
+  const stone=new THREE.MeshStandardMaterial({color:0x4a524f,roughness:0.9});
+  const face=new THREE.MeshStandardMaterial({map:tex,roughness:0.85});
+  const sign=new THREE.Mesh(sg,[stone,stone,stone,stone,face,stone]);
+  const p=ROUTE[ROUTE.length-1];
+  sign.position.set(p.x,heightAt(p.x,p.z)+6,p.z);
+  sign.rotation.y=Math.atan2(p.x,p.z);
+  scene.add(sign);
+})();
+
+/* ---------- 운해(구름바다) ---------- */
+const clouds=[];
+(function cloudSea(){
+  const cv=document.createElement('canvas'); cv.width=cv.height=256;
+  const g=cv.getContext('2d');
+  const rg=g.createRadialGradient(128,128,10,128,128,126);
+  rg.addColorStop(0,'rgba(255,255,255,.95)');
+  rg.addColorStop(0.45,'rgba(255,255,255,.55)');
+  rg.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=rg; g.fillRect(0,0,256,256);
+  const tex=new THREE.CanvasTexture(cv);
+  const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.72,depthWrite:false,fog:true});
+  for(let i=0;i<46;i++){
+    const a=rnd()*Math.PI*2, r=3800+rnd()*4600;
+    const s=800+rnd()*1700;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(s,s),mat);
+    m.rotation.x=-Math.PI/2; m.rotation.z=rnd()*6.28;
+    m.position.set(Math.cos(a)*r, 700+rnd()*180, Math.sin(a)*r);
+    m.renderOrder=2;
+    clouds.push({m, a, r, sp:(0.006+rnd()*0.01)});
+    scene.add(m);
+  }
+})();
+
+/* ---------- 등산객 모델(3인칭) ---------- */
+const hiker=new THREE.Group();
+(function buildHiker(){
+  const skin=new THREE.MeshStandardMaterial({color:0xd9a479,roughness:0.9});
+  const coat=new THREE.MeshStandardMaterial({color:0xd8452f,roughness:0.85});
+  const pant=new THREE.MeshStandardMaterial({color:0x2c3b4a,roughness:0.95});
+  const pack=new THREE.MeshStandardMaterial({color:0x2f6f4f,roughness:0.9});
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(0.44,0.62,0.26),coat); torso.position.y=1.12;
+  const head =new THREE.Mesh(new THREE.SphereGeometry(0.15,14,10),skin);  head.position.y=1.57;
+  const cap  =new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.08,12),coat); cap.position.y=1.66;
+  const bag  =new THREE.Mesh(new THREE.BoxGeometry(0.36,0.5,0.2),pack);   bag.position.set(0,1.14,0.2);
+  const legL =new THREE.Mesh(new THREE.BoxGeometry(0.16,0.8,0.16),pant);  legL.position.set(-0.11,0.4,0);
+  const legR =legL.clone(); legR.position.x=0.11;
+  const armL =new THREE.Mesh(new THREE.BoxGeometry(0.12,0.55,0.12),coat); armL.position.set(-0.29,1.12,0);
+  const armR =armL.clone(); armR.position.x=0.29;
+  hiker.add(torso,head,cap,bag,legL,legR,armL,armR);
+  hiker.userData={legL,legR,armL,armR};
+  hiker.visible=false;
+  scene.add(hiker);
+})();
+
+/* =========================== 플레이어 =========================== */
+const P = {
+  pos:new THREE.Vector3(ROUTE[0].x, 0, ROUTE[0].z),
+  yaw:0, pitch:-0.06, vy:0, ground:true,
+  stamina:100, camY:0, bob:0, moving:false, third:false
+};
+P.pos.y = heightAt(P.pos.x,P.pos.z);
+P.camY  = P.pos.y;
+P.yaw   = Math.atan2(-ROUTE[0].x, -ROUTE[0].z);   // 정상 방향
+const START_ALT = P.pos.y;
+document.getElementById('startAlt').textContent =
+  '성판악 코스 · 해발 ' + Math.round(START_ALT).toLocaleString() + 'm 출발';
+
+const keys={};
+let mouseLook=false, started=false, t0=0, done=false;
+
+addEventListener('keydown',e=>{
+  if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key)>=0) e.preventDefault();
+  keys[e.code]=true;
+  if(e.code==='KeyV') P.third=!P.third;
+  if(e.code==='KeyH') document.getElementById('keys').classList.toggle('hide');
+  if(e.code==='KeyM'){
+    if(document.pointerLockElement) document.exitPointerLock();
+    else canvas.requestPointerLock();
+  }
+});
+addEventListener('keyup',e=>{ keys[e.code]=false; });
+document.addEventListener('pointerlockchange',()=>{ mouseLook = document.pointerLockElement===canvas; });
+addEventListener('mousemove',e=>{
+  if(!mouseLook) return;
+  P.yaw   -= e.movementX*0.0022;
+  P.pitch  = clamp(P.pitch - e.movementY*0.0022, -1.2, 1.2);
+});
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+
+/* =========================== 지점 안내 =========================== */
+const MARKS=[
+  {alt:900 , a:'해발 900m', b:'속밭 대피소 부근', c:'졸참나무·서어나무 숲을 지납니다'},
+  {alt:1200, a:'해발 1200m', b:'사라오름 갈림길', c:'산정호수가 있는 오름이 오른쪽입니다'},
+  {alt:1500, a:'해발 1500m', b:'진달래밭 대피소', c:'정상까지 남은 거리 약 2.3km'},
+  {alt:1700, a:'해발 1700m', b:'구상나무 군락지', c:'한국 특산종 구상나무와 고사목 지대'},
+  {alt:1850, a:'해발 1850m', b:'정상부 암괴지대', c:'나무 데크를 따라 마지막 오르막'}
+];
+let markIdx=0, toastT=0;
+function toast(a,b,c){
+  document.getElementById('tA').textContent=a;
+  document.getElementById('tB').textContent=b;
+  document.getElementById('tC').textContent=c;
+  document.getElementById('toast').classList.add('on');
+  toastT=4.2;
+}
+
+/* =========================== 고도 눈금 =========================== */
+(function ticks(){
+  const box=document.getElementById('gticks');
+  [[1950,'백록담'],[1500,'진달래밭'],[1000,''],[500,''],[0,'해수면']].forEach(([m,label])=>{
+    const d=document.createElement('div');
+    d.className='tick'; d.style.bottom=(m/1950*100)+'%';
+    d.innerHTML='<b>'+m.toLocaleString()+'</b> '+label;
+    box.appendChild(d);
+  });
+  const me=document.createElement('div');
+  me.className='tick me'; me.id='meTick'; me.innerHTML='<b>▸</b>';
+  box.appendChild(me);
+})();
+
+/* =========================== 미니맵 =========================== */
+const map=document.getElementById('map'), mctx=map.getContext('2d');
+function drawMap(){
+  const w=map.width, h=map.height, cx=w/2, cy=h/2;
+  const sc=(Math.min(w,h)/2-6)/W.R;
+  mctx.clearRect(0,0,w,h);
+  /* 고도 밴드 */
+  const bands=[[W.R,'#16303a'],[4600,'#1c4030'],[3400,'#22522f'],[2300,'#3d5b30'],[1400,'#6a6a3c'],[700,'#7d746a'],[330,'#b9bfc0']];
+  bands.forEach(([r,col])=>{
+    mctx.beginPath(); mctx.arc(cx,cy,r*sc,0,6.2832); mctx.fillStyle=col; mctx.fill();
+  });
+  /* 오름 */
+  mctx.fillStyle='rgba(0,0,0,.28)';
+  OREUM.forEach(o=>{ mctx.beginPath(); mctx.arc(cx+o.x*sc,cy+o.z*sc,o.s*sc*0.6,0,6.2832); mctx.fill(); });
+  /* 등산로 */
+  mctx.beginPath();
+  ROUTE.forEach((p,i)=> i? mctx.lineTo(cx+p.x*sc,cy+p.z*sc) : mctx.moveTo(cx+p.x*sc,cy+p.z*sc));
+  mctx.strokeStyle='rgba(255,122,41,.9)'; mctx.lineWidth=2.4; mctx.setLineDash([6,5]); mctx.stroke();
+  mctx.setLineDash([]);
+  /* 정상 */
+  mctx.beginPath(); mctx.arc(cx,cy,4.5,0,6.2832); mctx.fillStyle='#eef2f1'; mctx.fill();
+  mctx.strokeStyle='#141a1c'; mctx.lineWidth=1.6; mctx.stroke();
+  /* 플레이어 */
+  const px=cx+P.pos.x*sc, py=cy+P.pos.z*sc;
+  const fx=-Math.sin(P.yaw), fz=-Math.cos(P.yaw);
+  mctx.save(); mctx.translate(px,py); mctx.rotate(Math.atan2(fx,-fz));
+  mctx.beginPath(); mctx.moveTo(0,-9); mctx.lineTo(6,7); mctx.lineTo(0,3.5); mctx.lineTo(-6,7); mctx.closePath();
+  mctx.fillStyle='#ff7a29'; mctx.fill();
+  mctx.strokeStyle='rgba(0,0,0,.55)'; mctx.lineWidth=1.4; mctx.stroke();
+  mctx.restore();
+}
+
+/* =========================== HUD 갱신 =========================== */
+const $=id=>document.getElementById(id);
+const DIRS=['북','북동','동','남동','남','남서','서','북서'];
+function updateHUD(){
+  const alt=P.pos.y;
+  const r=Math.sqrt(P.pos.x*P.pos.x+P.pos.z*P.pos.z);
+  $('pAlt').textContent=Math.round(alt).toLocaleString();
+  $('pDist').textContent=Math.round(r).toLocaleString();
+  $('pX').textContent=(P.pos.x>=0?'+':'')+Math.round(P.pos.x).toLocaleString();
+  $('pZ').textContent=(P.pos.z>=0?'+':'')+Math.round(P.pos.z).toLocaleString();
+  $('pSlope').textContent=Math.round(slopeAt(P.pos.x,P.pos.z,10)*100);
+
+  let deg=(-P.yaw*180/Math.PI)%360; if(deg<0)deg+=360;
+  $('pHeading').textContent=DIRS[Math.round(deg/45)%8]+' '+Math.round(deg)+'°';
+
+  const lat=ORIGIN.lat + (-P.pos.z)/111320;
+  const lon=ORIGIN.lon + P.pos.x/(111320*Math.cos(ORIGIN.lat*Math.PI/180));
+  $('pGeo').textContent=lat.toFixed(5)+' N, '+lon.toFixed(5)+' E';
+
+  const el=started?(performance.now()-t0)/1000:0;
+  $('pTime').textContent=String(Math.floor(el/60)).padStart(2,'0')+':'+String(Math.floor(el%60)).padStart(2,'0');
+
+  const pct=clamp(alt/1950*100,0,100);
+  $('gfill').style.height=pct+'%';
+  $('meTick').style.bottom=pct+'%';
+
+  $('stamFill').style.width=P.stamina+'%';
+  $('stam').classList.toggle('low',P.stamina<30);
+  drawMap();
+}
+
+/* =========================== 루프 =========================== */
+const fwd=new THREE.Vector3(), rgt=new THREE.Vector3(), mv=new THREE.Vector3();
+let last=performance.now(), hudT=0;
+
+function tick(){
+  requestAnimationFrame(tick);
+  const now=performance.now();
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+
+  /* 키보드 시점 */
+  const turn=1.9*dt;
+  if(keys['ArrowLeft'])  P.yaw+=turn;
+  if(keys['ArrowRight']) P.yaw-=turn;
+  if(keys['ArrowUp'])    P.pitch=clamp(P.pitch+turn*0.7,-1.2,1.2);
+  if(keys['ArrowDown'])  P.pitch=clamp(P.pitch-turn*0.7,-1.2,1.2);
+
+  /* 이동 입력 */
+  let f=0,s=0;
+  if(keys['KeyW'])f+=1; if(keys['KeyS'])f-=1;
+  if(keys['KeyD'])s+=1; if(keys['KeyA'])s-=1;
+  const run=(keys['ShiftLeft']||keys['ShiftRight']) && P.stamina>1;
+  P.moving = started && (f!==0||s!==0);
+
+  fwd.set(-Math.sin(P.yaw),0,-Math.cos(P.yaw));
+  rgt.set( Math.cos(P.yaw),0,-Math.sin(P.yaw));
+  mv.set(0,0,0).addScaledVector(fwd,f).addScaledVector(rgt,s);
+
+  if(started && mv.lengthSq()>0){
+    mv.normalize();
+    const base=run?13.5:5.4;
+    let step=base*dt;
+    const nx=P.pos.x+mv.x*step, nz=P.pos.z+mv.z*step;
+    const h0=P.pos.y, h1=heightAt(nx,nz);
+    const grade=(h1-h0)/Math.max(step,1e-4);
+    /* 오르막 감속 · 내리막 약간 가속 */
+    const fac = grade>0 ? 1/(1+grade*2.6) : 1+Math.min(0.22,-grade*0.28);
+    step*=fac;
+    if(grade<2.2){                                   // 절벽은 오르지 못함
+      P.pos.x+=mv.x*step; P.pos.z+=mv.z*step;
+      P.bob+=step*(run?2.4:1.9);
+    }
+    const cost=(run?11:3.4)*dt + Math.max(0,grade)*7*dt;
+    P.stamina=clamp(P.stamina-cost,0,100);
+  } else if(started){
+    P.stamina=clamp(P.stamina+7*dt,0,100);
+  }
+
+  /* 경계 */
+  const rr=Math.sqrt(P.pos.x*P.pos.x+P.pos.z*P.pos.z);
+  if(rr>W.R*0.985){ const k=W.R*0.985/rr; P.pos.x*=k; P.pos.z*=k; }
+
+  /* 중력·접지 */
+  const g=heightAt(P.pos.x,P.pos.z);
+  if(started && keys['Space'] && P.ground){ P.vy=JUMP; P.ground=false; }
+  if(P.vy<=0 && P.pos.y-g<3.2){ P.pos.y=g; P.vy=0; P.ground=true; }
+  else { P.vy-=GRAV*dt; P.pos.y+=P.vy*dt; if(P.pos.y<g){P.pos.y=g;P.vy=0;P.ground=true;} else P.ground=false; }
+
+  /* 카메라 */
+  P.camY += (P.pos.y-P.camY)*(1-Math.exp(-16*dt));
+  const bobY = P.moving&&P.ground ? Math.sin(P.bob*2.2)*0.055 : 0;
+  camera.rotation.set(P.pitch,P.yaw,0);
+  if(P.third){
+    const back=6.2, up=2.6;
+    const cx=P.pos.x-fwd.x*back, cz=P.pos.z-fwd.z*back;
+    const cy=Math.max(P.camY+up, heightAt(cx,cz)+1.4);
+    camera.position.set(cx,cy,cz);
+    camera.lookAt(P.pos.x, P.camY+1.3, P.pos.z);
+    hiker.visible=true;
+    hiker.position.set(P.pos.x,P.pos.y,P.pos.z);
+    hiker.rotation.y=P.yaw+Math.PI;
+    const sw=P.moving?Math.sin(P.bob*4.4)*0.5:0;
+    hiker.userData.legL.rotation.x= sw; hiker.userData.legR.rotation.x=-sw;
+    hiker.userData.armL.rotation.x=-sw*0.7; hiker.userData.armR.rotation.x= sw*0.7;
+  } else {
+    hiker.visible=false;
+    camera.position.set(P.pos.x, P.camY+EYE+bobY, P.pos.z);
+  }
+  sky.position.copy(camera.position);
+
+  /* 구름 흐름 */
+  for(let i=0;i<clouds.length;i++){
+    const c=clouds[i]; c.a+=c.sp*dt;
+    c.m.position.x=Math.cos(c.a)*c.r; c.m.position.z=Math.sin(c.a)*c.r;
+  }
+
+  /* 지점 안내 */
+  if(started && markIdx<MARKS.length && P.pos.y>=MARKS[markIdx].alt){
+    const m=MARKS[markIdx++]; toast(m.a,m.b,m.c);
+  }
+  if(toastT>0){ toastT-=dt; if(toastT<=0) document.getElementById('toast').classList.remove('on'); }
+
+  /* 등정 판정 */
+  if(started && !done && rr<340 && P.pos.y>1830){
+    done=true;
+    const el=(performance.now()-t0)/1000;
+    $('sTime').textContent='등정 시간 '+Math.floor(el/60)+'분 '+Math.floor(el%60)+'초 · 총 상승고도 '+Math.round(P.pos.y-START_ALT)+'m';
+    $('summit').classList.add('on');
+    setTimeout(()=>$('summit').classList.remove('on'),6000);
+  }
+
+  hudT-=dt;
+  if(hudT<=0){ updateHUD(); hudT=0.1; }
+
+  renderer.render(scene,camera);
+}
+
+/* =========================== 시작 =========================== */
+updateHUD();
+tick();
+const btn=$('startBtn');
+btn.disabled=false;
+btn.textContent='등반 시작';
+$('loadTxt').textContent='클릭하면 마우스로도 둘러볼 수 있습니다 · M 키로 해제';
+btn.addEventListener('click',()=>{
+  started=true; t0=performance.now();
+  $('intro').classList.add('gone');
+  setTimeout(()=>$('intro').style.display='none',900);
+  canvas.requestPointerLock();
+  toast('해발 '+Math.round(START_ALT)+'m','성판악 탐방로 출발','정상 백록담까지 약 '+(Math.round(Math.hypot(P.pos.x,P.pos.z)/100)/10)+'km');
+});
+canvas.addEventListener('click',()=>{ if(started && !mouseLook) canvas.requestPointerLock(); });
+</script>
+</body>
+</html>
