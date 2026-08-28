@@ -251,17 +251,33 @@ profile/
 
 ---
 
-## Apps Script 웹앱 URL 정리
+## ⚠️ Apps Script 프로젝트 지도 (2026-08-28 정리 — 반드시 먼저 읽을 것)
 
-| 파일 | 변수명 | 용도 |
+프로젝트가 여러 개이고 이름이 비슷해 **엉뚱한 곳을 고치는 사고가 실제로 있었다.** 아래 표가 유일한 기준이다.
+
+| 프로젝트 이름 | 편집 링크 | 담당 | 시트 연결 |
+|---|---|---|---|
+| **강의스케쥴 API** | [1OKUmoVs…](https://script.google.com/d/1OKUmoVsNX-KqFD_JqsxPCL4_dEjK_KJhCleo2Phb7MaLH_a7-nQnlvVf/edit) | schedule.html · resume-download.js · edu.html · 노션 정산 연동 | **바인딩 아님** — `경력사항` 시트를 `SPREADSHEET_ID` 로 직접 연다 |
+| 제목 없는 프로젝트 (앱갤러리) | [1qkNDhNn…](https://script.google.com/d/1qkNDhNnyvbMF0zVJY3rj0roLo6CgARw5ZB679o_sZZzFrZyEK84SAf-H/edit) | all.html (앱목록) | `경력사항` 스프레드시트에 바인딩 |
+
+**규칙 1 — 스케쥴·경력서·교육공고·노션 정산 관련 수정은 `강의스케쥴 API` 프로젝트에서만 한다.**
+파일 구성: `Code.gs`(본체) + `notion.gs`(노션 정산 연동). 저장소 백업본은 각각 `schedule-apps-script.txt`, `schedule-notion-script.txt`.
+
+**규칙 2 — 앱갤러리 프로젝트는 절대 재배포하지 않는다.**
+그 프로젝트의 배포는 옛 버전에 고정돼 있고, 현재 코드에는 스케쥴 로직이 없다(과거 `제목 없음.gs` 삭제됨). 재배포하면 고정이 풀려 API가 죽는다. 코드 열람은 무방.
+
+**규칙 3 — 노션 토큰은 `강의스케쥴 API` 프로젝트의 스크립트 속성 `NOTION_TOKEN` 에만 둔다.**
+공개 페이지인 `schedule.html` 의 JS에 토큰을 넣지 않는다. 스크립트 속성은 프로젝트별로 분리되므로 다른 프로젝트에는 두지 않는다.
+
+### 웹앱 URL 정리
+
+| 스크립트 | 변수명 | 쓰는 파일 |
 |---|---|---|
-| `schedule-apps-script.txt` | `SCHEDULE_API_URL` / `RESUME_API_URL` | schedule.html + resume-download.js **공용** |
+| `schedule-apps-script.txt` (+ `schedule-notion-script.txt`) | `SCHEDULE_API_URL` / `RESUME_API_URL` | schedule.html · resume-download.js · edu.html **공용** |
 | `apps-gallery-script.txt` | `APPS_API_URL` | all.html 전용 |
-| (별도 스크립트) | `APPS_SCRIPT_URL` | edu.html 전용 |
+| (별도) | `FILE_API_URL` | all.html 파일 업로드 |
 
-> ⚠️ schedule.html과 index.html(경력서)은 같은 Apps Script URL을 공유한다.  
-> Apps Script를 재배포하면 두 기능 모두 새 URL로 업데이트해야 한다.  
-> 업데이트 위치: `schedule.html` 상단 `SCHEDULE_API_URL`, `resume-download.js` 상단 `RESUME_API_URL`
+> ⚠️ 세 페이지가 같은 URL을 공유한다. URL이 바뀌면 `schedule.html` · `resume-download.js` · `edu.html` **세 곳을 모두** 고쳐야 한다.
 
 ---
 
@@ -321,11 +337,34 @@ schedule.html 달력에서 **지난 날짜의 강의**에 "경력등록" 버튼�
 | `update` | 스케쥴 수정 |
 | `delete` | 스케쥴 삭제 |
 | `complete` | 경력사항 등록 + 완료 플래그 저장 |
+| `notionAdd` | 노션 정산 원장에 행 생성 + 정산등록 플래그 저장 (`notion.gs`) |
 | `certAdd` | 자격증/연수 추가 (자격증현황 시트) |
 | `certUpdate` | 자격증/연수 수정 (ID 기준) |
 | `certDelete` | 자격증/연수 삭제 (ID 기준) |
 
 > `apps-gallery-script.txt`(별도 배포)는 앱 추가(기본 POST) + `action:'update'`(앱 수정)을 지원하며, `앱목록` 시트의 ID 컬럼(F)을 사용한다.
+
+---
+
+## 노션 정산 원장 연동 (2026-08-28)
+
+### 원칙
+- **금액은 등록 시점에 넣지 않는다.** 노션에 `완료 / 입금대기` 상태로 행만 만들고, 실제 금액은 입금 확인 후 노션에서 직접 입력한다.
+- 근로소득 건은 교통비 때문에 월별 편차가 크고 페이백도 선공제 여부를 미리 알 수 없어, 예상 금액은 대부분 틀린다. `예상금액` 속성은 만들지 않는다.
+- 미수금은 금액이 아니라 **"행이 있는데 입금여부=입금대기"** 로 판단한다.
+
+### 정산 버튼 표시 조건 (셋 다 만족할 때만)
+1. 강의 종료됨 (`isEventPast`)
+2. 날짜 >= `SETTLE_START`(`2026-09-01`) — 그 이전 건은 이미 노션에 정리돼 있어 중복 방지
+3. 업체가 `SALARY_COMPANIES`(대정중·남원중·백록초)가 **아님** — 월급제라 노션에 월 단위 행이 이미 있음
+
+### 중복 방지 2중 장치
+- 시트 `강의스케쥴` L열 `정산등록` = 'Y' 플래그
+- 노션 `일정ID` 속성에 시트 ID 저장 → 이미 있으면 새 행을 만들지 않고 플래그만 맞춘다
+
+### 노션 DB
+`🎤 출강 및 근무 내역(예정 포함)` — `36b1717c-f78e-4efe-ac2e-2e1e404b4d5b`
+연동용 속성: `일정ID`(텍스트) · `소득구분`(사업/기타/근로) · `페이백대상`(현민주/고인숙)
 
 ---
 
@@ -350,6 +389,7 @@ schedule.html 자격·연수 폼 → 자격증현황 시트 → (index 자격 �
 ## ⚠️ 배포(재배포) 주의
 - `schedule-apps-script.txt`는 **schedule.html + resume-download.js 공용**. 자격·연수 액션 추가 등 스크립트 변경 시 **재배포 필요**.
 - `apps-gallery-script.txt`는 **all.html 전용 별개 배포**. 앱 수정(update)·ID 컬럼 추가 등 변경 시 이 스크립트를 **따로 재배포**.
+- 🚫 **앱갤러리 프로젝트는 재배포 금지** (위 '프로젝트 지도' 규칙 2 참조).
 - 재배포는 **"배포 관리 → 기존 배포 편집 → 버전: 새 버전"**으로 하면 **URL이 유지**되어 코드 내 URL을 바꿀 필요가 없다. (새 배포를 만들면 URL이 바뀌어 해당 파일들의 URL을 모두 갱신해야 함)
 
 ---
