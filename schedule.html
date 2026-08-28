@@ -296,6 +296,32 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   width: 100%;
 }
 .ev-done::before { content: '✓'; font-size: 0.6rem; }
+.btn-settle {
+  font-size: 0.64rem;
+  padding: 2px 0;
+  border-radius: 999px;
+  margin-top: 3px;
+  background: rgba(74,124,89,.12);
+  color: #3d6b4d;
+  border: 1px solid rgba(74,124,89,.42);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn-settle::before { content: '\20A9'; font-size: 0.6rem; opacity: .8; }
+.btn-settle:hover { background: rgba(74,124,89,.22); color: #2d5238; border-color: rgba(74,124,89,.7); }
+.ev-settled {
+  font-size: 0.6rem; color: #3d6b4d; opacity: .7;
+  margin-top: 3px; text-align: center; letter-spacing: 0.04em;
+}
 .empty {
   text-align:center; padding:4rem 1rem;
   background:var(--paper); border:1px solid var(--line); border-radius:var(--r);
@@ -736,7 +762,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 </div>
 
 <script>
-const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
+const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
 
 const PRESET_COMPANIES = {
   '대정중학교':       '#1e56c8',  // 파랑
@@ -783,6 +809,14 @@ const HOLIDAYS = {
   '2028-10-09':'한글날','2028-12-25':'성탄절'
 };
 const getHoliday = d => HOLIDAYS[d] || null;
+
+/* ── 정산등록(노션 원장) 설정 ────────────────────────────────
+   · SETTLE_START 이후 날짜의 강의에만 정산 버튼이 뜬다(기존 건 중복 방지)
+   · 월급제 업체는 노션에 월 단위로 이미 기록되므로 제외한다 */
+const SETTLE_START     = '2026-09-01';
+const SALARY_COMPANIES = ['대정중학교', '남원중학교', '백록초등학교'];
+const canSettle = ev => !!ev.date && ev.date >= SETTLE_START
+                        && SALARY_COMPANIES.indexOf(ev.company) === -1;
 
 let data         = [];
 let customColors = JSON.parse(localStorage.getItem(COLOR_STORE) || '{}');
@@ -924,6 +958,19 @@ function makeCell(day,year,month,other,isToday=false) {
           cbtn.title='경력사항 시트에 자동 등록';
           cbtn.onclick=e=>{e.stopPropagation();markComplete(ev.id);}; cell.appendChild(cbtn);
         }
+        // 노션 정산 원장 등록 — 새로 추가된 강의(9월 이후·월급제 제외)만
+        if (canSettle(ev)) {
+          if (ev.settled === 'Y') {
+            const sd=document.createElement('div');
+            sd.className='ev-settled'; sd.textContent='정산됨';
+            cell.appendChild(sd);
+          } else {
+            const sbtn=document.createElement('button');
+            sbtn.className='btn-settle'; sbtn.textContent='정산';
+            sbtn.title='노션 정산 원장에 등록 (금액은 입금 후 직접 입력)';
+            sbtn.onclick=e=>{e.stopPropagation();markSettled(ev.id);}; cell.appendChild(sbtn);
+          }
+        }
       }
     });
     if (evs.length>2){const m=document.createElement('div');m.className='ev-more';m.textContent=`+${evs.length-2}`;cell.appendChild(m);}
@@ -1026,6 +1073,34 @@ async function saveSchedule() {
   } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
 }
 async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); }catch(e){ alert('삭제에 실패했습니다.'); } }
+
+// ── 정산 원장(노션) 등록 ────────────────────────────────────
+//  금액은 보내지 않는다. 노션에 "완료 / 입금대기" 상태로 행만 만들고,
+//  실제 금액은 입금 확인 후 노션에서 직접 입력한다.
+async function markSettled(id) {
+  const s = data.find(x => x.id === id);
+  if (!s) return;
+
+  const msg = '노션 정산 원장에 등록하시겠습니까?\n\n'
+    + '날짜: ' + s.date + '\n'
+    + '업체: ' + s.company + '\n'
+    + '학교: ' + (s.school || '-') + '\n'
+    + '시수: ' + (s.hours || '-') + '\n\n'
+    + '※ 금액은 입금 확인 후 노션에서 직접 입력하세요.';
+  if (!confirm(msg)) return;
+
+  try {
+    const r = await apiPost({ action:'notionAdd', id });
+    const i = data.findIndex(x => x.id === id);
+    if (i > -1) data[i].settled = 'Y';
+    render();
+    alert(r && r.skipped
+      ? '이미 노션에 등록되어 있어 중복으로 만들지 않았습니다.'
+      : '노션 정산 원장에 등록했습니다.');
+  } catch (e) {
+    alert('노션 등록에 실패했습니다.\n' + (e.message || e));
+  }
+}
 
 // ── 이벤트 종료 시간 초과 여부 판단 ─────────────────────────
 // time 필드가 "HH:MM-HH:MM" 형식이면 종료 시각 기준,

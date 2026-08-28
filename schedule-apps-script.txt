@@ -32,6 +32,11 @@ var BASIC_INFO = {
 };
 
 // ── 시트 이름 ─────────────────────────────────────────────────
+// ── 데이터가 들어있는 스프레드시트 (경력사항) ────────────────
+//  이 스크립트는 해당 시트에 바인딩돼 있지 않으므로 ID로 직접 연다.
+var SPREADSHEET_ID = '1yFbcXWh7wjRzLhvY818ISo9PJpK_Lyg2zC0z0efBbIw';
+function getSS_() { return SpreadsheetApp.openById(SPREADSHEET_ID); }
+
 var SHEET_EDU         = "학력사항";
 var SHEET_CAREER      = "경력사항";
 var SHEET_CERT        = "자격증현황";
@@ -56,7 +61,7 @@ function doGet(e) {
     }
 
     // 기존 경력서 요청 (변경 없음)
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = getSS_();
     var result = {
       basicInfo:    BASIC_INFO,
       education:    readEducation(ss),
@@ -79,11 +84,16 @@ function doGet(e) {
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    var ss   = SpreadsheetApp.getActiveSpreadsheet();
+    var ss   = getSS_();
 
     // 강의 스케쥴 처리 (action 키가 있는 경우)
     if (data.action === 'add' || data.action === 'update' || data.action === 'delete' || data.action === 'complete') {
       return handleSchedule_(ss, data);
+    }
+
+    // 노션 정산 원장 등록 (notion.gs)
+    if (data.action === 'notionAdd') {
+      return handleNotionAdd_(ss, data);
     }
 
     // 자격증 / 연수 처리
@@ -120,7 +130,7 @@ function doPost(e) {
 //  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고 | 경력등록
 // ============================================================
 function getScheduleData_() {
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var ss    = getSS_();
   var sheet = ss.getSheetByName(SHEET_SCHEDULE);
 
   if (!sheet) {
@@ -153,7 +163,8 @@ function getScheduleData_() {
       hours:     String(r[7]  || '').trim(),
       topic:     String(r[8]  || '').trim(),
       note:      String(r[9]  || '').trim(),
-      completed: String(r[10] || '').trim()  // 경력등록 완료 여부 ('Y' or '')
+      completed: String(r[10] || '').trim(), // 경력등록 완료 여부 ('Y' or '')
+      settled:   String(r[11] || '').trim()  // 정산등록(노션) 완료 여부
     });
   }
   return jsonOutput(result);
@@ -459,7 +470,7 @@ function sendKakaoMessage_(text) {
 }
 
 function buildKakaoSummary_() {
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var ss    = getSS_();
   var sheet = ss.getSheetByName('공고목록');
   var today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy.MM.dd');
   if (!sheet) return '📋 교육 모니터링 [' + today + ']\n공고 시트를 찾을 수 없습니다.';
@@ -517,7 +528,7 @@ function setupDailyTrigger() {
 //  GET ?sheet=자동검색결과 → { updatedAt, searchedAt, keywords, items[] }
 // ============================================================
 function getAutoSearchData_() {
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var ss    = getSS_();
   var sheet = ss.getSheetByName(SHEET_AUTO_SEARCH);
 
   // 시트가 없으면 빈 결과 반환

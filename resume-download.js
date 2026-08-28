@@ -2,7 +2,7 @@
    resume-download.js — 강지애 프로필 경력서 PDF
    ============================================================ */
 
-const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec';
+const RESUME_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
 
 /* ── 통합 계약 설정 ────────────────────────────────────────
    여러 일정이 등록돼도 경력서에서는 "시작일 ~ 종료일" 한 줄로 통합.
