@@ -10,13 +10,23 @@
 <meta property="og:title" content="강의 스케쥴 관리 · 강지애">
 <meta property="og:image" content="https://loveria3.github.io/profile/assets/og-image.png">
 <meta property="og:url" content="https://loveria3.github.io/profile/schedule.html">
+
+<!-- ── 홈 화면 앱(아이폰/안드로이드) ────────────────────────────
+     아이폰: 공유 → 홈 화면에 추가 → 전체화면 앱으로 실행 -->
+<link rel="apple-touch-icon" sizes="180x180" href="assets/schedule-icon-180.png">
+<link rel="manifest" href="schedule.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="강의 스케쥴">
+<meta name="theme-color" content="#2a3b2e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script>
 /* 이미 인증된 세션이면 PIN 화면 플래시 방지 */
-if (sessionStorage.getItem('kja_sch_v1') === '1') {
+if (localStorage.getItem('kja_sch_v1') === '1') {
   document.documentElement.classList.add('pin-authed');
 }
 </script>
@@ -450,6 +460,53 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 }
 .do-shake { animation:shake .38s ease; }
 
+/* ── 모바일 달력: 셀 안 색점 요약 ── */
+.m-dots { display:none; justify-content:center; gap:3px; flex-wrap:wrap; margin-top:1px; }
+.m-dot  { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.m-dot.done { opacity:.32; }
+
+/* ── 데이 시트 (모바일에서 날짜 탭 시) ── */
+.day-sheet {
+  position:fixed; inset:0; z-index:400; display:none;
+  background:rgba(27,26,24,.35); opacity:0; transition:opacity .2s;
+}
+.day-sheet.open { display:block; opacity:1; }
+.day-sheet-panel {
+  position:absolute; left:0; right:0; bottom:0;
+  background:var(--paper); border-radius:16px 16px 0 0;
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom));
+  max-height:80vh; overflow-y:auto;
+  transform:translateY(100%); transition:transform .24s cubic-bezier(.2,.8,.3,1);
+  box-shadow:0 -6px 26px rgba(0,0,0,.14);
+}
+.day-sheet.open .day-sheet-panel { transform:translateY(0); }
+.day-sheet-bar { width:38px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 12px; }
+.day-sheet-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.day-sheet-date { font-family:'Noto Serif KR',serif; font-size:1.05rem; font-weight:600; color:var(--ink); }
+.day-sheet-hol { font-size:.72rem; font-weight:700; color:#c04a3a; margin-left:7px; }
+.day-sheet-close {
+  background:none; border:none; font-size:.78rem; color:var(--muted);
+  cursor:pointer; padding:6px 8px; font-family:inherit; line-height:1;
+}
+.ds-item { border:1px solid var(--line-soft); border-radius:var(--r); padding:12px 14px; margin-bottom:10px; background:var(--bg); }
+.ds-co { font-size:.8rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.ds-meta { font-size:.74rem; color:var(--ink-soft); line-height:1.65; }
+.ds-actions { display:flex; gap:6px; margin-top:11px; flex-wrap:wrap; }
+.ds-btn {
+  flex:1; min-width:78px; min-height:40px; border-radius:999px;
+  font-size:.73rem; font-weight:700; font-family:inherit; cursor:pointer;
+  border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);
+}
+.ds-btn.gold  { background:rgba(201,163,91,.14); border-color:rgba(201,163,91,.5); color:#9a7830; }
+.ds-btn.green { background:rgba(74,124,89,.13);  border-color:rgba(74,124,89,.45); color:#3d6b4d; }
+.ds-done { flex:1; min-width:78px; text-align:center; font-size:.7rem; color:var(--muted); align-self:center; padding:11px 0; }
+.ds-empty { font-size:.8rem; color:var(--muted); text-align:center; padding:24px 0; }
+.day-sheet-add {
+  width:100%; min-height:46px; border-radius:999px; border:none;
+  background:var(--accent); color:var(--paper);
+  font-family:inherit; font-size:.82rem; font-weight:700; cursor:pointer; margin-top:2px;
+}
+
 @media(max-width:980px){
   .foot-grid { grid-template-columns:1fr 1fr; }
 }
@@ -458,7 +515,21 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   main { padding-left:20px; padding-right:20px; }
   .nav { display:none; }
   .nav-toggle { display:flex; }
-  .cal-cell { min-height:66px; padding:4px 3px; }
+  /* 달력이 가로 스크롤 없이 7일 모두 들어오게 */
+  .calendar { min-width:0; }
+  .cal-cell { min-height:58px; padding:5px 2px; cursor:pointer; }
+  .dnum { width:22px; height:22px; font-size:.72rem; margin:0 auto 2px; }
+  .wday { font-size:.62rem; padding:8px 2px; letter-spacing:.04em; }
+  .hol-name { display:none; }
+  .cal-cell.is-holiday { background:rgba(192,74,58,.05); }
+  /* 셀 안 뱃지·버튼은 감추고 색점으로 요약 → 날짜를 탭해 상세를 연다 */
+  .ev-badge, .ev-more, .btn-complete, .ev-done, .btn-settle, .ev-settled { display:none !important; }
+  .m-dots { display:flex; }
+  .stats-row { flex-wrap:nowrap; gap:7px; }
+  .stat-card { flex:1; min-width:0; padding:11px 10px; }
+  .stat-label { font-size:.55rem; letter-spacing:.03em; }
+  .stat-val { font-size:1.25rem; }
+  .stat-sub { font-size:.62rem; }
   .form-grid { grid-template-columns:1fr; }
   .month-title { font-size:1.15rem; min-width:130px; }
   .foot-grid { display:flex; flex-direction:column; gap:32px; padding-left:20px; padding-right:20px; }
@@ -917,6 +988,7 @@ function render() {
   const rem=(fd+dim)%7===0?0:7-((fd+dim)%7);
   for (let d=1;d<=rem;d++) grid.appendChild(makeCell(d,cy,cm+1,true));
   renderList(); renderStats(); renderLegend(); updateDatalist();
+  if (daySheetDate) renderDaySheet();
 }
 
 function makeCell(day,year,month,other,isToday=false) {
@@ -936,7 +1008,7 @@ function makeCell(day,year,month,other,isToday=false) {
   }
   if (!other) {
     // 셀(빈 영역) 클릭 시 해당 날짜로 강의 추가 — 이미 강의가 있어도 계속 추가 가능
-    cell.onclick=()=>openAddModal(dStr);
+    cell.onclick=()=>{ isMobileView() ? openDaySheet(dStr) : openAddModal(dStr); };
     cell.title='클릭하여 이 날짜에 강의 추가';
     const evs=data.filter(s=>s.date===dStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     evs.slice(0,2).forEach(ev=>{
@@ -974,6 +1046,16 @@ function makeCell(day,year,month,other,isToday=false) {
       }
     });
     if (evs.length>2){const m=document.createElement('div');m.className='ev-more';m.textContent=`+${evs.length-2}`;cell.appendChild(m);}
+    // 모바일용 색점 요약 (데스크톱에서는 CSS로 숨김)
+    if (evs.length) {
+      const dots=document.createElement('div'); dots.className='m-dots';
+      evs.slice(0,5).forEach(ev=>{
+        const c=getCompanyColor(ev.company), d=document.createElement('span');
+        d.className='m-dot'+(ev.completed==='Y'?' done':'');
+        d.style.background=c.dot; dots.appendChild(d);
+      });
+      cell.appendChild(dots);
+    }
   }
   return cell;
 }
@@ -1073,6 +1155,79 @@ async function saveSchedule() {
   } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
 }
 async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); }catch(e){ alert('삭제에 실패했습니다.'); } }
+
+// ── 모바일 데이 시트 ────────────────────────────────────────
+//  좁은 화면에서는 달력 칸에 색점만 찍고, 날짜를 탭하면
+//  그날 강의 목록이 아래에서 올라온다. 수정·경력등록·정산을 여기서 한다.
+const isMobileView = () => window.matchMedia('(max-width:640px)').matches;
+let daySheetDate = null;
+
+function openDaySheet(dStr) {
+  daySheetDate = dStr;
+  renderDaySheet();
+  document.getElementById('daySheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDaySheet() {
+  document.getElementById('daySheet').classList.remove('open');
+  document.body.style.overflow = '';
+  daySheetDate = null;
+}
+function daySheetBackdrop(e) {
+  if (e.target === document.getElementById('daySheet')) closeDaySheet();
+}
+
+function renderDaySheet() {
+  if (!daySheetDate) return;
+  const d   = new Date(daySheetDate + 'T00:00:00');
+  const wd  = ['일','월','화','수','목','금','토'][d.getDay()];
+  const hol = getHoliday(daySheetDate);
+  document.getElementById('daySheetDate').innerHTML =
+    `${d.getMonth()+1}월 ${d.getDate()}일 (${wd})`
+    + (hol ? `<span class="day-sheet-hol">${escC(hol)}</span>` : '');
+
+  const evs = data.filter(s => s.date === daySheetDate)
+                  .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const body = document.getElementById('daySheetBody');
+
+  if (!evs.length) {
+    body.innerHTML = '<div class="ds-empty">이 날은 등록된 일정이 없습니다.</div>';
+  } else {
+    body.innerHTML = evs.map(ev => {
+      const c    = getCompanyColor(ev.company);
+      const past = isEventPast(ev, d);
+      let acts = `<button class="ds-btn" onclick="openEditModal('${ev.id}')">수정</button>`;
+      if (past) {
+        acts += ev.completed === 'Y'
+          ? '<div class="ds-done">\u2713 경력 등록됨</div>'
+          : `<button class="ds-btn gold" onclick="dsComplete('${ev.id}')">경력 등록</button>`;
+        if (canSettle(ev)) {
+          acts += ev.settled === 'Y'
+            ? '<div class="ds-done">\u2713 정산 등록됨</div>'
+            : `<button class="ds-btn green" onclick="dsSettle('${ev.id}')">정산 등록</button>`;
+        }
+      }
+      const meta = [ev.school, ev.time, ev.hours ? ev.hours + '시간' : '', ev.topic]
+                     .filter(Boolean).join(' · ');
+      return `<div class="ds-item">
+        <div class="ds-co" style="color:${c.color}">
+          <span class="ev-dot" style="background:${c.dot}"></span>${escC(ev.company)}
+          <span style="color:var(--muted);font-weight:500">· ${escC(ev.type)}</span>
+        </div>
+        <div class="ds-meta">${escC(meta)}</div>
+        ${ev.note ? `<div class="ds-meta" style="color:var(--muted)">${escC(ev.note)}</div>` : ''}
+        <div class="ds-actions">${acts}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('daySheetAdd').onclick = () => {
+    const dd = daySheetDate; closeDaySheet(); openAddModal(dd);
+  };
+}
+
+async function dsComplete(id) { await markComplete(id); renderDaySheet(); }
+async function dsSettle(id)   { await markSettled(id);  renderDaySheet(); }
 
 // ── 정산 원장(노션) 등록 ────────────────────────────────────
 //  금액은 보내지 않는다. 노션에 "완료 / 입금대기" 상태로 행만 만들고,
@@ -1335,7 +1490,7 @@ setupCompanyAc();
   if (!overlay) return;
 
   // 이미 인증된 세션이면 즉시 숨김
-  if (sessionStorage.getItem('kja_sch_v1') === '1') {
+  if (localStorage.getItem('kja_sch_v1') === '1') {
     overlay.style.display = 'none'; return;
   }
 
@@ -1431,7 +1586,7 @@ setupCompanyAc();
 
     if (ok) {
       // 인증 성공 → 세션에 저장 후 오버레이 페이드아웃
-      sessionStorage.setItem('kja_sch_v1', '1');
+      localStorage.setItem('kja_sch_v1', '1');
       setRL({n:0, until:0});
       overlay.style.transition = 'opacity .35s';
       overlay.style.opacity = '0';
@@ -1479,6 +1634,19 @@ if (navToggle && navMobile) {
   });
 }
 </script>
+
+<!-- ── 모바일 데이 시트 ── -->
+<div class="day-sheet" id="daySheet" onclick="daySheetBackdrop(event)">
+  <div class="day-sheet-panel" role="dialog" aria-label="선택한 날짜의 일정">
+    <div class="day-sheet-bar"></div>
+    <div class="day-sheet-hd">
+      <div class="day-sheet-date" id="daySheetDate"></div>
+      <button class="day-sheet-close" onclick="closeDaySheet()" aria-label="닫기">✕ 닫기</button>
+    </div>
+    <div id="daySheetBody"></div>
+    <button class="day-sheet-add" id="daySheetAdd">+ 이 날짜에 강의 추가</button>
+  </div>
+</div>
 </body>
 </html>
 

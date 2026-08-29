@@ -1,0 +1,15 @@
+{
+  "name": "강의 스케쥴 관리",
+  "short_name": "강의 스케쥴",
+  "description": "강지애 강의 스케쥴 관리",
+  "start_url": "schedule.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4ede2",
+  "theme_color": "#2a3b2e",
+  "icons": [
+    { "src": "assets/schedule-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/schedule-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
