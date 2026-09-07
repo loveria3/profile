@@ -96,6 +96,11 @@ function doPost(e) {
       return handleNotionAdd_(ss, data);
     }
 
+    // 구글 캘린더 동기화 (calendar.gs)
+    if (data.action === 'syncCalendar') {
+      return handleCalendarSync_(data);
+    }
+
     // 자격증 / 연수 처리
     if (data.action === 'certAdd' || data.action === 'certUpdate' || data.action === 'certDelete') {
       return handleCert_(ss, data);

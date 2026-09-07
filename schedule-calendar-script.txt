@@ -1,0 +1,360 @@
+// ============================================================
+//  강의스케쥴 → 구글 캘린더 자동 동기화   (calendar.gs)
+//  ------------------------------------------------------------
+//  · 강의스케쥴 시트를 읽어 "강의 스케쥴" 전용 구글 캘린더에
+//    일정을 만들고 · 고치고 · 지운다. (한 방향: 시트 → 캘린더)
+//  · 아이폰 기본 캘린더 앱에 구글 계정을 추가하면 그대로 보인다.
+//  · 알림: 전날 저녁 6시 팝업 알림 1개.
+//
+//  [ 설치 방법 ]
+//  1. Apps Script 편집기 → 왼쪽 "파일" + 버튼 → 스크립트 →
+//     이름을 calendar 로 하고, 이 파일 내용 전체를 붙여넣기
+//  2. Code.gs 의 doPost 안에 아래 3줄을 추가 (notionAdd 블록 아래)
+//        if (data.action === 'syncCalendar') {
+//          return handleCalendarSync_(data);
+//        }
+//  3. 함수 목록에서 캘린더_초기설정 을 선택하고 ▶ 실행 → 권한 승인
+//  4. 배포 → 배포 관리 → 기존 배포 ✏️ → 버전 "새 버전" → 배포
+// ============================================================
+
+// ── 설정 ─────────────────────────────────────────────────────
+var CAL_NAME            = '강의 스케쥴';   // 전용 캘린더 이름
+var CAL_PROP_KEY        = 'CALENDAR_ID';   // 스크립트 속성 키
+var CAL_TAG             = 'kjaScheduleId'; // 이벤트에 붙이는 매칭 태그
+var CAL_EVENTID_COL     = 13;              // 강의스케쥴 시트 M열 = 캘린더ID
+var CAL_PAST_DAYS       = 120;             // 과거 며칠까지 동기화
+var CAL_FUTURE_DAYS     = 540;             // 미래 며칠까지 동기화
+var CAL_REMIND_HOUR     = 18;              // 전날 알림 시각 (18 = 저녁 6시)
+var CAL_DEFAULT_MINUTES = 60;              // 종료시각 없을 때 기본 길이(분)
+var CAL_TZ              = 'Asia/Seoul';
+
+// ============================================================
+//  ① 최초 1회 실행 — 캘린더 만들고 · 전체 동기화 · 트리거 등록
+// ============================================================
+function 캘린더_초기설정() {
+  var cal = getScheduleCalendar_();
+  var res = syncCalendarAll_();
+  setupCalendarTrigger_();
+  Logger.log('✅ 캘린더 준비 완료');
+  Logger.log('   캘린더 이름 : ' + cal.getName());
+  Logger.log('   캘린더 ID   : ' + cal.getId());
+  Logger.log('   동기화 결과 : 새로 ' + res.created + '건 / 갱신 ' + res.updated
+             + '건 / 삭제 ' + res.removed + '건');
+  Logger.log('   → 폰에서 구글 계정만 추가하면 "' + CAL_NAME + '" 캘린더가 보입니다.');
+  return res;
+}
+
+// ============================================================
+//  ② 전용 캘린더 가져오기 (없으면 생성)
+// ============================================================
+function getScheduleCalendar_() {
+  var props = PropertiesService.getScriptProperties();
+  var saved = props.getProperty(CAL_PROP_KEY);
+  if (saved) {
+    var c = null;
+    try { c = CalendarApp.getCalendarById(saved); } catch (e) { c = null; }
+    if (c) return c;
+  }
+
+  var found = CalendarApp.getCalendarsByName(CAL_NAME);
+  var cal;
+  if (found && found.length > 0) {
+    cal = found[0];
+  } else {
+    cal = CalendarApp.createCalendar(CAL_NAME, {
+      summary:  '강지애 강의·일정 (스케쥴 페이지에서 자동 동기화)',
+      color:    CalendarApp.Color.GREEN,
+      timeZone: CAL_TZ
+    });
+  }
+  props.setProperty(CAL_PROP_KEY, cal.getId());
+  return cal;
+}
+
+// ============================================================
+//  ③ 웹앱 요청 처리
+//     { action:'syncCalendar' }                        → 전체 동기화
+//     { action:'syncCalendar', id:'xxx' }              → 한 건만 동기화
+//     { action:'syncCalendar', deleteId:'xxx', date:'2026-09-10' } → 한 건 삭제
+// ============================================================
+function handleCalendarSync_(data) {
+  try {
+    if (data.deleteId) {
+      var n = deleteCalendarByScheduleId_(data.deleteId, data.date);
+      return jsonOutput({ success: true, removed: n });
+    }
+    if (data.id) {
+      var one = syncCalendarOne_(data.id);
+      return jsonOutput({ success: true, result: one });
+    }
+    var res = syncCalendarAll_();
+    return jsonOutput({
+      success: true,
+      created: res.created,
+      updated: res.updated,
+      removed: res.removed
+    });
+  } catch (err) {
+    return errorOutput('캘린더 동기화 실패: ' + err.toString());
+  }
+}
+
+// ============================================================
+//  ④ 전체 동기화
+// ============================================================
+function syncCalendarAll_() {
+  var ss    = getSS_();
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return { created: 0, updated: 0, removed: 0 };
+
+  ensureCalHeader_(sheet);
+  var cal  = getScheduleCalendar_();
+  var rows = sheet.getDataRange().getValues();
+
+  var now  = new Date();
+  var from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - CAL_PAST_DAYS);
+  var to   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + CAL_FUTURE_DAYS);
+
+  var keep = {}, created = 0, updated = 0, removed = 0;
+
+  for (var i = 1; i < rows.length; i++) {
+    var row = calRowToObj_(rows[i]);
+    if (!row.id || !row.date) continue;
+    var d = calParseDate_(row.date);
+    if (!d || d < from || d > to) continue;
+
+    var r = syncOneRow_(cal, sheet, i + 1, row);
+    if (r === 'created') created++;
+    else if (r === 'updated') updated++;
+    keep[row.id] = true;
+  }
+
+  // 시트에서 지워진 일정 → 캘린더에서도 제거 (태그가 붙은 것만)
+  var evs = cal.getEvents(from, to);
+  for (var j = 0; j < evs.length; j++) {
+    var tag = evs[j].getTag(CAL_TAG);
+    if (tag && !keep[tag]) { evs[j].deleteEvent(); removed++; }
+  }
+
+  return { created: created, updated: updated, removed: removed };
+}
+
+// ============================================================
+//  ⑤ 한 건만 동기화
+// ============================================================
+function syncCalendarOne_(id) {
+  var ss    = getSS_();
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return 'no-sheet';
+
+  ensureCalHeader_(sheet);
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim() === String(id).trim()) {
+      return syncOneRow_(getScheduleCalendar_(), sheet, i + 1, calRowToObj_(rows[i]));
+    }
+  }
+  return 'not-found';
+}
+
+// ============================================================
+//  ⑥ 시트 한 행 → 캘린더 이벤트 (생성 또는 갱신)
+// ============================================================
+function syncOneRow_(cal, sheet, rowIdx, row) {
+  var spec  = buildEventSpec_(row);
+  var cell  = sheet.getRange(rowIdx, CAL_EVENTID_COL);
+  var evId  = String(cell.getValue() || '').trim();
+  var ev    = null;
+
+  if (evId) {
+    try { ev = cal.getEventById(evId); } catch (e) { ev = null; }
+  }
+
+  // 날짜가 없거나 잘못된 행 → 이벤트가 있으면 지운다
+  if (!spec) {
+    if (ev) { ev.deleteEvent(); cell.setValue(''); }
+    return 'skipped';
+  }
+
+  var mode;
+  if (ev) {
+    ev.setTitle(spec.title);
+    if (spec.allDay) ev.setAllDayDate(spec.start);
+    else             ev.setTime(spec.start, spec.end);
+    ev.setDescription(spec.description);
+    ev.setLocation(spec.location);
+    mode = 'updated';
+  } else {
+    var opts = { description: spec.description, location: spec.location };
+    ev = spec.allDay
+       ? cal.createAllDayEvent(spec.title, spec.start, opts)
+       : cal.createEvent(spec.title, spec.start, spec.end, opts);
+    cell.setValue(ev.getId());
+    mode = 'created';
+  }
+
+  ev.setTag(CAL_TAG, row.id);
+
+  // 알림: 전날 저녁 6시 (이벤트마다 분 단위로 환산)
+  try {
+    ev.removeAllReminders();
+    ev.addPopupReminder(calReminderMinutes_(spec.start));
+  } catch (e) {}
+
+  return mode;
+}
+
+// ============================================================
+//  ⑦ 일정 삭제 (스케쥴 페이지에서 삭제했을 때)
+// ============================================================
+function deleteCalendarByScheduleId_(id, dateStr) {
+  var cal = getScheduleCalendar_();
+  var d   = calParseDate_(dateStr);
+  var from, to;
+
+  if (d) {
+    from = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    to   = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 2);
+  } else {
+    var now = new Date();
+    from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - CAL_PAST_DAYS);
+    to   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + CAL_FUTURE_DAYS);
+  }
+
+  var evs = cal.getEvents(from, to), n = 0;
+  for (var i = 0; i < evs.length; i++) {
+    if (evs[i].getTag(CAL_TAG) === String(id).trim()) { evs[i].deleteEvent(); n++; }
+  }
+  return n;
+}
+
+// ============================================================
+//  ⑧ 이벤트 내용 만들기
+// ============================================================
+function buildEventSpec_(row) {
+  var d = calParseDate_(row.date);
+  if (!d) return null;
+
+  var title = row.school || row.company || row.type || '일정';
+  if (row.topic) title += ' · ' + row.topic;
+
+  var lines = [];
+  if (row.type)    lines.push('구분: '     + row.type);
+  if (row.company) lines.push('업체: '     + row.company);
+  if (row.school)  lines.push('출강처: '   + row.school);
+  if (row.mode)    lines.push('수강방식: ' + row.mode);
+  if (row.time)    lines.push('시간: '     + row.time);
+  if (row.hours)   lines.push('시수: '     + row.hours + '시간');
+  if (row.topic)   lines.push('주제: '     + row.topic);
+  if (row.note)    lines.push('비고: '     + row.note);
+  lines.push('');
+  lines.push('※ 스케쥴 페이지에서 자동 등록된 일정입니다. 수정은 스케쥴 페이지에서 하세요.');
+  lines.push('일정ID: ' + row.id);
+
+  var t = calParseTimeRange_(row.time);
+  if (!t) {
+    return {
+      allDay: true,
+      start: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+      end: null,
+      title: title,
+      description: lines.join('\n'),
+      location: row.school || row.company || ''
+    };
+  }
+
+  var start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), t.sh, t.sm, 0);
+  var end;
+  if (t.eh === null) {
+    var mins = CAL_DEFAULT_MINUTES;
+    var h = parseFloat(String(row.hours).replace(/[^0-9.]/g, ''));
+    if (!isNaN(h) && h > 0) mins = Math.round(h * 60);
+    end = new Date(start.getTime() + mins * 60000);
+  } else {
+    end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), t.eh, t.em, 0);
+    if (end <= start) end = new Date(start.getTime() + CAL_DEFAULT_MINUTES * 60000);
+  }
+
+  return {
+    allDay: false,
+    start: start,
+    end: end,
+    title: title,
+    description: lines.join('\n'),
+    location: row.school || row.company || ''
+  };
+}
+
+// ── 전날 저녁 6시까지 남은 분 수 ──────────────────────────────
+function calReminderMinutes_(start) {
+  var prev = new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1,
+                      CAL_REMIND_HOUR, 0, 0);
+  var mins = Math.round((start.getTime() - prev.getTime()) / 60000);
+  if (mins < 1)     mins = 1;
+  if (mins > 40320) mins = 40320; // 구글 캘린더 최대 4주
+  return mins;
+}
+
+// ── 시트 한 행 → 객체 ────────────────────────────────────────
+//  A ID | B 날짜 | C 구분 | D 업체명 | E 수강방식 | F 출강학교단체
+//  G 시간 | H 시수 | I 수업주제 | J 비고 | K 경력등록 | L 정산등록 | M 캘린더ID
+function calRowToObj_(r) {
+  return {
+    id:      String(r[0] || '').trim(),
+    date:    r[1],
+    type:    String(r[2] || '').trim(),
+    company: String(r[3] || '').trim(),
+    mode:    String(r[4] || '').trim(),
+    school:  String(r[5] || '').trim(),
+    time:    String(r[6] || '').trim(),
+    hours:   String(r[7] || '').trim(),
+    topic:   String(r[8] || '').trim(),
+    note:    String(r[9] || '').trim()
+  };
+}
+
+// ── 날짜 파싱 (Date 객체 또는 'yyyy-MM-dd' 문자열) ────────────
+function calParseDate_(v) {
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return null;
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  }
+  var m = String(v || '').trim().match(/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+}
+
+// ── 시간 파싱: "10:00-12:00" / "10:00~12:00" / "10:00" ────────
+function calParseTimeRange_(t) {
+  var s = String(t || '').trim();
+  if (!s) return null;
+  var m = s.match(/(\d{1,2}):(\d{2})\s*[~\-–—]\s*(\d{1,2}):(\d{2})/);
+  if (m) return { sh: +m[1], sm: +m[2], eh: +m[3], em: +m[4] };
+  var one = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (one) return { sh: +one[1], sm: +one[2], eh: null, em: null };
+  return null;
+}
+
+// ── M열 헤더 보장 ────────────────────────────────────────────
+function ensureCalHeader_(sheet) {
+  var v = String(sheet.getRange(1, CAL_EVENTID_COL).getValue() || '').trim();
+  if (!v) sheet.getRange(1, CAL_EVENTID_COL).setValue('캘린더ID');
+}
+
+// ============================================================
+//  ⑨ 매일 새벽 4시 전체 재동기화 트리거
+// ============================================================
+function setupCalendarTrigger_() {
+  ScriptApp.getProjectTriggers()
+    .filter(function (t) { return t.getHandlerFunction() === 'dailyCalendarSync'; })
+    .forEach(function (t) { ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('dailyCalendarSync')
+    .timeBased().atHour(4).everyDays(1).inTimezone(CAL_TZ).create();
+  Logger.log('✅ 매일 새벽 4시 캘린더 재동기화 트리거 등록 완료');
+}
+
+function dailyCalendarSync() {
+  var res = syncCalendarAll_();
+  Logger.log('캘린더 동기화: 새로 ' + res.created + ' / 갱신 ' + res.updated
+             + ' / 삭제 ' + res.removed);
+}
