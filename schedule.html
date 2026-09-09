@@ -374,6 +374,23 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   border-radius:var(--r-sm); padding:11px 12px;
 }
 
+/* ── 돈 카드 (미수금 · 이달 입금) ── 통계 줄과 겹치지 않게 아래 별도 줄 */
+.money-row { display:flex; gap:10px; flex-wrap:wrap; margin:-1.3rem 0 2rem; }
+.money-row:empty { display:none; }
+.money-row .stat-card { min-width:150px; }
+.stat-card.money-card { background:rgba(42,59,46,.06); }
+.stat-card.money-card .stat-label { color:var(--accent); }
+.stat-card.money-card .stat-val   { color:var(--accent); }
+.stat-card.money-card .stat-sub   { color:var(--muted); }
+.stat-card.money-card.warn        { background:rgba(192,74,58,.09); }
+.stat-card.money-card.warn .stat-label,
+.stat-card.money-card.warn .stat-val { color:#b5442f; }
+.stat-card.money-card.warn .stat-sub { color:#a9634f; }
+.stat-card.money-card.paid        { background:rgba(201,163,91,.13); }
+.stat-card.money-card.paid .stat-label { color:#9a7830; }
+.stat-card.money-card.paid .stat-val   { color:var(--accent); font-size:1rem; }
+.stat-card.money-card.paid .stat-sub   { color:#9a7830; }
+
 /* ── 달력 뱃지 시간 · 더보기 ── */
 .ev-tm {
   font-family:'JetBrains Mono',monospace; font-size:0.56rem;
@@ -630,6 +647,8 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   .stat-label { font-size:.55rem; letter-spacing:.03em; }
   .stat-val { font-size:1.25rem; }
   .stat-sub { font-size:.62rem; }
+  .money-row { gap:7px; margin-top:-1.5rem; }
+  .money-row .stat-card { flex:1; min-width:0; }
   .form-grid { grid-template-columns:1fr; }
   .month-title { font-size:1.15rem; min-width:130px; }
   .foot-grid { display:flex; flex-direction:column; gap:32px; padding-left:20px; padding-right:20px; }
@@ -708,6 +727,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
 <main>
   <div class="stats-row" id="statsRow"></div>
+  <div class="money-row" id="moneyRow"></div>
 
   <div class="cal-header">
     <div class="cal-nav">
@@ -736,7 +756,10 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
   <div class="list-hd">
     <div class="sec-ttl">이달의 강의 목록</div>
-    <div class="sec-badge" id="listBadge">0건</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-xs" id="bulkCompleteBtn" onclick="completeMonth()" hidden></button>
+      <div class="sec-badge" id="listBadge">0건</div>
+    </div>
   </div>
   <div id="listWrap"></div>
 
@@ -979,6 +1002,18 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
 </div>
 
+<!-- 미수금 목록 MODAL — 노션 원장에서 읽어온 미입금 건 -->
+<div class="overlay" id="unpaidOverlay" onclick="overlayClick(event,'unpaidOverlay')">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-ttl">미수금 — 아직 입금되지 않은 건</div>
+    <div id="unpaidBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="closeOverlay('unpaidOverlay')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 정산 등록 MODAL — 입금 확인 후 한 번에 기록 -->
 <div class="overlay" id="settleOverlay" onclick="overlayClick(event,'settleOverlay')">
   <div class="modal" style="max-width:560px">
@@ -1118,14 +1153,26 @@ let editId = null;
 
 const saveColors = () => localStorage.setItem(COLOR_STORE, JSON.stringify(customColors));
 
+/* 마지막으로 받아둔 스케쥴을 브라우저에 남겨, 새로고침·지하철에서도 달력이 바로 뜨게 한다.
+   캐시로 먼저 그린 뒤 시트에서 받아 다시 그린다. 조회에 실패하면 캐시를 그대로 둔다. */
+const DATA_STORE = 'kja_sched_data_v1';
+
 async function loadData() {
+  try {
+    const c = JSON.parse(localStorage.getItem(DATA_STORE) || 'null');
+    if (c && Array.isArray(c.items) && c.items.length) { data = c.items; render(); }
+  } catch(e) {}
+
   try {
     const res  = await fetch(SCHEDULE_API_URL + '?type=schedule');
     const json = await res.json();
-    data = Array.isArray(json) ? json : [];
+    if (Array.isArray(json)) {
+      data = json;
+      try { localStorage.setItem(DATA_STORE, JSON.stringify({at:Date.now(), items:data})); } catch(e) {}
+    }
   } catch(e) {
     console.error('데이터 로드 실패:', e);
-    data = [];
+    if (!data.length) data = [];   // 캐시가 있으면 그대로 쓴다
   }
   render();
 }
@@ -1208,7 +1255,7 @@ function render() {
   }
   const rem=(fd+dim)%7===0?0:7-((fd+dim)%7);
   for (let d=1;d<=rem;d++) grid.appendChild(makeCell(d,cy,cm+1,true));
-  renderList(); renderStats(); renderLegend(); renderSettle(); updateDatalist();
+  renderList(); renderStats(); renderMoney(); renderLegend(); renderSettle(); updateDatalist();
   if (daySheetDate) renderDaySheet();
 }
 
@@ -1303,6 +1350,10 @@ function renderList() {
   const ms=mStr(cy,cm);
   const items=data.filter(s=>s.date.startsWith(ms)).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
   document.getElementById('listBadge').textContent=`${items.length}건`;
+  // 지난 강의 중 경력 미등록 건이 2개 이상이면 묶음 등록 버튼을 띄운다
+  const bc = document.getElementById('bulkCompleteBtn'), np = pendingCompletes().length;
+  bc.hidden = np < 2;
+  if (np >= 2) bc.textContent = `경력등록 ${np}건 일괄`;
   const w=document.getElementById('listWrap');
   if (!items.length){w.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><p>이달의 강의가 없습니다.<br><span>+ 강의 추가</span> 버튼으로 등록해보세요.</p></div>`;return;}
   let html=`<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th><th></th></tr></thead><tbody>`;
@@ -1666,6 +1717,108 @@ function renderDaySheet() {
 async function dsComplete(id) { await markComplete(id); renderDaySheet(); }
 function dsSettle(id)         { openSettleModal(id); }
 
+/* ══ 노션 원장 읽기 — 미수금 · 월별 수입 ════════════════════
+   시트에는 금액이 없고 노션이 원장이므로, 돈에 관한 표시는 전부 여기서 온다.
+   느린 조회라 localStorage 에 캐시해 두고 화면을 먼저 그린 뒤 뒤에서 갱신한다. */
+const LEDGER_STORE = 'kja_ledger_v1';
+const LEDGER_TTL   = 10 * 60 * 1000;   // 10분
+let ledger = [];
+
+function loadLedgerCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LEDGER_STORE) || 'null');
+    if (c && Array.isArray(c.items)) { ledger = c.items; return c.at || 0; }
+  } catch(e) {}
+  return 0;
+}
+async function loadLedger(force) {
+  const at = loadLedgerCache();
+  if (!force && at && Date.now() - at < LEDGER_TTL) { renderMoney(); return; }
+  renderMoney();                                   // 캐시본 먼저 그린다
+  try {
+    const r = await apiPost({ action:'notionLedger' });
+    if (r && Array.isArray(r.items)) {
+      ledger = r.items;
+      try { localStorage.setItem(LEDGER_STORE, JSON.stringify({at:Date.now(), items:ledger})); } catch(e) {}
+      renderMoney();
+    }
+  } catch(e) { console.warn('정산 원장 조회 실패:', e.message || e); }
+}
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+const UNPAID   = ['입금대기','미정산','확인필요'];
+
+// 미수금 = 이미 지난 일인데 아직 입금이 안 된 건 (앞으로 할 강의는 뺀다)
+function unpaidRows() {
+  const t = todayStr();
+  return ledger.filter(x => x.date && x.date <= t && UNPAID.indexOf(x.status) > -1)
+               .sort((a,b) => a.date.localeCompare(b.date));
+}
+// 이달 입금 = 입금일이 이번 달인 입금완료 건 (입금일이 없으면 강의일로 본다)
+function paidInMonth(ym) {
+  return ledger.filter(x => x.status === '입금완료'
+                            && String(x.payDate || x.date || '').startsWith(ym));
+}
+
+/* ── A. 미수금 카드 · C. 이달 입금 카드 ───────────────────── */
+function renderMoney() {
+  const row = document.getElementById('moneyRow');
+  if (!row) return;
+  if (!ledger.length) { row.innerHTML = ''; return; }
+
+  const up  = unpaidRows();
+  const sum = up.reduce((t,x) => t + (x.gross || x.net || 0), 0);
+  const old = up.length ? daysAgo(up[0].date) : 0;
+
+  const paid = paidInMonth(mStr(cy,cm));
+  const net  = paid.reduce((t,x) => t + (x.net   || 0), 0);
+  const pb   = paid.reduce((t,x) => t + (x.payback || 0), 0);
+
+  const cards = [];
+  cards.push(`<div class="stat-card money-card${up.length?' warn':''}" onclick="openUnpaid()"
+       title="클릭하면 미수금 목록을 봅니다" style="cursor:pointer">
+    <div class="stat-label">미수금</div>
+    <div class="stat-val">${up.length}</div>
+    <div class="stat-sub">${up.length ? (sum ? won(sum)+'원 · ' : '') + '최장 '+old+'일' : '없음'}</div>
+  </div>`);
+  cards.push(`<div class="stat-card money-card paid">
+    <div class="stat-label">${cm+1}월 입금</div>
+    <div class="stat-val">${net ? won(net) : '—'}</div>
+    <div class="stat-sub">${paid.length}건${pb ? ' · 페이백 −'+won(pb) : ''}</div>
+  </div>`);
+  row.innerHTML = cards.join('');
+}
+
+function openUnpaid() {
+  const up = unpaidRows();
+  const body = document.getElementById('unpaidBody');
+  if (!up.length) {
+    body.innerHTML = '<div class="ds-empty">미수금이 없습니다. 👏</div>';
+  } else {
+    const sum = up.reduce((t,x) => t + (x.gross || x.net || 0), 0);
+    body.innerHTML = `<div style="overflow-x:auto"><table class="sch-table"><thead>
+      <tr style="background:var(--bg-deep)"><th style="padding-left:14px">일자</th><th>강의</th>
+      <th>주관업체</th><th>금액</th><th>상태</th><th>경과</th></tr></thead><tbody>`
+      + up.map(x => {
+          const ag = daysAgo(x.date);
+          const amt = x.gross || x.net;
+          return `<tr>
+            <td class="date-col" style="padding-left:14px">${escC(x.date.slice(2).replace(/-/g,'.'))}</td>
+            <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
+            <td>${escC(x.company || '-')}</td>
+            <td style="font-family:'JetBrains Mono',monospace">${amt ? won(amt) : '<span style="color:var(--muted)">미입력</span>'}</td>
+            <td><span class="type-lbl">${escC(x.status)}</span></td>
+            <td><span class="stl-age${ag>=30?' late':''}">${ag}일</span></td>
+          </tr>`;
+        }).join('')
+      + `</tbody></table></div>
+         <div class="stl-sum" style="padding-top:12px">
+           <span style="color:var(--muted);font-size:.74rem">금액이 비어 있는 건은 노션에서 채워주세요</span>
+           <span>합계 <b>${won(sum)}</b>원</span></div>`;
+  }
+  openOverlay('unpaidOverlay');
+}
+
 /* ══ 정산 등록 (노션 원장) ═══════════════════════════════════
    입금이 확인된 시점에 한 번만 기록한다. 한 번의 입금에 여러 강의가
    묶이므로, 같은 업체의 미정산 강의를 함께 골라 강의료를 나눠 넣는다.
@@ -1952,6 +2105,7 @@ async function saveSettle() {
     });
     closeOverlay('settleOverlay');
     render();
+    loadLedger(true);                                     // 미수금·이달 입금 카드 갱신
     btn.disabled = false; btn.textContent = '정산 등록';   // 알림창 뜨기 전에 되돌린다
     alert(`정산 등록 완료\n\n새로 생성 ${r.created || 0}건`
         + `\n기존 행 갱신 ${r.updated || 0}건`
@@ -1985,45 +2139,68 @@ function isEventPast(ev, cellDate) {
 // ── 경력 등록 완료 처리 ──────────────────────────────────────
 const completing = {};   // 같은 강의를 두 번 눌러 경력사항에 두 줄 들어가는 것 방지
 
-async function markComplete(id) {
+/* 근무기간·직위·주요업무를 만드는 규칙은 **서버(Code.gs buildCareerRow_)** 가 갖는다.
+   정산과 같은 방식으로 맞춘 것 — 규칙을 바꿀 때 Apps Script 한 곳만 고치면 된다.
+   여기서는 무엇이 등록되는지 확인만 보여주고 id 만 보낸다. */
+async function markComplete(id, silent) {
   const s = data.find(x => x.id === id);
-  if (!s || completing[id]) return;
+  if (!s || completing[id]) return false;
 
-  // 근무기간: "2026-05-26" → "2026.05.26"
-  const period = s.date.replace(/-/g, '.');
-
-  // 직위/역할 변환
-  const position = s.type === '교육수강' ? '수강'
-                 : s.type === '디지털튜터' ? '디지털튜터'
-                 : '강사';
-
-  // 주요업무 구성
-  let work = '';
-  if (s.school) {
-    work = s.school + (s.hours ? ' (' + s.hours + 'h)' : '') + ' — ' + (s.topic || s.type + ' 강의');
-  } else {
-    work = (s.topic || s.type + ' 강의') + (s.hours ? ' (' + s.hours + 'h)' : '');
+  if (!silent) {
+    const msg = '경력사항에 등록하시겠습니까?\n\n'
+      + '날짜: ' + s.date + '\n'
+      + '기관: ' + s.company + '\n'
+      + '학교: ' + (s.school || '-') + '\n'
+      + '시수: ' + (s.hours || '-') + '\n\n'
+      + '※ 근무기간·직위·주요업무는 규칙에 따라 자동으로 채워집니다.';
+    if (!confirm(msg)) return false;
   }
-
-  const confirmMsg = '경력사항에 등록하시겠습니까?\n\n'
-    + '기간: ' + period + '\n'
-    + '기관: ' + s.company + '\n'
-    + '직위: ' + position + '\n'
-    + '주요업무: ' + work;
-
-  if (!confirm(confirmMsg)) return;
 
   completing[id] = true;
   try {
-    await apiPost({ action:'complete', id, period, org:s.company, position, work, note:'완료' });
+    await apiPost({ action:'complete', id });
     const i = data.findIndex(x => x.id === id);
     if (i >= 0) data[i] = { ...data[i], completed: 'Y' };
-    render();
+    if (!silent) render();
+    return true;
   } catch(e) {
-    alert('경력 등록에 실패했습니다. 다시 시도해주세요.');
+    if (!silent) alert('경력 등록에 실패했습니다. 다시 시도해주세요.');
+    return false;
   } finally {
     delete completing[id];
   }
+}
+
+/* ── B. 묶음 경력등록 ────────────────────────────────────────
+   회차로 나눈 강의는 4회면 버튼을 4번 눌러야 했다.
+   이달의 지난 강의 중 아직 등록 안 된 건을 한 번에 올린다. */
+function pendingCompletes() {
+  const ms = mStr(cy,cm);
+  return data.filter(s => s.date.startsWith(ms) && s.completed !== 'Y'
+                          && isEventPast(s, new Date(s.date + 'T00:00:00')))
+             .sort((a,b) => a.date.localeCompare(b.date));
+}
+
+async function completeMonth() {
+  const rows = pendingCompletes();
+  if (!rows.length) { alert('이달에 등록할 지난 강의가 없습니다.'); return; }
+
+  const list = rows.map(s => `  ${s.date.slice(5).replace('-','.')}  ${s.company}`
+                             + (s.school ? ` · ${s.school}` : '')).join('\n');
+  if (!confirm(`${cm+1}월의 지난 강의 ${rows.length}건을 경력사항에 등록합니다.\n\n${list}\n\n진행할까요?`)) return;
+
+  const btn = document.getElementById('bulkCompleteBtn');
+  const lbl = btn ? btn.textContent : '';
+  if (btn) btn.disabled = true;
+  let ok = 0, fail = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (btn) btn.textContent = `등록 중… ${i+1}/${rows.length}`;
+    (await markComplete(rows[i].id, true)) ? ok++ : fail++;
+  }
+  if (btn) { btn.disabled = false; btn.textContent = lbl; }
+  render();
+  alert(fail ? `${ok}건 등록, ${fail}건 실패\n실패한 건은 달력에서 개별로 다시 눌러주세요.`
+             : `${ok}건을 경력사항에 등록했습니다.`);
 }
 
 function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
@@ -2193,6 +2370,7 @@ async function delCert(id) {
 
 loadData();
 loadCerts();
+loadLedger();
 setupCompanyAc();
 
 // ── PIN LOCK ──
