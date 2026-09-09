@@ -1629,6 +1629,12 @@ async function saveSettle() {
       paybackTo: payback > 0 ? document.getElementById('sf-paybackTo').value : '',
       items:     items
     });
+    // 구버전 Apps Script는 모르는 action 에도 {success:true} 만 돌려준다.
+    // created/updated 가 없으면 정산이 실제로 일어나지 않은 것으로 본다.
+    if (!r || (r.created === undefined && r.updated === undefined)) {
+      throw new Error('서버가 정산 액션을 처리하지 못했습니다.\n'
+        + 'Apps Script(Code.gs · notion.gs)를 최신 내용으로 재배포했는지 확인해주세요.');
+    }
     items.forEach(it => {
       const i = data.findIndex(x => x.id === it.id);
       if (i > -1) data[i].settled = 'Y';
