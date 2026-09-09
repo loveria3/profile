@@ -217,6 +217,11 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 /* ── LIST ── */
 .list-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
 .sec-ttl  { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
+.sec-note {
+  font-size:0.7rem; color:var(--muted); line-height:1.6;
+  margin-top:5px; max-width:52ch; text-transform:none; letter-spacing:0;
+}
+.sec-note b { color:var(--ink-soft); font-weight:600; }
 .sec-badge {
   font-size:0.72rem; color:var(--accent-warm);
   background:rgba(179,117,58,.1); border:1px solid rgba(179,117,58,.25);
@@ -766,7 +771,11 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
   <!-- ── 정산 대기 (입금 확인 전 강의 · 월 구분 없이 전체) ── -->
   <div class="list-hd" style="margin-top:2.8rem">
-    <div class="sec-ttl">정산 대기</div>
+    <div>
+      <div class="sec-ttl">정산 대기</div>
+      <div class="sec-note">입금을 확인하고 <b>내가 기록할</b> 강의입니다.
+        위쪽 <b>미수금</b> 카드는 노션 기준으로 <b>아직 못 받은 돈</b>이라 건수가 다를 수 있습니다.</div>
+    </div>
     <div class="sec-badge" id="settleBadge">0건</div>
   </div>
   <div id="settleWrap"></div>
@@ -1212,7 +1221,6 @@ function getCompanyColor(name) {
 function allCompanies() {
   return [...new Set([...Object.keys(PRESET_COMPANIES), ...Object.keys(customColors), ...data.map(s=>s.company).filter(Boolean)])];
 }
-function updateDatalist() { /* companies updated via allCompanies() dynamically */ }
 
 function setupCompanyAc() {
   const inp = document.getElementById('f-company');
@@ -1256,7 +1264,7 @@ function render() {
   }
   const rem=(fd+dim)%7===0?0:7-((fd+dim)%7);
   for (let d=1;d<=rem;d++) grid.appendChild(makeCell(d,cy,cm+1,true));
-  renderList(); renderStats(); renderMoney(); renderLegend(); renderSettle(); updateDatalist();
+  renderList(); renderStats(); renderMoney(); renderLegend(); renderSettle();
   if (daySheetDate) renderDaySheet();
 }
 
