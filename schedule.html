@@ -1748,6 +1748,11 @@ async function loadLedger(force) {
 const todayStr = () => new Date().toISOString().slice(0,10);
 const UNPAID   = ['입금대기','미정산','확인필요'];
 
+/* 아직 못 받은 돈의 금액 — 노션에 세 가지가 섞여 있어 우선순위를 둔다.
+   예상금액(실제로 들어올 액수 추정) → 세전총액(세금 전이라 과대) → 실입금액 */
+const amtOf   = x => x.expected || x.gross || x.net || 0;
+const isGuess = x => !x.gross && !x.net && !!x.expected;
+
 // 미수금 = 이미 지난 일인데 아직 입금이 안 된 건 (앞으로 할 강의는 뺀다)
 function unpaidRows() {
   const t = todayStr();
@@ -1767,7 +1772,7 @@ function renderMoney() {
   if (!ledger.length) { row.innerHTML = ''; return; }
 
   const up  = unpaidRows();
-  const sum = up.reduce((t,x) => t + (x.gross || x.net || 0), 0);
+  const sum = up.reduce((t,x) => t + amtOf(x), 0);
   const old = up.length ? daysAgo(up[0].date) : 0;
 
   const paid = paidInMonth(mStr(cy,cm));
@@ -1795,18 +1800,20 @@ function openUnpaid() {
   if (!up.length) {
     body.innerHTML = '<div class="ds-empty">미수금이 없습니다. 👏</div>';
   } else {
-    const sum = up.reduce((t,x) => t + (x.gross || x.net || 0), 0);
+    const sum = up.reduce((t,x) => t + amtOf(x), 0);
     body.innerHTML = `<div style="overflow-x:auto"><table class="sch-table"><thead>
       <tr style="background:var(--bg-deep)"><th style="padding-left:14px">일자</th><th>강의</th>
       <th>주관업체</th><th>금액</th><th>상태</th><th>경과</th></tr></thead><tbody>`
       + up.map(x => {
           const ag = daysAgo(x.date);
-          const amt = x.gross || x.net;
+          const amt = amtOf(x);
           return `<tr>
             <td class="date-col" style="padding-left:14px">${escC(x.date.slice(2).replace(/-/g,'.'))}</td>
             <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
             <td>${escC(x.company || '-')}</td>
-            <td style="font-family:'JetBrains Mono',monospace">${amt ? won(amt) : '<span style="color:var(--muted)">미입력</span>'}</td>
+            <td style="font-family:'JetBrains Mono',monospace">${amt
+                ? won(amt) + (isGuess(x) ? ' <span style="font-family:inherit;font-size:.68rem;color:var(--muted)">예상</span>' : '')
+                : '<span style="color:var(--muted)">미입력</span>'}</td>
             <td><span class="type-lbl">${escC(x.status)}</span></td>
             <td><span class="stl-age${ag>=30?' late':''}">${ag}일</span></td>
           </tr>`;
