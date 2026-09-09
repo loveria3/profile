@@ -332,6 +332,47 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   font-size: 0.6rem; color: #3d6b4d; opacity: .7;
   margin-top: 3px; text-align: center; letter-spacing: 0.04em;
 }
+
+/* ── 정산 대기 · 정산 모달 ── */
+.stl-age { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--muted); white-space:nowrap; }
+.stl-age.late { color:#b5442f; font-weight:700; }
+.stl-list {
+  border:1px solid var(--line); border-radius:var(--r-sm);
+  background:var(--bg); max-height:230px; overflow-y:auto; margin-bottom:4px;
+}
+.stl-row {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-bottom:1px solid var(--line-soft);
+}
+.stl-row:last-child { border-bottom:none; }
+.stl-row input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.stl-row .stl-d { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--ink); white-space:nowrap; }
+.stl-row .stl-t { flex:1; font-size:0.76rem; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stl-row .stl-h { font-size:0.68rem; color:var(--muted); white-space:nowrap; }
+.stl-amt {
+  width:96px; flex-shrink:0; text-align:right;
+  background:var(--paper); border:1px solid var(--line); color:var(--ink);
+  padding:5px 8px; border-radius:var(--r-sm);
+  font-size:0.76rem; font-family:'JetBrains Mono',monospace;
+}
+.stl-amt:focus { outline:none; border-color:var(--accent); }
+.stl-amt:disabled { opacity:.35; }
+.stl-sum {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.78rem; padding:7px 2px 0;
+}
+.stl-sum b { font-family:'JetBrains Mono',monospace; font-size:0.92rem; color:var(--accent); }
+.stl-chk {
+  display:flex; align-items:center; gap:7px; cursor:pointer;
+  font-size:0.8rem; color:var(--ink); font-weight:600;
+}
+.stl-chk input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+.stl-hint { font-size:0.7rem; color:var(--muted); line-height:1.7; margin-top:4px; }
+.stl-hint b { color:var(--accent-warm); font-family:'JetBrains Mono',monospace; }
+.stl-box {
+  background:var(--bg); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:11px 12px;
+}
 .empty {
   text-align:center; padding:4rem 1rem;
   background:var(--paper); border:1px solid var(--line); border-radius:var(--r);
@@ -640,6 +681,13 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
   <div id="listWrap"></div>
 
+  <!-- ── 정산 대기 (입금 확인 전 강의 · 월 구분 없이 전체) ── -->
+  <div class="list-hd" style="margin-top:2.8rem">
+    <div class="sec-ttl">정산 대기</div>
+    <div class="sec-badge" id="settleBadge">0건</div>
+  </div>
+  <div id="settleWrap"></div>
+
   <!-- ── 자격 · 연수 ── -->
   <div class="cal-header" style="margin-top:2.8rem">
     <div class="cal-nav"><div class="sec-ttl">자격 · 연수</div></div>
@@ -833,6 +881,76 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
 </div>
 
+<!-- 정산 등록 MODAL — 입금 확인 후 한 번에 기록 -->
+<div class="overlay" id="settleOverlay" onclick="overlayClick(event,'settleOverlay')">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-ttl">정산 등록</div>
+
+    <div class="fgrp full" style="margin-bottom:14px">
+      <label class="flbl">함께 정산할 강의 <span id="stlCoName" style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0"></span></label>
+      <div class="stl-list" id="stlList"></div>
+      <div class="stl-sum">
+        <button class="btn-xs" type="button" onclick="settleSpread()">총액 입력 → 시수 비례 배분</button>
+        <span>강의료 합계 <b id="stlGross">0</b>원</span>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="fgrp">
+        <label class="flbl" for="sf-company">주관업체 (노션)</label>
+        <select class="fsel" id="sf-company" onchange="settleRecalc()"></select>
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="sf-role">참여형태</label>
+        <select class="fsel" id="sf-role">
+          <option>강사</option><option>보조강사</option>
+          <option>운영지원</option><option>보조강사 &amp;강사</option>
+        </select>
+      </div>
+
+      <div class="fgrp full">
+        <div class="stl-box">
+          <label class="stl-chk">
+            <input type="checkbox" id="sf-taxed" checked onchange="settleRecalc()">
+            세금 있음 (원천징수 후 입금)
+          </label>
+          <div class="stl-hint" id="stlTaxHint"></div>
+        </div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="sf-deposit">계좌 입금액 *</label>
+        <input type="number" class="finp" id="sf-deposit" placeholder="통장에 찍힌 금액" style="appearance:textfield">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="sf-paydate">입금일</label>
+        <input type="date" class="finp" id="sf-paydate">
+      </div>
+
+      <div class="fgrp full">
+        <div class="stl-box">
+          <label class="stl-chk">
+            <input type="checkbox" id="sf-hasPayback" onchange="settleTogglePayback()">
+            페이백 있음
+          </label>
+          <div id="stlPaybackGrp" style="display:none;gap:8px;margin-top:9px">
+            <select class="fsel" id="sf-paybackTo" style="flex:1">
+              <option value="현민주">현민주</option>
+              <option value="고인숙">고인숙</option>
+            </select>
+            <input type="number" class="finp" id="sf-payback" placeholder="페이백 금액" style="flex:1;appearance:textfield">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('settleOverlay')">취소</button>
+      <button class="btn btn-primary" id="stlSaveBtn" onclick="saveSettle()">정산 등록</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
 
@@ -988,7 +1106,7 @@ function render() {
   }
   const rem=(fd+dim)%7===0?0:7-((fd+dim)%7);
   for (let d=1;d<=rem;d++) grid.appendChild(makeCell(d,cy,cm+1,true));
-  renderList(); renderStats(); renderLegend(); updateDatalist();
+  renderList(); renderStats(); renderLegend(); renderSettle(); updateDatalist();
   if (daySheetDate) renderDaySheet();
 }
 
@@ -1040,8 +1158,8 @@ function makeCell(day,year,month,other,isToday=false) {
           } else {
             const sbtn=document.createElement('button');
             sbtn.className='btn-settle'; sbtn.textContent='정산';
-            sbtn.title='노션 정산 원장에 등록 (금액은 입금 후 직접 입력)';
-            sbtn.onclick=e=>{e.stopPropagation();markSettled(ev.id);}; cell.appendChild(sbtn);
+            sbtn.title='입금 확인 후 정산 등록 (여러 건 묶어서 가능)';
+            sbtn.onclick=e=>{e.stopPropagation();openSettleModal(ev.id);}; cell.appendChild(sbtn);
           }
         }
       }
@@ -1263,33 +1381,267 @@ function renderDaySheet() {
 }
 
 async function dsComplete(id) { await markComplete(id); renderDaySheet(); }
-async function dsSettle(id)   { await markSettled(id);  renderDaySheet(); }
+function dsSettle(id)         { openSettleModal(id); }
 
-// ── 정산 원장(노션) 등록 ────────────────────────────────────
-//  금액은 보내지 않는다. 노션에 "완료 / 입금대기" 상태로 행만 만들고,
-//  실제 금액은 입금 확인 후 노션에서 직접 입력한다.
-async function markSettled(id) {
-  const s = data.find(x => x.id === id);
-  if (!s) return;
+/* ══ 정산 등록 (노션 원장) ═══════════════════════════════════
+   입금이 확인된 시점에 한 번만 기록한다. 한 번의 입금에 여러 강의가
+   묶이므로, 같은 업체의 미정산 강의를 함께 골라 강의료를 나눠 넣는다.
+   ─ 사용자가 넣는 값: 건별 강의료 · 계좌 입금액 · 세금 있음/없음
+   ─ 원천징수세액 = 강의료 - 실입금액 (자동 역산, 입력받지 않음)     */
 
-  const msg = '노션 정산 원장에 등록하시겠습니까?\n\n'
-    + '날짜: ' + s.date + '\n'
-    + '업체: ' + s.company + '\n'
-    + '학교: ' + (s.school || '-') + '\n'
-    + '시수: ' + (s.hours || '-') + '\n\n'
-    + '※ 금액은 입금 확인 후 노션에서 직접 입력하세요.';
+// 노션 '주관업체' 선택지 (노션 DB 옵션과 문자열이 정확히 같아야 한다)
+const NOTION_COMPANIES = [
+  '에듀인플랫폼','에듀인플랫폼(한라도서관)','에듀인플랫폼(디지털새싹)',
+  '에듀인플랫폼(찾컨)','에듀인플랫폼(랄랄라캠프)',
+  '제주대(찾컨)','제주대(디싹)',
+  '대정중학교','남원중학교','백록초등학교',
+  '제주평생교육진흥원','도민대학','한국표준협회',
+  '목포대랄랄라','제미에듀','프리랜서','제주고등학교'
+];
+
+// 업체별 원천징수 세율(%) — 과거 정산 기록에서 확인된 값.
+// 사용자는 세율을 고르지 않고 '세금 있음'만 체크한다.
+const NOTION_TAX_RATE = {
+  '에듀인플랫폼': 3.3, '에듀인플랫폼(한라도서관)': 3.3,
+  '에듀인플랫폼(디지털새싹)': 8.8, '에듀인플랫폼(찾컨)': 3.3,
+  '에듀인플랫폼(랄랄라캠프)': 3.3,
+  '제주대(찾컨)': 8.8, '제주대(디싹)': 8.8,
+  '대정중학교': 3.3, '남원중학교': 3.3, '백록초등학교': 3.3,
+  '제주평생교육진흥원': 3.3, '도민대학': 3.3, '한국표준협회': 8.8,
+  '목포대랄랄라': 3.3, '제미에듀': 3.3, '프리랜서': 8.8, '제주고등학교': 3.3
+};
+const DEFAULT_TAX_RATE = 3.3;
+
+// 시트 업체명 → 노션 주관업체 초기 선택값 (다르면 모달에서 바꾸면 된다)
+const NOTION_CO_GUESS = {
+  '에듀인플랫폼':'에듀인플랫폼', '에듀인플랫폼(핑퐁)':'에듀인플랫폼',
+  '제주대학교':'제주대(디싹)', '제주대':'제주대(디싹)',
+  '도민대학':'도민대학', '제주평생교육진흥원':'제주평생교육진흥원',
+  '한국표준협회':'한국표준협회', '목포대랄랄라':'목포대랄랄라',
+  '제미에듀':'제미에듀', '재미에듀':'제미에듀', '프리랜서':'프리랜서',
+  '제주고등학교':'제주고등학교', '대정중학교':'대정중학교',
+  '남원중학교':'남원중학교', '백록초등학교':'백록초등학교'
+};
+
+const won = n => Number(n || 0).toLocaleString('ko-KR');
+
+// 정산 대기 = 지난 강의 · 정산 조건 충족 · 아직 미정산 (월 구분 없이 전체)
+function pendingSettles() {
+  return data
+    .filter(s => canSettle(s) && s.settled !== 'Y'
+                 && isEventPast(s, new Date(s.date + 'T00:00:00')))
+    .sort((a,b) => a.date.localeCompare(b.date));
+}
+const daysAgo = d => Math.floor((Date.now() - new Date(d + 'T00:00:00')) / 86400000);
+
+function renderSettle() {
+  const items = pendingSettles();
+  document.getElementById('settleBadge').textContent = `${items.length}건`;
+  const w = document.getElementById('settleWrap');
+  if (!items.length) {
+    w.innerHTML = `<div class="empty"><div class="empty-ico">💰</div><p>정산을 기다리는 강의가 없습니다.<br><span>입금이 확인되면 여기에서 등록하세요.</span></p></div>`;
+    return;
+  }
+  let html = `<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)">`
+    + `<th style="padding-left:14px">일자</th><th>업체명</th><th>출강학교 · 주제</th><th>시수</th><th>경과</th><th></th>`
+    + `</tr></thead><tbody>`;
+  items.forEach(s => {
+    const c = getCompanyColor(s.company), ag = daysAgo(s.date);
+    const desc = [s.school, s.topic].filter(Boolean).join(' · ') || '—';
+    html += `<tr>
+      <td class="date-col" style="padding-left:14px">${escC(s.date.slice(2).replace(/-/g,'.'))}</td>
+      <td><span class="co-chip" style="background:${hexToRgba(c.dot,.11)};color:${c.color}">
+        <span class="co-chip-dot" style="background:${c.dot}"></span>${escC(s.company)}</span></td>
+      <td>${escC(desc)}</td>
+      <td>${s.hours ? escC(s.hours) + '시수' : ''}</td>
+      <td><span class="stl-age${ag >= 30 ? ' late' : ''}">${ag}일 경과</span></td>
+      <td style="text-align:right;padding-right:14px">
+        <button class="btn-xs" onclick="openSettleModal('${s.id}')">정산</button></td>
+    </tr>`;
+  });
+  w.innerHTML = html + '</tbody></table></div>';
+}
+
+// ── 정산 모달 ───────────────────────────────────────────────
+let stlState = { picked:{}, amounts:{}, rows:[] };
+
+function openSettleModal(id) {
+  const base = data.find(x => x.id === id);
+  if (!base) return;
+
+  // 같은 업체의 미정산 강의를 후보로 모은다 (기준 건은 항상 포함·선택)
+  const rows = pendingSettles().filter(s => s.company === base.company);
+  if (!rows.some(s => s.id === id)) rows.unshift(base);
+  rows.sort((a,b) => b.date.localeCompare(a.date));
+
+  stlState = { picked:{}, amounts:{}, rows };
+  rows.forEach(s => { stlState.picked[s.id] = (s.id === id); stlState.amounts[s.id] = ''; });
+
+  document.getElementById('stlCoName').textContent =
+    `· ${base.company} · 미정산 ${rows.length}건`;
+
+  const sel = document.getElementById('sf-company');
+  sel.innerHTML = NOTION_COMPANIES.map(c => `<option>${escC(c)}</option>`).join('');
+  sel.value = NOTION_CO_GUESS[base.company] || NOTION_COMPANIES[0];
+
+  const dep = document.getElementById('sf-deposit');
+  dep.value = ''; dep.dataset.auto = '';          // 이전에 열었던 값이 남지 않도록 초기화
+
+  document.getElementById('sf-role').value     = '강사';
+  document.getElementById('sf-taxed').checked  = true;
+  document.getElementById('sf-hasPayback').checked = false;
+  document.getElementById('sf-payback').value  = '';
+  document.getElementById('sf-paydate').value  = new Date().toISOString().slice(0,10);
+  settleTogglePayback();
+
+  renderSettleList();
+  settleRecalc();
+  openOverlay('settleOverlay');
+}
+
+function renderSettleList() {
+  document.getElementById('stlList').innerHTML = stlState.rows.map(s => {
+    const on = stlState.picked[s.id];
+    const desc = [s.school, s.topic].filter(Boolean).join(' · ') || s.type;
+    return `<div class="stl-row">
+      <input type="checkbox" ${on ? 'checked' : ''} onchange="settlePick('${s.id}',this.checked)">
+      <span class="stl-d">${escC(s.date.slice(5).replace('-','.'))}</span>
+      <span class="stl-t" title="${escC(desc)}">${escC(desc)}</span>
+      <span class="stl-h">${s.hours ? escC(s.hours) + '시수' : ''}</span>
+      <input type="number" class="stl-amt" placeholder="강의료" ${on ? '' : 'disabled'}
+             value="${escC(stlState.amounts[s.id])}"
+             oninput="settleAmt('${s.id}',this.value)" style="appearance:textfield">
+    </div>`;
+  }).join('');
+}
+
+function settlePick(id, on) {
+  stlState.picked[id] = on;
+  if (!on) stlState.amounts[id] = '';
+  renderSettleList(); settleRecalc();
+}
+function settleAmt(id, v) { stlState.amounts[id] = v; settleRecalc(); }
+
+const stlPickedRows = () => stlState.rows.filter(s => stlState.picked[s.id]);
+const stlGrossSum   = () => stlPickedRows()
+  .reduce((t,s) => t + (parseFloat(stlState.amounts[s.id]) || 0), 0);
+
+// 총 강의료를 시수 비례로 나눠 채운다 (시수가 없으면 균등, 끝수는 마지막 건에)
+function settleSpread() {
+  const picked = stlPickedRows();
+  if (!picked.length) { alert('먼저 정산할 강의를 선택하세요.'); return; }
+  const raw = prompt('선택한 ' + picked.length + '건의 강의료 총액을 입력하세요. (원)');
+  if (raw === null) return;
+  const total = Math.round(parseFloat(String(raw).replace(/[,\s]/g,'')) || 0);
+  if (total <= 0) { alert('금액을 숫자로 입력해주세요.'); return; }
+
+  const parts = alloc(total, picked.map(s => parseFloat(s.hours) || 0));
+  picked.forEach((s,i) => { stlState.amounts[s.id] = String(parts[i]); });
+  renderSettleList(); settleRecalc();
+}
+
+/* total 을 weights 비율로 정수 배분한다. 가중치 합이 0이면 균등 배분하고,
+   반올림에서 생긴 끝수는 마지막 항목에 몰아 합계를 정확히 맞춘다. */
+function alloc(total, weights) {
+  const n = weights.length;
+  if (!n) return [];
+  const sum = weights.reduce((a,b) => a + b, 0);
+  const w   = sum > 0 ? weights : weights.map(() => 1);
+  const ws  = sum > 0 ? sum : n;
+  const out = w.map(x => Math.round(total * x / ws));
+  out[n-1] = total - out.slice(0,-1).reduce((a,b) => a + b, 0);
+  return out;
+}
+
+function settleRecalc() {
+  const gross = stlGrossSum();
+  document.getElementById('stlGross').textContent = won(gross);
+
+  const co    = document.getElementById('sf-company').value;
+  const taxed = document.getElementById('sf-taxed').checked;
+  const rate  = NOTION_TAX_RATE[co] != null ? NOTION_TAX_RATE[co] : DEFAULT_TAX_RATE;
+  const dep   = document.getElementById('sf-deposit');
+  const auto  = taxed ? Math.round(gross * (1 - rate/100)) : gross;
+
+  // 사용자가 아직 손대지 않았거나 이전 자동값 그대로면 다시 채워준다
+  if (!dep.value || dep.dataset.auto === dep.value) {
+    dep.value = gross ? String(auto) : '';
+    dep.dataset.auto = dep.value;
+  }
+  document.getElementById('stlTaxHint').innerHTML = taxed
+    ? `${escC(co)} 기준 <b>${rate}%</b> 적용 → 예상 실입금 <b>${won(auto)}</b>원<br>`
+      + `통장 금액이 다르면 아래 <b>계좌 입금액</b>을 고치세요. 차액이 원천징수세액으로 기록됩니다.`
+    : `세금 없이 강의료 전액(<b>${won(gross)}</b>원)이 입금된 것으로 기록합니다.`;
+}
+
+function settleTogglePayback() {
+  const on = document.getElementById('sf-hasPayback').checked;
+  document.getElementById('stlPaybackGrp').style.display = on ? 'flex' : 'none';
+}
+
+async function saveSettle() {
+  const picked = stlPickedRows();
+  if (!picked.length) { alert('정산할 강의를 선택하세요.'); return; }
+
+  const gross = stlGrossSum();
+  if (gross <= 0) { alert('강의료를 입력하세요.'); return; }
+
+  const deposit = Math.round(parseFloat(document.getElementById('sf-deposit').value) || 0);
+  if (deposit <= 0) { alert('계좌 입금액을 입력하세요.'); return; }
+
+  const co      = document.getElementById('sf-company').value;
+  const taxed   = document.getElementById('sf-taxed').checked;
+  const rate    = NOTION_TAX_RATE[co] != null ? NOTION_TAX_RATE[co] : DEFAULT_TAX_RATE;
+  const payback = document.getElementById('sf-hasPayback').checked
+                ? Math.round(parseFloat(document.getElementById('sf-payback').value) || 0) : 0;
+
+  // 입금액·페이백을 강의료 비율로 건별 배분한다
+  const gs   = picked.map(s => parseFloat(stlState.amounts[s.id]) || 0);
+  const nets = alloc(deposit, gs);
+  const pbs  = payback > 0 ? alloc(payback, gs) : gs.map(() => 0);
+
+  const items = picked.map((s,i) => ({
+    id:      s.id,
+    gross:   gs[i],
+    net:     nets[i],
+    tax:     Math.max(0, gs[i] - nets[i]),
+    payback: pbs[i]
+  }));
+
+  const income = !taxed ? '' : rate === 3.3 ? '사업소득' : rate === 8.8 ? '기타소득' : '';
+  const msg = `${picked.length}건을 정산 등록합니다.\n\n`
+    + `강의료 합계  ${won(gross)}원\n`
+    + `계좌 입금액  ${won(deposit)}원\n`
+    + `원천징수     ${won(Math.max(0, gross - deposit))}원\n`
+    + (payback ? `페이백       ${won(payback)}원\n` : '')
+    + `\n노션에 ${picked.length}개 행으로 기록됩니다.`;
   if (!confirm(msg)) return;
 
+  const btn = document.getElementById('stlSaveBtn');
+  btn.disabled = true; btn.textContent = '등록 중…';
   try {
-    const r = await apiPost({ action:'notionAdd', id });
-    const i = data.findIndex(x => x.id === id);
-    if (i > -1) data[i].settled = 'Y';
+    const r = await apiPost({
+      action:    'notionSettle',
+      company:   co,
+      role:      document.getElementById('sf-role').value,
+      income:    income,
+      payDate:   document.getElementById('sf-paydate').value,
+      paybackTo: payback > 0 ? document.getElementById('sf-paybackTo').value : '',
+      items:     items
+    });
+    items.forEach(it => {
+      const i = data.findIndex(x => x.id === it.id);
+      if (i > -1) data[i].settled = 'Y';
+    });
+    closeOverlay('settleOverlay');
     render();
-    alert(r && r.skipped
-      ? '이미 노션에 등록되어 있어 중복으로 만들지 않았습니다.'
-      : '노션 정산 원장에 등록했습니다.');
+    alert(`정산 등록 완료\n\n새로 생성 ${r.created || 0}건`
+        + `\n기존 행 갱신 ${r.updated || 0}건`
+        + ((r.failed && r.failed.length) ? `\n실패 ${r.failed.length}건 — ${r.failed.join(', ')}` : ''));
   } catch (e) {
-    alert('노션 등록에 실패했습니다.\n' + (e.message || e));
+    alert('정산 등록에 실패했습니다.\n' + (e.message || e));
+  } finally {
+    btn.disabled = false; btn.textContent = '정산 등록';
   }
 }
 
