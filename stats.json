@@ -2,7 +2,7 @@
   "_comment": "숫자와 설명을 수정하고 저장하면 메인 페이지에 자동 반영됩니다.",
   "stats": [
     {
-      "num": "20",
+      "num": "30",
       "plus": true,
       "unit": "개소",
       "label": "Field Verified",

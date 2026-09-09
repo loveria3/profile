@@ -760,7 +760,10 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
 
   <div class="list-hd">
-    <div class="sec-ttl">이달의 강의 목록</div>
+    <div>
+      <div class="sec-ttl">이달의 강의 목록</div>
+      <div class="sec-note" id="completeNote" hidden></div>
+    </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="btn-xs" id="bulkCompleteBtn" onclick="completeMonth()" hidden></button>
       <div class="sec-badge" id="listBadge">0건</div>
@@ -1363,6 +1366,18 @@ function renderList() {
   const bc = document.getElementById('bulkCompleteBtn'), np = pendingCompletes().length;
   bc.hidden = np < 2;
   if (np >= 2) bc.textContent = `경력등록 ${np}건 일괄`;
+
+  // 다른 달에 밀린 경력등록 알림 (프로필 학교 칩·통계가 그만큼 비어 보인다)
+  const note = document.getElementById('completeNote');
+  const other = pendingCompletesAll().filter(s => !s.date.startsWith(ms));
+  if (!other.length) { note.hidden = true; }
+  else {
+    const months = [...new Set(other.map(s => s.date.slice(0,7)))]
+      .map(m => `${+m.slice(5)}월`).join(' · ');
+    note.innerHTML = `다른 달에 <b>경력 미등록 ${other.length}건</b>이 남아 있습니다 (${escC(months)}). `
+      + `등록해야 프로필의 출강 학교·통계에 반영됩니다.`;
+    note.hidden = false;
+  }
   const w=document.getElementById('listWrap');
   if (!items.length){w.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><p>이달의 강의가 없습니다.<br><span>+ 강의 추가</span> 버튼으로 등록해보세요.</p></div>`;return;}
   let html=`<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th><th></th></tr></thead><tbody>`;
@@ -2193,7 +2208,13 @@ async function markComplete(id, silent) {
    이달의 지난 강의 중 아직 등록 안 된 건을 한 번에 올린다. */
 function pendingCompletes() {
   const ms = mStr(cy,cm);
-  return data.filter(s => s.date.startsWith(ms) && s.completed !== 'Y'
+  return pendingCompletesAll().filter(s => s.date.startsWith(ms));
+}
+
+/* 경력등록을 안 하면 프로필 페이지의 학교 칩·통계에 반영되지 않는다.
+   보고 있는 달 말고 다른 달에 밀린 게 있으면 알려준다. */
+function pendingCompletesAll() {
+  return data.filter(s => s.completed !== 'Y'
                           && isEventPast(s, new Date(s.date + 'T00:00:00')))
              .sort((a,b) => a.date.localeCompare(b.date));
 }
