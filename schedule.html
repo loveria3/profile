@@ -838,6 +838,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
     <div class="foot-bottom">
       <span>© 2026 Kang Ji-ae. All rights reserved.</span>
       <span class="claude-made">Made with Claude · v 1.0 · Schedule</span>
+      <span class="mono" id="verStamp" style="font-size:.62rem;color:var(--muted);opacity:.75"></span>
     </div>
   </div>
 </footer>
@@ -1109,6 +1110,10 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 <script>
 const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
 
+/* 배포 버전 스탬프 — 페이지를 고쳐 올릴 때마다 이 값을 함께 올린다.
+   푸터에 페이지/서버 버전이 나란히 찍히므로 '올린 게 맞나?' 를 눈으로 바로 확인할 수 있다. */
+const PAGE_VERSION = '2026-09-09a';
+
 const PRESET_COMPANIES = {
   '대정중학교':       '#1e56c8',  // 파랑
   '에듀인플랫폼':     '#8c2dbd',  // 보라
@@ -1195,19 +1200,20 @@ async function loadData() {
   render();
 }
 
-/* 네트워크가 잠깐 끊겨 저장이 실패하는 일이 있어 한 번 자동 재시도한다.
-   ⚠️ 아무거나 재시도하면 안 된다 — add·complete·certAdd 는 요청이 서버에 닿은 뒤
-   응답만 실패해도 재시도하면 **행이 두 번 들어간다.** 몇 번을 보내도 결과가 같은
-   액션만 재시도하고, 나머지는 예전처럼 한 번만 보내고 실패를 알린다. */
-const RETRYABLE = ['update','delete','certUpdate','certDelete','syncCalendar','notionLedger'];
+/* 네트워크가 잠깐 끊겨 저장이 실패하는 일이 있어 자동 재시도한다.
+   예전에는 add·complete 를 재시도하지 못했다 — 요청이 서버에 닿은 뒤 응답만
+   실패해도 다시 보내면 행이 두 번 들어갔기 때문이다.
+   이제 요청마다 고유한 reqId 를 붙이고 서버가 Q열에 기록해 같은 요청을 걸러내므로,
+   **몇 번을 보내도 결과가 같다.** 그래서 모든 액션을 안전하게 재시도한다. */
+const newReqId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 async function apiPost(payload) {
-  const canRetry = payload && RETRYABLE.indexOf(payload.action) > -1;
-  const tries = canRetry ? 2 : 1;
+  const body = { reqId: newReqId(), ...payload };   // 같은 요청은 같은 reqId 로 재전송된다
   let lastErr;
+  const tries = 2;
   for (let i = 0; i < tries; i++) {
     try {
-      const res  = await fetch(SCHEDULE_API_URL, { method:'POST', body:JSON.stringify(payload) });
+      const res  = await fetch(SCHEDULE_API_URL, { method:'POST', body:JSON.stringify(body) });
       const json = await res.json();
       if (json.error) throw new Error(json.message || '서버 오류');
       return json;
@@ -2435,6 +2441,25 @@ loadData();
 loadCerts();
 loadLedger();
 setupCompanyAc();
+showVersions();
+
+/* 페이지 버전과 서버(Apps Script) 버전을 푸터에 나란히 찍는다.
+   셋 중 하나만 안 올라가 있으면 여기서 바로 보인다. */
+async function showVersions() {
+  const el = document.getElementById('verStamp');
+  if (!el) return;
+  el.textContent = 'page ' + PAGE_VERSION + ' · server …';
+  try {
+    const r = await fetch(SCHEDULE_API_URL + '?type=version');
+    const v = await r.json();
+    const same = v.code === PAGE_VERSION;
+    el.textContent = 'page ' + PAGE_VERSION + ' · code ' + v.code
+                   + ' · notion ' + v.notion + ' · cal ' + v.calendar;
+    if (!same) { el.style.color = '#b5442f'; el.style.opacity = '1'; el.title = '페이지와 서버 버전이 다릅니다 — 배포 누락일 수 있습니다'; }
+  } catch (e) {
+    el.textContent = 'page ' + PAGE_VERSION + ' · server 확인 불가';
+  }
+}
 
 // ── PIN LOCK ──
 ;(async function() {
