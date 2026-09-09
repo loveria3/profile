@@ -1408,9 +1408,11 @@ const NOTION_TAX_RATE = {
   '제주대(찾컨)': 8.8, '제주대(디싹)': 8.8,
   '대정중학교': 3.3, '남원중학교': 3.3, '백록초등학교': 3.3,
   '제주평생교육진흥원': 3.3, '도민대학': 3.3, '한국표준협회': 8.8,
-  '목포대랄랄라': 3.3, '제미에듀': 3.3, '프리랜서': 8.8, '제주고등학교': 3.3
+  '목포대랄랄라': 3.3, '제미에듀': 3.3, '프리랜서': 3.3, '제주고등학교': 3.3
 };
 const DEFAULT_TAX_RATE = 3.3;
+// 프리랜서는 발주처가 매번 달라 세율이 일정하지 않다(3.3%·8.8% 둘 다 확인됨).
+// 어느 쪽이든 계좌 입금액을 실제 금액으로 고치면 세액·소득구분이 알아서 맞는다.
 
 // 시트 업체명 → 노션 주관업체 초기 선택값 (다르면 모달에서 바꾸면 된다)
 const NOTION_CO_GUESS = {
@@ -1487,7 +1489,12 @@ function openSettleModal(id) {
   const dep = document.getElementById('sf-deposit');
   dep.value = ''; dep.dataset.auto = '';          // 이전에 열었던 값이 남지 않도록 초기화
 
-  document.getElementById('sf-role').value     = '강사';
+  // 참여형태는 비고·수업주제에 적힌 말로 추측해 둔다 (틀리면 바꾸면 된다)
+  const hint = (base.note || '') + ' ' + (base.topic || '');
+  document.getElementById('sf-role').value =
+      /보조\s*강사/.test(hint)                 ? '보조강사'
+    : /운영\s*지원|스태?프|행사\s*지원/.test(hint) ? '운영지원'
+    : '강사';
   document.getElementById('sf-taxed').checked  = true;
   document.getElementById('sf-hasPayback').checked = false;
   document.getElementById('sf-payback').value  = '';
@@ -1608,7 +1615,14 @@ async function saveSettle() {
     payback: pbs[i]
   }));
 
-  const income = !taxed ? '' : rate === 3.3 ? '사업소득' : rate === 8.8 ? '기타소득' : '';
+  /* 소득구분은 '가정한 세율'이 아니라 실제로 떼인 세액으로 판정한다.
+     자동 세율이 빗나가도(예: 프리랜서 8.8% 가정 → 실제 3.3%) 계좌 입금액을
+     고치면 여기서 바로잡힌다. 반올림 오차 때문에 ±0.4%p 를 허용한다. */
+  const effRate = gross > 0 ? (gross - deposit) / gross * 100 : 0;
+  const income  = (!taxed || effRate <= 0)         ? ''
+                : Math.abs(effRate - 3.3) <= 0.4   ? '사업소득'
+                : Math.abs(effRate - 8.8) <= 0.4   ? '기타소득'
+                : '';
   const msg = `${picked.length}건을 정산 등록합니다.\n\n`
     + `강의료 합계  ${won(gross)}원\n`
     + `계좌 입금액  ${won(deposit)}원\n`
@@ -1641,6 +1655,7 @@ async function saveSettle() {
     });
     closeOverlay('settleOverlay');
     render();
+    btn.disabled = false; btn.textContent = '정산 등록';   // 알림창 뜨기 전에 되돌린다
     alert(`정산 등록 완료\n\n새로 생성 ${r.created || 0}건`
         + `\n기존 행 갱신 ${r.updated || 0}건`
         + ((r.failed && r.failed.length) ? `\n실패 ${r.failed.length}건 — ${r.failed.join(', ')}` : ''));
