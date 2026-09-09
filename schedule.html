@@ -202,15 +202,16 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   line-height:1.4; margin-bottom:3px;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
+/* 업체명이 잘리지 않도록 두 줄로 나눈다 — 1줄 업체명(칸 너비 전부 사용) / 2줄 시작시각 */
 .ev-badge {
-  display:flex; align-items:center; gap:3px;
-  font-size:0.66rem; font-weight:600;
-  padding:2px 5px; border-radius:4px; margin-bottom:2px;
-  cursor:pointer; overflow:hidden;
-  max-width:100%; line-height:1.5;
+  display:block;
+  font-size:0.63rem; font-weight:600;
+  padding:3px 5px; border-radius:4px; margin-bottom:2px;
+  cursor:pointer; max-width:100%; line-height:1.35;
 }
-.ev-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; display:inline-block; }
-.ev-txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+.ev-top { display:flex; align-items:flex-start; gap:3px; }
+.ev-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; display:inline-block; margin-top:4px; }
+.ev-txt { flex:1; min-width:0; white-space:normal; word-break:break-all; }
 .ev-more { font-size:0.66rem; color:var(--muted); padding-left:3px; }
 
 /* ── LIST ── */
@@ -393,8 +394,8 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
 /* ── 달력 뱃지 시간 · 더보기 ── */
 .ev-tm {
-  font-family:'JetBrains Mono',monospace; font-size:0.56rem;
-  opacity:.72; flex-shrink:0; letter-spacing:-.02em;
+  font-family:'JetBrains Mono',monospace; font-size:0.55rem;
+  opacity:.7; letter-spacing:-.02em; padding-left:7px; line-height:1.4;
 }
 .ev-more { cursor:pointer; }
 .ev-more:hover { color:var(--accent); text-decoration:underline; }
@@ -1283,11 +1284,12 @@ function makeCell(day,year,month,other,isToday=false) {
       const c=getCompanyColor(ev.company), b=document.createElement('div');
       b.className='ev-badge';
       b.style.cssText=`background:${hexToRgba(c.dot,.1)};color:${c.color}`;
-      // 같은 업체 강의가 하루에 여러 건일 때 구분되도록 시작 시각을 함께 보여준다
+      // 업체명은 자르지 않고 칸 너비에 맞춰 줄바꿈한다.
+      // 시작 시각은 아랫줄에 작게 — 같은 업체 강의가 하루에 여러 건일 때 구분용.
       const st = ev.time ? ev.time.split(/[~\-]/)[0].trim() : '';
-      b.innerHTML=`<span class="ev-dot" style="background:${c.dot}"></span>`
-        + (st ? `<span class="ev-tm">${escC(st)}</span>` : '')
-        + `<span class="ev-txt">${trunc(ev.company, st ? 4 : 6)}</span>`;
+      b.innerHTML=`<div class="ev-top"><span class="ev-dot" style="background:${c.dot}"></span>`
+        + `<span class="ev-txt">${escC(ev.company)}</span></div>`
+        + (st ? `<div class="ev-tm">${escC(st)}</div>` : '');
       b.title=`[${ev.type}] ${ev.company}${ev.school?' · '+ev.school:''}${ev.time?' '+ev.time:''}`;
       b.onclick=e=>{e.stopPropagation();openEditModal(ev.id);}; cell.appendChild(b);
       // 수업 종료 시간 기준으로 경력 등록 버튼 / 완료 뱃지 표시
