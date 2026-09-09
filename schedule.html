@@ -898,6 +898,12 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
         <input type="text" class="finp" id="f-topic" placeholder="예: AI 기초 이해">
       </div>
       <div class="fgrp full">
+        <label class="flbl" for="f-expected">예상금액
+          <span style="font-weight:400;color:var(--muted);font-size:0.62rem;text-transform:none;letter-spacing:0">
+            (받을 것으로 예상되는 금액 · 넣으면 노션 월별 차트에 잡힙니다)</span></label>
+        <input type="number" class="finp" id="f-expected" placeholder="예: 160000 (모르면 비워두세요)" style="appearance:textfield">
+      </div>
+      <div class="fgrp full">
         <label class="flbl">비고</label>
         <textarea class="ftxt" id="f-note" placeholder="기타 메모"></textarea>
       </div>
@@ -1189,11 +1195,28 @@ async function loadData() {
   render();
 }
 
+/* 네트워크가 잠깐 끊겨 저장이 실패하는 일이 있어 한 번 자동 재시도한다.
+   ⚠️ 아무거나 재시도하면 안 된다 — add·complete·certAdd 는 요청이 서버에 닿은 뒤
+   응답만 실패해도 재시도하면 **행이 두 번 들어간다.** 몇 번을 보내도 결과가 같은
+   액션만 재시도하고, 나머지는 예전처럼 한 번만 보내고 실패를 알린다. */
+const RETRYABLE = ['update','delete','certUpdate','certDelete','syncCalendar','notionLedger'];
+
 async function apiPost(payload) {
-  const res  = await fetch(SCHEDULE_API_URL, { method:'POST', body:JSON.stringify(payload) });
-  const json = await res.json();
-  if (json.error) throw new Error(json.message || '서버 오류');
-  return json;
+  const canRetry = payload && RETRYABLE.indexOf(payload.action) > -1;
+  const tries = canRetry ? 2 : 1;
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res  = await fetch(SCHEDULE_API_URL, { method:'POST', body:JSON.stringify(payload) });
+      const json = await res.json();
+      if (json.error) throw new Error(json.message || '서버 오류');
+      return json;
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await new Promise(r => setTimeout(r, 900));
+    }
+  }
+  throw lastErr;
 }
 const uid        = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const pad        = n  => String(n).padStart(2,'0');
@@ -1426,7 +1449,7 @@ function openAddModal(presetDate) {
   document.getElementById('f-role').value='강사';
   document.getElementById('f-mode').value='오프라인';
   document.getElementById('modeGrp').style.display='none';
-  ['f-company','f-school','f-time','f-hours','f-topic','f-note'].forEach(id=>document.getElementById(id).value='');
+  ['f-company','f-school','f-time','f-hours','f-topic','f-note','f-expected'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('editBanner').hidden = true;
   document.getElementById('saveBtn').textContent = '저장';
   showRepBox(true); resetRep();
@@ -1443,6 +1466,7 @@ function openEditModal(id) {
   document.getElementById('f-company').value=s.company||''; document.getElementById('f-school').value=s.school||'';
   document.getElementById('f-time').value=s.time||''; document.getElementById('f-hours').value=s.hours||'';
   document.getElementById('f-topic').value=s.topic||''; document.getElementById('f-note').value=s.note||'';
+  document.getElementById('f-expected').value=s.expected||'';
 
   /* 추가 모달과 겉모습이 같아 엉뚱한 강의를 덮어쓰는 일이 있었다.
      어떤 일정을 고치는 중인지 위쪽에 크게 알려준다. */
@@ -1559,7 +1583,8 @@ async function saveSchedule() {
     mode: type==='교육수강' ? document.getElementById('f-mode').value : '',
     school:document.getElementById('f-school').value.trim(),time:document.getElementById('f-time').value.trim(),
     hours:document.getElementById('f-hours').value.trim(),
-    topic:document.getElementById('f-topic').value.trim(),note:document.getElementById('f-note').value.trim()};
+    topic:document.getElementById('f-topic').value.trim(),note:document.getElementById('f-note').value.trim(),
+    expected:document.getElementById('f-expected').value.trim()};
   // 회차 등록 — 추가할 때만, 날짜가 2개 이상일 때만 갈라진다
   const dates = editId ? [date] : repDates();
   if (!editId && dates.length > 1) { await saveSeries(entry, dates); return; }
