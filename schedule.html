@@ -765,6 +765,12 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
           <option>방과후학교</option><option>디지털튜터</option><option>교육수강</option>
         </select>
       </div>
+      <div class="fgrp">
+        <label class="flbl" for="f-role">참여형태</label>
+        <select class="fsel" id="f-role">
+          <option>강사</option><option>보조강사</option><option>안전요원</option>
+        </select>
+      </div>
       <div class="fgrp" id="modeGrp" style="display:none">
         <label class="flbl">수강방식</label>
         <select class="fsel" id="f-mode">
@@ -1235,6 +1241,7 @@ function openAddModal(presetDate) {
   editId=null; document.getElementById('modalTitle').textContent='강의 추가';
   document.getElementById('f-date').value=(typeof presetDate==='string'&&presetDate)?presetDate:new Date().toISOString().split('T')[0];
   document.getElementById('f-type').value='디싹';
+  document.getElementById('f-role').value='강사';
   document.getElementById('f-mode').value='오프라인';
   document.getElementById('modeGrp').style.display='none';
   ['f-company','f-school','f-time','f-hours','f-topic','f-note'].forEach(id=>document.getElementById(id).value='');
@@ -1244,6 +1251,7 @@ function openEditModal(id) {
   const s=data.find(x=>x.id===id); if(!s) return;
   editId=id; document.getElementById('modalTitle').textContent='강의 수정';
   document.getElementById('f-date').value=s.date; document.getElementById('f-type').value=s.type;
+  document.getElementById('f-role').value=s.role||'강사';
   document.getElementById('f-mode').value=s.mode||'오프라인';
   document.getElementById('modeGrp').style.display = s.type==='교육수강' ? '' : 'none';
   document.getElementById('f-company').value=s.company||''; document.getElementById('f-school').value=s.school||'';
@@ -1257,6 +1265,7 @@ async function saveSchedule() {
   getCompanyColor(company);
   const type=document.getElementById('f-type').value;
   const entry={date,type,company,
+    role: document.getElementById('f-role').value,
     mode: type==='교육수강' ? document.getElementById('f-mode').value : '',
     school:document.getElementById('f-school').value.trim(),time:document.getElementById('f-time').value.trim(),
     hours:document.getElementById('f-hours').value.trim(),
@@ -1489,11 +1498,16 @@ function openSettleModal(id) {
   const dep = document.getElementById('sf-deposit');
   dep.value = ''; dep.dataset.auto = '';          // 이전에 열었던 값이 남지 않도록 초기화
 
-  // 참여형태는 비고·수업주제에 적힌 말로 추측해 둔다 (틀리면 바꾸면 된다)
+  /* 참여형태 — 강의에 저장된 값을 노션 선택지로 옮긴다.
+     노션에는 '안전요원' 옵션이 없어 기존 '운영지원'으로 보낸다.
+     값이 없는 예전 강의는 비고·수업주제의 표현으로 추측한다. */
   const hint = (base.note || '') + ' ' + (base.topic || '');
   document.getElementById('sf-role').value =
-      /보조\s*강사/.test(hint)                 ? '보조강사'
-    : /운영\s*지원|스태?프|행사\s*지원/.test(hint) ? '운영지원'
+      base.role === '안전요원'  ? '운영지원'
+    : base.role === '보조강사'  ? '보조강사'
+    : base.role === '강사'      ? '강사'
+    : /보조\s*강사/.test(hint)                    ? '보조강사'
+    : /안전\s*요원|운영\s*지원|스태?프|행사\s*지원/.test(hint) ? '운영지원'
     : '강사';
   document.getElementById('sf-taxed').checked  = true;
   document.getElementById('sf-hasPayback').checked = false;

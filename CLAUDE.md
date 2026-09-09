@@ -237,7 +237,22 @@ profile/
 - **SCHEDULE_API_URL**: `https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec`
 - ⚠️ **resume-download.js의 RESUME_API_URL과 완전히 동일** — 하나의 Apps Script로 통합 관리
 - **Apps Script 파일**: `schedule-apps-script.txt` (resume + schedule + 카카오 통합)
-- **연결 시트**: `강의스케쥴` (11컬럼), `경력사항` (경력등록), **`자격증현황` (자격·연수 관리)**
+- **연결 시트**: `강의스케쥴` (14컬럼), `경력사항` (경력등록), **`자격증현황` (자격·연수 관리)**
+
+#### ⚠️ 강의스케쥴 시트 컬럼 지도 (새 컬럼 추가 전 반드시 확인)
+컬럼 번호가 파일마다 흩어져 있어 **실제로 충돌이 날 뻔했다**(참여형태를 M에 넣으려다 캘린더ID를 덮어쓸 뻔함).
+
+| 열 | 이름 | 쓰는 곳 | 상수 |
+|---|---|---|---|
+| A~J (1~10) | ID·날짜·구분·업체명·수강방식·출강학교단체·시간·시수·수업주제·비고 | `handleSchedule_` add/update 가 `getRange(row,1,1,11)` 로 한 번에 씀 | — |
+| K (11) | 경력등록 | `handleSchedule_` (`complete`) | 하드코딩 `11` |
+| L (12) | 정산등록 | `notion.gs` | `COL_SETTLED` |
+| M (13) | 캘린더ID | `calendar.gs` | `CAL_EVENTID_COL` |
+| N (14) | **참여형태** | `Code.gs` | `COL_ROLE` |
+
+- K 이후 컬럼은 `appendRow`/`setValues` 범위(1~11) 밖이라 **개별 `setValue` 로 따로 기록**한다. 덕분에 수정 시 서로의 값을 덮어쓰지 않는다.
+- **참여형태**: `강사` / `보조강사` / `안전요원` (디싹 안전요원 업무 반영). 빈 값이면 `강사`로 본다.
+- 노션 `참여형태`에는 안전요원 옵션이 없어 정산 시 **`안전요원` → `운영지원`** 으로 보낸다(과거 "어린이날 행사 스태프"도 운영지원으로 기록됨). 옵션 오염 방지 원칙 유지.
 - **시간 형식**: `HH:MM-HH:MM` 또는 `HH:MM~HH:MM` 둘 다 허용 (정규식 `/[~\-]/`)
 - **회사 색상**: `PRESET_COMPANIES` 객체에 하드코딩 + `AUTO_PALETTE` 자동 배정, `localStorage`에 저장
 - **달력 셀 클릭**: 날짜 칸의 빈 영역 클릭 시 해당 날짜로 강의 추가 모달이 열림(하루 2건 이상 등록 가능). 뱃지 클릭은 수정.
