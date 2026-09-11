@@ -1112,7 +1112,7 @@ const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES
 
 /* 배포 버전 스탬프 — 페이지를 고쳐 올릴 때마다 이 값을 함께 올린다.
    푸터에 페이지/서버 버전이 나란히 찍히므로 '올린 게 맞나?' 를 눈으로 바로 확인할 수 있다. */
-const PAGE_VERSION = '2026-09-09a';
+const PAGE_VERSION = '2026-09-11a';
 
 const PRESET_COMPANIES = {
   '대정중학교':       '#1e56c8',  // 파랑
@@ -1187,7 +1187,11 @@ async function loadData() {
   } catch(e) {}
 
   try {
-    const res  = await fetch(SCHEDULE_API_URL + '?type=schedule');
+    /* 매번 다른 URL + no-store 로 브라우저 캐시를 건너뛴다.
+       예전에는 URL이 똑같아 크롬이 옛 응답을 계속 내줬다 — 폰에서 경력등록을 해도
+       PC 는 F5 를 눌러도 '등록' 버튼이 그대로였다(2026-09-11). */
+    const res  = await fetch(SCHEDULE_API_URL + '?type=schedule&_=' + Date.now(),
+                             { cache: 'no-store' });
     const json = await res.json();
     if (Array.isArray(json)) {
       data = json;
@@ -2346,7 +2350,7 @@ const escC = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,
 
 async function loadCerts() {
   try {
-    const res  = await fetch(SCHEDULE_API_URL);
+    const res  = await fetch(SCHEDULE_API_URL + '?_=' + Date.now(), { cache: 'no-store' });
     const json = await res.json();
     certData = Array.isArray(json.certificates) ? json.certificates : [];
   } catch(e) { console.error('자격/연수 로드 실패:', e); certData = []; }
@@ -2443,6 +2447,26 @@ loadLedger();
 setupCompanyAc();
 showVersions();
 
+/* ── 다른 기기에서 바꾼 내용 자동 반영 ───────────────────────
+   폰(홈 화면 앱)과 PC 가 같은 시트를 보지만, 각자 열릴 때 한 번만 읽었다.
+   폰에서 경력등록을 해도 열어둔 PC 화면은 옛 데이터를 계속 들고 있었다.
+   탭·앱으로 돌아올 때 다시 읽는다. 30초 안에 돌아온 것은 그냥 둔다
+   (창을 자주 오가도 시트를 계속 두드리지 않도록). */
+const SYNC_MIN_GAP = 30000;
+let lastSyncAt = Date.now();
+
+function syncIfStale() {
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - lastSyncAt < SYNC_MIN_GAP) return;
+  lastSyncAt = Date.now();
+  loadData();
+  loadCerts();
+}
+
+document.addEventListener('visibilitychange', syncIfStale);
+// 아이폰 홈 화면 앱은 되돌아올 때 bfcache 에서 복원되는 경우가 있다
+window.addEventListener('pageshow', e => { if (e.persisted) syncIfStale(); });
+
 /* 페이지 버전과 서버(Apps Script) 버전을 푸터에 나란히 찍는다.
    셋 중 하나만 안 올라가 있으면 여기서 바로 보인다. */
 async function showVersions() {
@@ -2450,7 +2474,8 @@ async function showVersions() {
   if (!el) return;
   el.textContent = 'page ' + PAGE_VERSION + ' · server …';
   try {
-    const r = await fetch(SCHEDULE_API_URL + '?type=version');
+    const r = await fetch(SCHEDULE_API_URL + '?type=version&_=' + Date.now(),
+                          { cache: 'no-store' });
     const v = await r.json();
     const same = v.code === PAGE_VERSION;
     el.textContent = 'page ' + PAGE_VERSION + ' · code ' + v.code
