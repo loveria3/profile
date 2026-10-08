@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6차시 — 내 손으로 만드는 PDF 편집기</title>
+<style>
+  :root{--ink:#1f2328;--sub:#6b7480;--line:#e3e6ea;--bg:#f7f8fa;--navy:#1f3864;
+        --soft:#eef1f7;--ok:#2f6b4f;--warn:#8a5a00;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 70px}
+
+  header{border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:8px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{font-size:13px;color:var(--sub);margin:8px 0 0}
+  .htop{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .open{margin-left:auto;flex:none;background:var(--navy);color:#fff;text-decoration:none;
+        border-radius:6px;padding:12px 20px;font-size:15px;font-weight:700;white-space:nowrap}
+  .open span{font-size:13px;opacity:.75;margin-left:4px}
+  .open:hover{background:#16294a}
+  .opens{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .open.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+  .open.ghost:hover{background:var(--soft)}
+  .open.cal{background:#fff;color:var(--warn);border:1px solid var(--warn)}
+  .open.cal:hover{background:#fffaf0}
+  .open.cal span{opacity:.9}
+  @media(max-width:620px){.opens{margin-left:0;width:100%}
+    .open{margin-left:0;flex:1 1 100%;text-align:center}}
+
+  section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin:14px 0}
+  section.challenge{border:1px dashed var(--navy);background:#fcfcfe}
+  section.rule{border:2px solid var(--navy);background:#f6f9ff}
+  section.home{border:1px solid var(--warn);background:#fffdf6}
+  .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+    min-width:26px;height:26px;padding:0 5px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .num.ch{background:#fff;color:var(--navy);border:1px dashed var(--navy)}
+  .num.hm{background:var(--warn)}
+  h2{font-size:19px;margin:0;letter-spacing:-.01em}
+  .badge{font-size:11px;font-weight:700;color:var(--navy);border:1px solid var(--navy);
+    border-radius:3px;padding:1px 6px}
+  .badge.step{background:var(--navy);color:#fff}
+  .badge.hm{color:var(--warn);border-color:var(--warn)}
+  .time{margin-left:auto;font-size:12px;color:var(--sub)}
+  .one{font-size:14px;color:var(--sub);margin:8px 0 0}
+  .only{font-size:13px;color:var(--warn);margin:8px 0 0}
+
+  .box{background:#fbfcfd;border:1px solid var(--line);border-radius:5px;margin:14px 0 0}
+  .bar{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;
+    background:#f2f4f7;border-bottom:1px solid var(--line);border-radius:5px 5px 0 0}
+  .bar span{font-size:12px;font-weight:700;color:var(--navy)}
+  .txt{padding:14px 16px;font-size:15px;white-space:pre-wrap;word-break:keep-all}
+  button{background:var(--navy);color:#fff;border:0;border-radius:4px;padding:6px 14px;
+    font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex:none}
+  button:hover{background:#16294a}
+  button.copied{background:var(--ok)}
+
+  .jump{position:sticky;top:0;z-index:10;display:flex;gap:6px;flex-wrap:wrap;
+    padding:10px 0 9px;background:rgba(247,248,250,.96);border-bottom:1px solid var(--line)}
+  .jump a{min-width:38px;height:38px;padding:0 7px;border:1px solid var(--line);border-radius:6px;background:#fff;
+    color:var(--sub);text-decoration:none;font-weight:700;font-size:14px;
+    display:flex;align-items:center;justify-content:center}
+  .jump a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  section{scroll-margin-top:64px}
+
+  .demo{border:1px dashed #9aa3b0;border-radius:6px;padding:4px 14px 14px;margin:16px 0 0;background:#fafbfc}
+  .demoh{font-size:12.5px;font-weight:700;color:#6b7480;margin:10px 0 0;letter-spacing:.01em}
+  .demoh span{font-weight:400;font-size:12px;color:#98a1ad}
+  .demo .box{margin-top:10px}
+  .part{margin:26px 0 6px;padding:16px 20px;border-radius:6px;
+    background:#fffaf0;border:1px dashed var(--warn)}
+  .pt{font-size:17px;font-weight:800;color:var(--warn);letter-spacing:-.01em}
+  .pd{font-size:14px;color:#6b5a35;margin-top:7px;line-height:1.65}
+  .jump a.hm{color:var(--warn);border-color:#e6d5a8}
+  .jump a.hm.on{background:var(--warn);color:#fff;border-color:var(--warn)}
+  .small{font-size:12.5px;color:var(--sub);margin:8px 0 0}
+  .ph{color:#1668dc;font-weight:700}
+  .dl{display:inline-block;margin-top:10px;background:var(--navy);color:#fff;text-decoration:none;
+    border-radius:4px;padding:7px 14px;font-size:13px;font-weight:700}
+  .dl.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+  .dl:hover{background:#16294a;color:#fff}
+
+  ul{margin:12px 0 0;padding-left:20px}
+  li{margin:5px 0;font-size:15px}
+  ol{margin:12px 0 0;padding-left:22px}
+  ol li{margin:7px 0}
+  .note{background:var(--soft);border-left:3px solid var(--navy);padding:10px 14px;
+    margin:14px 0 0;font-size:14px;border-radius:0 4px 4px 0}
+  .save{background:#f2f8f4;border-left:3px solid var(--ok);padding:11px 14px;margin:14px 0 0;
+    font-size:14px;border-radius:0 4px 4px 0}
+  .save b{color:var(--ok)}
+  table{width:100%;border-collapse:collapse;margin:14px 0 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#f2f4f7;width:34%;white-space:nowrap}
+  .chk{list-style:none;padding-left:0}
+  .chk li:before{content:"☐ ";color:var(--navy);font-weight:700}
+  .end{background:var(--navy);color:#fff;border-radius:6px;padding:20px 22px;margin:18px 0 0}
+  .end p{margin:5px 0;font-size:15px}
+  footer{text-align:center;font-size:12px;color:var(--sub);margin-top:26px}
+  @media print{button,.jump,.dl{display:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<!-- ▼ PDF 저장 버튼 (상단 오른쪽) -->
+<style>
+#pdfSaveBtn{position:fixed;top:14px;right:16px;z-index:9999;
+  background:#1f3864;color:#fff !important;text-decoration:none !important;
+  border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:inherit;line-height:1;display:inline-block;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);border:0}
+#pdfSaveBtn:hover{background:#16294a}
+@media print{#pdfSaveBtn{display:none !important}}
+@media(max-width:600px){#pdfSaveBtn{top:8px;right:8px;padding:7px 12px;font-size:12px}}
+</style>
+<a href="#" id="pdfSaveBtn" title="인쇄 창에서 '대상'을 [PDF로 저장]으로 고르세요"
+   onclick="window.print();return false;">⬇ PDF 저장</a>
+<!-- ▲ PDF 저장 버튼 -->
+
+<div class="wrap">
+
+<header>
+  <div class="htop">
+    <div>
+      <h1>6차시 — 내 손으로 만드는 PDF 편집기</h1>
+      <p class="sub">클로드로 바꾸는 내 일상 · 제주도민대학 · 강사 강지애 &nbsp;|&nbsp; 2026. 8. 20.(목)</p>
+    </div>
+    <div class="opens">
+      <a class="open" href="pdf.html" target="_blank" rel="noopener">완성된 PDF 편집기 열기 <span>↗</span></a>
+      <a class="open ghost" href="pdf.html" download="PDF편집기.html">편집기 내려받기 <span>↓</span></a>
+      <a class="open cal" href="schedule.html" target="_blank" rel="noopener">일정앱(구글캘린더) <span>집에서 ↗</span></a>
+    </div>
+  </div>
+</header>
+
+<nav class="jump">
+  <a href="#s0">규칙</a>
+  <a href="#s1">1</a>
+  <a href="#s2">2</a>
+  <a href="#s3">3</a>
+  <a href="#s4">4</a>
+  <a href="#s5">5</a>
+  <a href="#s6">미션</a>
+  <a href="#s7">북마크</a>
+  <a href="#s8" class="hm">집에서</a>
+  <a href="#s9" class="hm">꾸미기</a>
+  <a href="#s10" class="hm">도전</a>
+</nav>
+
+<!-- 0 -->
+<section id="s0" class="rule">
+  <div class="head"><span class="num">!</span><h2>오늘의 규칙 — 한 번에 하나씩</h2><span class="time">5분</span></div>
+  <p class="one">오늘은 <b>무료 계정</b>으로 앱을 <b>다섯 번</b>에 걸쳐 키웁니다. 요청 한 번이 곧 자원입니다.</p>
+  <ol>
+    <li><b>새 대화를 열지 마세요.</b> 열면 앱을 처음부터 다시 만들어야 합니다. 오늘은 대화창 하나로 끝까지 갑니다.</li>
+    <li>안 될 때 <b>"다시 만들어줘"는 금지</b>입니다. → <b>"○○ 부분만 고쳐줘"</b> 라고 하세요.</li>
+    <li><b>화면 사진을 올려 물어보지 마세요.</b> 사진은 소모가 큽니다. 무슨 일이 생겼는지 말로 적으세요.</li>
+    <li><b>초록색 저장 표시가 나오면 무조건 [다운로드].</b> 되돌아갈 자리를 만들어 두는 겁니다.</li>
+    <li>막히면 그 자리에서 <b>강사 완성본</b>을 받아 다음 단계로 합류하세요. 하는 일은 똑같습니다.</li>
+  </ol>
+  <p>
+    <a class="dl" href="pdf.html" target="_blank" rel="noopener">강사 완성본 열어 보기</a>
+    <a class="dl ghost" href="pdf.html" download="PDF편집기.html">강사 완성본 내려받기</a>
+  </p>
+  <p class="small">막혔을 때 쓰는 <b>비상용</b>입니다. 내려받으면 <b>PDF편집기.html</b> 이라는 파일이 생기고,
+    <b>더블클릭</b>하면 크롬에서 바로 열립니다. 제목을 눌러 <b>내 이름</b>으로 바꿀 수 있습니다.</p>
+  <p class="note"><b>한도에 걸렸거나 "대화가 너무 깁니다"가 떠도 끝이 아닙니다.</b>
+     받아 둔 <b>.html 파일을 새 대화에 올려서</b> "이 파일에 ○○ 기능을 추가해줘" 하면 그대로 이어집니다.
+     집에서 복습할 때도 이 방법을 씁니다.</p>
+  <p class="one" style="margin-top:16px"><b>오늘 쓸 파일은 이 하나에 다 들어 있습니다.</b> 수업 시작할 때 먼저 받아 두세요.</p>
+  <p>
+    <a class="dl" href="img/6차시_실습_샘플.zip" download>실습 샘플 <b>모두 내려받기</b> (압축 파일)</a>
+  </p>
+  <p class="small">받은 뒤 <b>압축을 꼭 푸세요</b> — 파일을 <b>오른쪽 단추 → 압축 풀기</b>.
+    안에 파일 아홉 개가 있고, 이름 앞 번호가 <b>쓰는 순서</b>입니다.
+    푼 폴더는 <b>바탕화면</b>에 두면 찾기 쉽습니다.</p>
+</section>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="head"><span class="num">1</span><h2>올리고 · 옮기고 · 저장하기</h2><span class="badge step">1단계</span><span class="time">28분</span></div>
+  <p class="one">여기까지 하면 <b>쓸 수 있는 앱</b>이 됩니다. 하는 일은 세 가지 — <b>올려서 보기 · 순서 바꾸기 · 합쳐서 저장</b>.</p>
+
+  <p class="note"><b>보내는 방법이 두 가지입니다.</b><br>
+    <b>강사</b>는 앞에 나와서 <b>하나 · 둘 · 셋을 따로따로</b> 보냅니다 — 무엇이 어떻게 붙는지 보여 드리려고요.<br>
+    <b>수강생</b>은 아래 <b>큰 프롬프트 하나만</b> 복사해서 보내세요. 사용량이 훨씬 적게 듭니다.</p>
+
+  <div class="box">
+    <div class="bar"><span>프롬프트 1 — 복사한 뒤 <b>이름부터 내 이름으로 고치세요</b></span><button>복사</button></div>
+    <div class="txt">PDF를 다루는 웹앱을 아티팩트로 만들어줘. 제목은 강지애의 PDF 편집기 라고 해줘.
+
+기능은 세 가지야. 아래 순서대로 만들어줘.
+
+컴퓨터에 있는 PDF 파일을 화면 위로 끌어다 놓으면 올라가게 해줘. 여러 개를 한꺼번에 놓아도 되게 해줘.
+올린 PDF의 페이지를 그림으로 죽 늘어놓아 보여줘. 페이지마다 번호를 붙여줘.
+파일별로 칸을 나누지 말고, 모든 파일의 페이지를 하나의 목록에 이어서 나란히 늘어놓아 줘.
+번호도 파일마다 1번부터 다시 세지 말고, 전체를 통틀어 1번부터 차례로 붙여줘.
+어느 파일에서 온 페이지인지는 그림 아래에 작은 글씨로만 적어줘.
+
+페이지를 손으로 끌어다 놓으면 순서가 바뀌게 해줘.
+서로 다른 파일에서 온 페이지끼리도 순서를 바꿀 수 있어야 해.
+예를 들어 두 번째 파일의 1페이지를 첫 번째 파일의 1페이지 앞으로 옮길 수 있어야 해.
+파일 안에서만 순서가 바뀌면 안 돼.
+끌기가 어려운 사람을 위해서, 페이지마다 앞으로 보내기 단추와 뒤로 보내기 단추도 같이 넣어줘.
+페이지마다 빼기 단추를 넣어줘.
+잘못 눌렀을 때 쓸 되돌리기 단추도 하나 넣어줘.
+
+화면에 있는 페이지를 전부 하나로 합쳐서 PDF 한 개로 저장하게 해줘.
+저장하기 전에 파일 이름을 내가 직접 적을 수 있게 해줘.
+
+글씨는 크게 하고, 단추에는 무슨 일이 일어나는지 한글로 적어줘.</div>
+  </div>
+
+  <div class="demo">
+    <div class="demoh">강사 시연용 — 하나씩 따로 보낼 때 &nbsp;<span>수강생은 안 써도 됩니다</span></div>
+
+    <div class="box">
+      <div class="bar"><span>1 - 하나 &nbsp;·&nbsp; 올려서 보기</span><button>복사</button></div>
+      <div class="txt">PDF를 다루는 웹앱을 아티팩트로 만들어줘. 제목은 강지애의 PDF 편집기 라고 해줘.
+
+컴퓨터에 있는 PDF 파일을 화면 위로 끌어다 놓으면 올라가게 해줘. 여러 개를 한꺼번에 놓아도 되게 해줘.
+올린 PDF의 페이지를 그림으로 죽 늘어놓아 보여줘. 페이지마다 번호를 붙여줘.
+파일별로 칸을 나누지 말고, 모든 파일의 페이지를 하나의 목록에 이어서 나란히 늘어놓아 줘.
+번호도 파일마다 1번부터 다시 세지 말고, 전체를 통틀어 1번부터 차례로 붙여줘.
+어느 파일에서 온 페이지인지는 그림 아래에 작은 글씨로만 적어줘.
+
+글씨는 크게 하고, 단추에는 무슨 일이 일어나는지 한글로 적어줘.</div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span>1 - 둘 &nbsp;·&nbsp; 순서 바꾸고 빼기</span><button>복사</button></div>
+      <div class="txt">페이지를 정리하는 기능을 더해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+페이지를 손으로 끌어다 놓으면 순서가 바뀌게 해줘.
+서로 다른 파일에서 온 페이지끼리도 순서를 바꿀 수 있어야 해.
+예를 들어 두 번째 파일의 1페이지를 첫 번째 파일의 1페이지 앞으로 옮길 수 있어야 해.
+파일 안에서만 순서가 바뀌면 안 돼.
+끌기가 어려운 사람을 위해서, 페이지마다 앞으로 보내기 단추와 뒤로 보내기 단추도 같이 넣어줘.
+페이지마다 빼기 단추를 넣어줘.
+잘못 눌렀을 때 쓸 되돌리기 단추도 하나 넣어줘.</div>
+    </div>
+
+    <div class="box">
+      <div class="bar"><span>1 - 셋 &nbsp;·&nbsp; 합쳐서 저장하기</span><button>복사</button></div>
+      <div class="txt">이제 저장하는 기능을 더해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+화면에 있는 페이지를 전부 하나로 합쳐서 PDF 한 개로 저장하게 해줘.
+저장하기 전에 파일 이름을 내가 직접 적을 수 있게 해줘.</div>
+    </div>
+  </div>
+
+  <p class="one" style="margin-top:18px"><b>확인은 압축을 푼 폴더의 1번과 2번 파일로 합니다.</b>
+    <b>01 연습용 파랑</b>(3페이지) 과 <b>02 연습용 주황</b>(2페이지) — 색이 달라서 섞여도 바로 구분됩니다.</p>
+
+  <p class="one" style="margin-top:16px"><b>하나</b> — 올려서 보기</p>
+  <ul>
+    <li>제목에 <b>내 이름</b>이 떴는지 먼저 확인 — <b>내가 만든 앱</b>입니다</li>
+    <li><b>01 파랑</b>과 <b>02 주황</b>을 한꺼번에 끌어다 놓기 → 다섯 장이 <b>한 줄로</b> 죽 보이면 성공</li>
+  </ul>
+
+  <p class="one" style="margin-top:16px"><b>둘</b> — 순서 바꾸고 빼기</p>
+  <ul>
+    <li><b>주황의 1페이지를 맨 앞으로</b> 끌어다 놓기 →
+      <b>주황 · 파랑 · 파랑 · 파랑 · 주황</b> 처럼 색이 섞이면 제대로 된 것입니다</li>
+    <li>아무 페이지나 <b>빼기</b> → 곧바로 <b>되돌리기</b></li>
+    <li>끌기가 잘 안 되면 <b>앞으로 · 뒤로 단추</b>를 쓰세요. 마우스 끌기는 손에 익는 데 시간이 걸립니다</li>
+  </ul>
+
+  <p class="one" style="margin-top:16px"><b>셋</b> — 합쳐서 저장하기</p>
+  <ul>
+    <li>섞어 놓은 그대로 <b>내연습</b> 이라는 이름으로 저장</li>
+    <li>내려받은 파일을 <b>열어서 눈으로 확인</b> — 화면에서 본 순서와 같으면 성공</li>
+  </ul>
+
+  <div class="save"><b>저장 ①</b> — 아티팩트 오른쪽 위 <b>[다운로드]</b>를 눌러 <b>.html 파일</b>로 받아 두세요.
+    여기가 첫 번째 되돌아갈 자리입니다.</div>
+
+  <p class="one" style="margin-top:18px"><b>1단계 완성본은 여기서도 받을 수 있습니다.</b>
+    내려받은 <b>.html 파일을 새 대화에 올리면</b> 2단계부터 그대로 이어 갈 수 있습니다.</p>
+  <p>
+    <a class="dl" href="pdfeditor.html" download="PDF편집기_1단계.html">1단계 완성본 내려받기 ↓</a>
+    <a class="dl ghost" href="pdfeditor.html" target="_blank" rel="noopener">먼저 열어 보기 ↗</a>
+  </p>
+  <p class="small"><b>PDF편집기_1단계.html</b> 파일이 생깁니다. <b>더블클릭</b>하면 크롬에서 바로 열립니다.
+    올리는 방법은 <b>강사 안내</b>를 따라 주세요.</p>
+
+  <p class="note" style="margin-top:18px"><b>여기부터는 안 될 때만 보세요.</b> 잘 되면 그냥 넘어가시면 됩니다.</p>
+
+  <div class="box">
+    <div class="bar"><span>화면이 하얗게 나왔을 때만 — 이어서 추가로 보내세요</span><button>복사</button></div>
+    <div class="txt">화면이 하얗게 나와. 무슨 문제인지 찾아서 고쳐줘.
+PDF를 읽는 부분은 pdf.js 와 pdf-lib 을 cdnjs 에서 불러오는 방식으로 다시 만들어줘.</div>
+  </div>
+  <p class="small">무슨 뜻인지 몰라도 괜찮습니다 — <b>고장 났을 때만 쓰는 구급약</b>입니다.</p>
+
+  <div class="box">
+    <div class="bar"><span>파일끼리 순서가 안 바뀔 때만 — 이어서 추가로 보내세요</span><button>복사</button></div>
+    <div class="txt">지금은 같은 파일 안에서만 순서가 바뀌고, 다른 파일의 페이지와는 순서를 바꿀 수가 없어.
+파일별로 나눠 놓지 말고, 올린 모든 페이지를 하나의 목록으로 합쳐서 관리해줘.
+그래야 어느 파일에서 왔든 서로 자리를 바꿀 수 있어.
+지금 있는 기능은 그대로 두고 이 부분만 고쳐줘.</div>
+  </div>
+  <p class="small">파랑끼리는 순서가 바뀌는데 <b>주황을 파랑 앞으로 못 옮기면</b> 이 경우입니다. 아주 흔한 오류입니다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="head"><span class="num">2</span><h2>거꾸로 된 페이지 세우기</h2><span class="badge step">2단계</span><span class="time">8분</span></div>
+  <p class="one">스캔하면 꼭 한두 페이지가 거꾸로 들어갑니다. 관공서에 낼 서류라면 반드시 세워야 합니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 2 — 같은 대화창에 이어서</span><button>복사</button></div>
+    <div class="txt">거꾸로 들어간 페이지를 바로 세우는 기능을 더해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+페이지마다 돌리기 단추를 넣어줘. 한 번 누를 때마다 오른쪽으로 90도씩 돌아가게 해줘.
+화면에 보이는 미리보기 그림도 같이 돌아가게 해줘.
+저장할 때도 돌린 그대로 저장되게 해줘.</div>
+  </div>
+  <ul>
+    <li><b>03 영수증 거꾸로</b>를 올려 두 페이지를 바로 세우기 — <b>돌리기를 두 번</b> 누르면 됩니다</li>
+    <li>저장한 파일을 <b>열어서 눈으로 확인</b> — 미리보기만 돌고 저장은 안 돌아가는 일이 흔합니다</li>
+  </ul>
+  <p class="note">저장한 파일이 여전히 거꾸로면 이렇게 말하세요.<br>
+    <b>"미리보기는 돌아가는데 저장한 파일은 그대로야. 저장할 때도 돌아가게 고쳐줘."</b></p>
+  <div class="save"><b>저장 ②</b> — 다시 <b>[다운로드]</b>. 앞 파일은 지우지 말고 그대로 두세요.</div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="head"><span class="num">3</span><h2>사진을 PDF로</h2><span class="badge step">3단계</span><span class="time">12분</span></div>
+  <p class="one">스마트폰으로 찍은 서류를 그대로 제출용 PDF로 바꿉니다. 오늘 배우는 것 중 <b>실제로 제일 많이 쓰게 될</b> 기능입니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 3</span><button>복사</button></div>
+    <div class="txt">사진도 넣을 수 있게 해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+스마트폰으로 찍은 사진 파일을 끌어다 놓으면 PDF 한 페이지로 들어가게 해줘.
+사진은 A4 용지 한 페이지 가운데에, 원래 비율 그대로 들어가면 돼.
+사진으로 만든 페이지도 순서 바꾸기, 빼기, 돌리기가 똑같이 되게 해줘.</div>
+  </div>
+  <ul>
+    <li>스마트폰으로 아무 종이나 찍어 <b>카톡 나에게 보내기</b> → 컴퓨터에서 내려받아 올리기</li>
+    <li>사진이 없으면 압축 폴더의 <b>06 사진 관리비고지서</b>를 쓰세요 — 사진으로 찍은 서류입니다</li>
+    <li><b>04 계약서 앞장</b>과 <b>05 뒷장</b> 뒤에 사진 한 장을 붙여 <b>한 파일</b>로 저장해 보기</li>
+  </ul>
+  <div class="save"><b>저장 ③</b> — <b>[다운로드]</b>.</div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="head"><span class="num">4</span><h2>PDF를 그림으로</h2><span class="badge step">4단계</span><span class="time">10분</span></div>
+  <p class="one">카톡이나 문자로 보낼 때 PDF는 열기가 번거롭습니다. 그림으로 바꾸면 바로 보입니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 4</span><button>복사</button></div>
+    <div class="txt">페이지를 그림 파일로 뽑는 기능을 더해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+페이지마다 작은 체크 칸을 만들어줘.
+체크한 페이지를 그림으로 저장 이라는 단추를 넣어줘.
+그림 파일 이름도 내가 직접 적을 수 있게 해줘.
+두 장 이상 체크했으면 하나의 압축 파일로 묶어서 받아지게 해줘.</div>
+  </div>
+  <div class="box">
+    <div class="bar"><span>압축 파일이 안 만들어졌을 때만 — 이어서 추가로 보내세요</span><button>복사</button></div>
+    <div class="txt">여러 장을 하나의 압축 파일로 묶는 게 안 돼. JSZip 을 cdnjs 에서 불러와서 고쳐줘.</div>
+  </div>
+  <p class="small">여러 장이 <b>따로따로 떨어져 내려오면</b> 그때만 보내세요. 8단계에서도 똑같이 쓸 수 있습니다.</p>
+  <ul>
+    <li><b>07 안내문 광고포함</b>에서 1페이지만 체크해 그림으로 저장 → 단톡방에 올려 보기</li>
+    <li>두 페이지 이상 체크해 <b>압축 파일 한 개</b>로 받아지는지 확인</li>
+  </ul>
+  <p class="note">이제 <b>양쪽으로</b> 다 됩니다. 사진에서 PDF로 가는 길은 <b>제출용</b>,
+    PDF에서 그림으로 가는 길은 <b>전송용</b>입니다.</p>
+  <div class="save"><b>저장 ④</b> — <b>[다운로드]</b>.</div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="head"><span class="num">5</span><h2>여러 개로 나누기</h2><span class="badge step">5단계</span><span class="time">10분</span></div>
+  <p class="one">긴 자료를 여러 사람에게 나눠 줄 때 씁니다. <b>오늘의 마지막 기능</b>입니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 5</span><button>복사</button></div>
+    <div class="txt">긴 자료를 여러 개로 나누는 기능을 더해줘. 앞에서 만든 것은 그대로 두고 이것만 더해줘.
+
+몇 개의 파일로 나눌지 내가 숫자로 정하게 해줘.
+페이지 수가 딱 나눠지지 않으면 앞의 파일부터 한 페이지씩 더 가져가게 해줘.
+파일 이름을 적으면 그 뒤에 번호가 붙게 해줘. 안내책자 라고 적으면 안내책자 1, 안내책자 2 이렇게.
+나누기 전에 여덟 페이지를 세 개로 나눕니다 처럼 결과를 미리 알려줘.
+나온 파일은 전부 하나의 압축 파일로 묶어서 받아지게 해줘.</div>
+  </div>
+  <ul>
+    <li><b>09 안내책자 8페이지</b>를 올려 <b>4개</b>로 나누기 → 2페이지씩 네 개가 나옵니다</li>
+    <li>파일 이름을 <span class="ph">안내책자</span> 로 적고 저장 → 압축을 풀어 확인</li>
+    <li><b>3개</b>로도 나눠 보기 → 3페이지 · 3페이지 · 2페이지 로 나뉩니다. 앞의 파일부터 한 페이지씩 더 갑니다</li>
+  </ul>
+  <p class="note">파일이 하나씩 따로 떨어지면 크롬이 <b>"파일 여러 개 다운로드"</b> 팝업으로 막습니다.
+    그래서 <b>압축 파일 한 개</b>로 묶어 달라고 부탁하는 것입니다.</p>
+  <div class="save"><b>저장 ⑤ — 오늘의 결과물</b> — <b>[다운로드]</b>. <b>여기까지가 오늘 다 같이 하는 데까지입니다.</b><br>이 파일만 있으면 나머지는 집에서 언제든 이어 갈 수 있습니다.</div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="head"><span class="num">6</span><h2>실전 미션 세 가지</h2><span class="time">15분</span></div>
+  <p class="one">이제 만든 앱으로 <b>진짜 일</b>을 시켜 봅니다. 하나씩 끝낼 때마다 손을 드세요.</p>
+  <p class="only">※ 시간이 모자라면 <b>미션 A 하나만</b> 하고 넘어가세요. 나머지는 집에서 해도 됩니다.</p>
+  <p class="small">미션에 쓰는 파일은 <b>맨 처음 받은 압축 폴더 안에 다 있습니다.</b>
+    아직 안 받으셨다면 <a href="img/6차시_실습_샘플.zip" download><b>여기</b></a>서 받으세요.</p>
+  <table>
+    <tr><th>미션 A · 관공서에 낼 서류</th><td>
+      <b>04 계약서 앞장</b>과 <b>05 뒷장</b>을 합치고, 그 뒤에 <b>06 관리비고지서 사진</b>을 붙여 <b>한 파일</b>로 저장<br>
+      <span style="color:#6b7480">→ 모두 3페이지가 나오면 성공. 내 사진이 있으면 그것으로 해도 됩니다</span></td></tr>
+    <tr><th>미션 B · 보험사에 낼 영수증</th><td>
+      <b>03 영수증 거꾸로</b>의 두 페이지를 <b>바로 세워서</b> 저장<br>
+      <span style="color:#6b7480">→ 저장한 파일을 열었을 때 글자가 똑바로 읽히면 성공</span></td></tr>
+    <tr><th>미션 C · 모임에 나눠 줄 자료</th><td>
+      <b>07 안내문 광고포함</b>에서 <b>광고 페이지를 빼고</b>, <b>08 동창회자료 순서뒤바뀜</b>을 <b>1 · 2 · 3</b> 순서로 맞춘 뒤
+      둘을 합쳐 <b>2개로 나눠</b> 저장<br>
+      <span style="color:#6b7480">→ 합치면 5페이지, 2개로 나누면 3페이지 + 2페이지가 됩니다</span></td></tr>
+  </table>
+  <p class="note"><b>정답은 종이에 적혀 있습니다.</b> 동창회 자료에는 페이지마다 큰 숫자가,
+    안내문에는 광고 페이지에 <b>"광 고"</b> 라고 크게 적혀 있습니다. 헷갈리면 숫자만 보세요.</p>
+  <ul class="chk">
+    <li>미션마다 저장한 파일을 <b>열어서 눈으로 확인</b>했다</li>
+    <li>세 개 다 했으면 <b>내 서류</b>로 한 번 더 해 봤다</li>
+  </ul>
+  <p class="note">미션이 안 풀리면 기능이 덜 붙은 것입니다. 해당 <b>단계로 돌아가</b> 그 프롬프트를 다시 보내세요.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="head"><span class="num">7</span><h2>크롬 북마크로 앉히기</h2><span class="time">5분</span></div>
+  <p class="one">오늘 만든 앱을 <b>언제든 한 번에 열리게</b> 만듭니다. 순서를 꼭 지키세요.</p>
+  <ol>
+    <li>「문서」 폴더 안에 <b>「내앱」</b> 폴더를 새로 만듭니다</li>
+    <li>내려받은 <b>최종본 .html</b> 파일을 그 폴더로 <b>옮깁니다</b> — 순서가 중요합니다</li>
+    <li>옮긴 파일을 <b>더블클릭</b> → 크롬에서 열립니다</li>
+    <li>주소창 오른쪽 <b>별표</b>를 눌러 이름을 <span class="ph">내 PDF 편집기</span> 로 저장</li>
+    <li>이제 <b>북마크만 누르면</b> 언제든 실행됩니다</li>
+  </ol>
+  <p class="note"><b>꼭 지킬 것 세 가지</b><br>
+    첫째, <b>인터넷이 연결돼 있어야</b> 열립니다 — PDF를 다루는 부품을 인터넷에서 받아 쓰기 때문입니다<br>
+    둘째, <b>파일을 옮기거나 지우면 북마크가 깨집니다</b> — 다운로드 폴더에 두면 나중에 정리하다 날립니다. 그래서 먼저 옮기고 북마크합니다<br>
+    셋째, <b>PC 크롬 기준</b>입니다 — 스마트폰에서는 이 방법이 안 됩니다</p>
+  <p class="note">아티팩트(claude.ai 화면)를 북마크하는 건 권하지 않습니다. 로그인이 필요하고 대화가 밀리면 찾기 어렵습니다.</p>
+  <p>
+    <a class="dl" href="pdf.html" target="_blank" rel="noopener">완성본 새 창으로 열기</a>
+    <a class="dl ghost" href="pdf.html" download="PDF편집기.html">완성본 내려받기</a>
+  </p>
+  <p class="one">오늘 만든 것이 잘 안 되면 이 완성본을 받아 그대로 쓰세요. 하는 일은 똑같습니다.
+    제목을 누르면 <b>내 이름</b>으로 바꿀 수 있습니다.</p>
+</section>
+
+<div class="part">
+  <div class="pt">여기까지가 오늘 수업입니다</div>
+  <div class="pd">아래는 <b>집에서</b> 하는 부분입니다. 지금 안 하셔도 됩니다.<br>
+    무료 계정은 <b>몇 시간 뒤</b> 다시 쓸 수 있습니다. 그때 내려받아 둔 <b>.html 파일</b>을 올려서 이어 가세요.</div>
+</div>
+
+<!-- 8 -->
+<section id="s8" class="home">
+  <div class="head"><span class="num hm">＋</span><h2>집에서 이어 하기</h2><span class="badge hm">복습</span></div>
+  <p class="one"><b>여기부터는 집에서 합니다.</b> 무료 계정은 몇 시간 지나면 다시 쓸 수 있습니다.
+  수업에서 <b>못 끝낸 단계</b>가 있어도 똑같은 방법으로 이어 가면 됩니다.</p>
+  <p class="note"><b>딱 하나만 챙기면 됩니다 — 내려받아 둔 .html 파일.</b>
+    이 파일이 오늘 만든 앱 그 자체입니다. 이것만 있으면 처음부터 다시 만들 필요가 없습니다.</p>
+  <ol>
+    <li>claude.ai 에서 <b>새 대화</b>를 엽니다</li>
+    <li>마지막으로 <b>받아 둔 .html 파일을 올립니다</b> (클립 단추 → 파일 선택)</li>
+    <li>아래 문장을 붙여넣고, 그 아래에 <b>못 끝낸 단계의 프롬프트</b>를 이어 붙입니다</li>
+  </ol>
+  <div class="box">
+    <div class="bar"><span>이어 하기 — 파일을 올린 뒤에 붙여넣기</span><button>복사</button></div>
+    <div class="txt">올린 html 파일은 내가 만든 PDF 편집기야.
+이 파일을 그대로 아티팩트로 열어주고, 아래 기능을 추가해줘.
+지금 있는 기능은 하나도 빼지 말고 그대로 둬.
+
+여기에 못 끝낸 단계의 프롬프트를 붙여넣으세요.</div>
+  </div>
+  <p class="note">이 방법이면 <b>처음부터 다시 만들지 않아도</b> 됩니다.
+    앞으로 기능을 더 붙이고 싶을 때도 똑같이 하면 됩니다.</p>
+  <ul>
+    <li>혼자 더 붙여 볼 만한 것 — <b>페이지 번호 찍기</b> / <b>홀수 페이지와 짝수 페이지 나누기</b> / <b>원하는 페이지 범위만 뽑기</b></li>
+    <li>단, <b>용량 줄이기</b>와 <b>비밀번호 걸기</b>는 잘 안 됩니다. 안 되면 붙들지 말고 넘어가세요</li>
+    <li>PDF 위에 <b>한글 글자를 얹는 것</b>도 글꼴 문제로 잘 깨집니다</li>
+  </ul>
+</section>
+
+<!-- 9 -->
+<section id="s9" class="home">
+  <div class="head"><span class="num hm">＊</span><h2>보기 좋게 꾸미기</h2><span class="badge hm">집에서</span><span class="badge">선택</span></div>
+  <p class="one">기능은 다 끝났습니다. 이제 <b>내 앱 모양</b>을 내 마음에 들게 바꿔 봅니다. 사용량이 돌아온 뒤에 하세요.</p>
+  <p class="only">※ 건너뛰어도 괜찮습니다. 기능과는 상관없이 <b>모양만</b> 바꾸는 단계입니다.</p>
+  <div class="box">
+    <div class="bar"><span>꾸미기 프롬프트</span><button>복사</button></div>
+    <div class="txt">기능은 그대로 두고 보기만 바꿔줘.
+
+바탕은 따뜻한 베이지색으로, 상자는 크림색으로 해줘.
+테두리는 아주 얇은 선 하나만 쓰고, 그림자는 쓰지 마.
+중요한 단추는 진한 초록색 바탕에 크림색 글씨로, 알약처럼 둥글게 해줘.
+제목은 명조체로, 본문은 고딕체로 해줘.
+여백을 넉넉하게 주고, 글씨는 크게 해줘.</div>
+  </div>
+  <p class="note">색이 마음에 안 들면 <b>"바탕을 연한 하늘색으로 바꿔줘"</b> 처럼 그냥 말로 부탁하세요.
+    사람마다 결과가 조금씩 다르게 나오는 것이 정상입니다.</p>
+  <div class="save"><b>다 꾸몄으면 다시 [다운로드]</b> — 이 파일로 북마크를 바꿔 두세요.</div>
+</section>
+
+<!-- 10 -->
+<section id="s10" class="home">
+  <div class="head"><span class="num hm">＊</span><h2>더 붙여 보기</h2><span class="badge hm">집에서</span><span class="badge">도전</span></div>
+  <p class="only">※ 안 해도 괜찮습니다. 앱에 대고 말하듯 "○○도 되게 해줘" 하면 됩니다.</p>
+  <div class="box">
+    <div class="bar"><span>도전 — 페이지 번호 찍기</span><button>복사</button></div>
+    <div class="txt">페이지 아래 가운데에 페이지 번호를 찍어 주는 기능을 더해줘.
+숫자만 찍으면 되니까 한글 글꼴은 필요 없어.
+켜고 끌 수 있게 하고, 저장할 때만 번호가 찍히게 해줘.</div>
+  </div>
+  <ul>
+    <li>왼쪽 메뉴 <b>'프로젝트'</b> → 새 프로젝트 <span class="ph">내 생활 AI</span> 를 만들어 6주 자료 모아 두기</li>
+    <li>짝꿍이 만든 앱과 <b>바꿔서</b> 같은 미션 해 보기 — 어디가 다른지 보입니다</li>
+  </ul>
+</section>
+
+<div class="end">
+  <p><b>1.</b> 앱은 한 번에 안 만든다 — <b>기능 하나씩</b> 붙인다</p>
+  <p><b>2.</b> 부탁할 때는 <b>"앞에서 만든 것은 그대로 두고 이것만 더해줘"</b></p>
+  <p><b>3.</b> 저장 표시가 나오면 <b>무조건 다운로드</b> — 되돌아갈 자리를 만든다</p>
+  <p><b>4.</b> 안 될 때는 "다시 만들어줘"가 아니라 <b>"○○만 고쳐줘"</b></p>
+  <p><b>5.</b> 한도에 걸려도 끝이 아니다 — <b>받아 둔 파일을 올려서</b> 이어 간다</p>
+  <p><b>6.</b> 완성본은 <b>「문서」로 옮긴 뒤 크롬 북마크</b></p>
+  <p style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)">
+    오늘은 <b>다섯 단계까지</b> 함께 했습니다. 꾸미기와 나머지는 <b>집에서</b> —
+    받아 둔 <b>.html 파일</b>만 올리면 언제든 이어집니다.</p>
+  <p style="margin-top:12px;">이제 내 손에 앱이 두 개입니다 — <b>가계부 앱 · PDF 편집기</b>.<br>
+    <b>6주간 고생 많으셨습니다.</b></p>
+</div>
+
+<footer>클로드로 바꾸는 내 일상 · 6차시 &nbsp;|&nbsp; 제주도민대학 · 강사 강지애</footer>
+
+</div>
+
+<script>
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.jump a'));
+  var secs  = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function mark(){
+    var i = 0;
+    for (var k = 0; k < secs.length; k++){
+      if (secs[k] && secs[k].getBoundingClientRect().top <= 80) i = k;
+    }
+    links.forEach(function(a, k){ a.classList.toggle('on', k === i); });
+  }
+  window.addEventListener('scroll', mark, {passive:true});
+  mark();
+})();
+
+document.querySelectorAll('button').forEach(function(b){
+  b.addEventListener('click', function(){
+    var t = b.closest('.box').querySelector('.txt').innerText;
+    var ok = function(){
+      b.textContent = '복사됨!'; b.classList.add('copied');
+      setTimeout(function(){ b.textContent = '복사'; b.classList.remove('copied'); }, 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(t).then(ok, function(){ fb(t, ok); });
+    } else { fb(t, ok); }
+  });
+});
+function fb(t, ok){
+  var a = document.createElement('textarea');
+  a.value = t; a.style.position = 'fixed'; a.style.opacity = '0';
+  document.body.appendChild(a); a.select();
+  try { document.execCommand('copy'); ok(); }
+  catch(e){ alert('직접 드래그해서 복사해 주세요.'); }
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

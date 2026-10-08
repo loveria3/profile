@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>강지애의 PDF 편집기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root{
+    --bg: #F2F4F7;
+    --paper: #FFFFFF;
+    --ink: #1E2430;
+    --ink-soft: #5B6472;
+    --indigo: #4338CA;
+    --indigo-dark: #332C9E;
+    --amber: #B45309;
+    --red: #C0362C;
+    --red-dark: #9C2C24;
+    --line: #D8DCE3;
+    --badge: #1E2430;
+    --focus: #1D4ED8;
+  }
+  *{ box-sizing: border-box; }
+  html, body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  button{ font-family: inherit; }
+  :focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .wrap{ max-width: 1200px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  header h1{
+    font-size: 30px;
+    font-weight: 900;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  header p.sub{
+    margin: 0 0 22px;
+    color: var(--ink-soft);
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  .dropzone{
+    border: 3px dashed var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+    padding: 34px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .dropzone.dragover{
+    border-color: var(--indigo);
+    background: #EEF0FE;
+  }
+  .dropzone .icon{ font-size: 40px; display:block; margin-bottom: 6px; }
+  .dropzone .main-txt{
+    font-size: 21px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .dropzone .sub-txt{
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  #fileInput{ display:none; }
+
+  .toolbar{
+    margin-top: 22px;
+    display:flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .toolbar .count{
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink-soft);
+  }
+  .toolbar .count b{ color: var(--ink); font-size: 19px; }
+
+  .btn{
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 12px 18px;
+    font-size: 16px;
+    transition: transform .05s, opacity .15s;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn:disabled{ opacity: .45; cursor: not-allowed; }
+
+  .btn-undo{
+    background: #fff;
+    border: 2px solid var(--ink);
+    color: var(--ink);
+  }
+  .btn-undo:hover:not(:disabled){ background: #F0F1F3; }
+
+  .save-group{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .save-group input[type="text"]{
+    font-family: inherit;
+    font-size: 16px;
+    padding: 12px 14px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    min-width: 220px;
+  }
+  .save-group input[type="text"]:focus{ border-color: var(--indigo); }
+  .save-group .ext{ color: var(--ink-soft); font-weight: 600; font-size: 16px; }
+
+  .btn-save{
+    background: var(--indigo);
+    color: #fff;
+  }
+  .btn-save:hover:not(:disabled){ background: var(--indigo-dark); }
+
+  .empty-msg{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 17px;
+    font-weight: 500;
+    padding: 50px 10px;
+  }
+
+  #pageGrid{
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 20px;
+  }
+
+  .page-card{
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    position: relative;
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .page-card:hover{ box-shadow: 0 4px 14px rgba(30,36,48,0.12); }
+  .page-card.dragging{ opacity: .35; }
+  .page-card.drop-target-before{ border-left: 4px solid var(--indigo); }
+  .page-card.drop-target-after{ border-right: 4px solid var(--indigo); }
+
+  .page-badge{
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    background: var(--badge);
+    color: #fff;
+    font-weight: 900;
+    font-size: 17px;
+    min-width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    padding: 0 4px;
+  }
+
+  .thumb-wrap{
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: #F5F5F5;
+    border-radius: 8px;
+    overflow: hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border: 1px solid #EAEAEA;
+  }
+  .thumb-wrap img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display:block;
+  }
+  .thumb-loading{
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .page-controls{
+    display:flex;
+    gap: 6px;
+    margin-top: 10px;
+    width: 100%;
+  }
+  .page-controls button{
+    flex: 1;
+    padding: 9px 4px;
+    font-size: 13.5px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-fwd, .btn-back{
+    background: #EEF0FE;
+    color: var(--indigo-dark);
+  }
+  .btn-fwd:hover:not(:disabled), .btn-back:hover:not(:disabled){ background: #DEE1FC; }
+  .btn-remove-page{
+    background: #FBE9E7;
+    color: var(--red-dark);
+    flex: 0 0 auto;
+    width: 42px;
+  }
+  .btn-remove-page:hover{ background: #F6D6D2; }
+
+  .page-caption{
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>강지애의 PDF 편집기</h1>
+    <p class="sub">PDF를 올리고, 페이지 순서를 바꾸고, 하나로 합쳐서 저장하세요.</p>
+  </header>
+
+  <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="PDF 파일 올리기">
+    <span class="icon">📄</span>
+    <p class="main-txt">여기로 PDF 파일을 끌어다 놓으세요</p>
+    <p class="sub-txt">여러 개를 한꺼번에 놓아도 됩니다 · 눌러서 파일 선택도 가능해요</p>
+    <input type="file" id="fileInput" accept="application/pdf" multiple />
+  </div>
+
+  <div class="toolbar">
+    <div class="count">전체 페이지: <b id="pageCount">0</b>장</div>
+    <button class="btn btn-undo" id="undoBtn" disabled>↩ 되돌리기</button>
+    <div class="save-group">
+      <input type="text" id="filenameInput" placeholder="저장할 파일 이름을 입력하세요" />
+      <span class="ext">.pdf</span>
+      <button class="btn btn-save" id="saveBtn">💾 PDF로 저장하기</button>
+    </div>
+  </div>
+
+  <div id="emptyMsg" class="empty-msg">아직 올라온 PDF가 없어요. 위쪽에 파일을 끌어다 놓아보세요.</div>
+  <div id="pageGrid"></div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ---- state ----
+let filesData = {};      // fileId -> { name, pdfDoc, pdfLibDoc, numPages }
+let pages = [];          // [{ id, fileId, pageNumInFile, fileName }]
+let history = [];        // undo stack: snapshots of `pages`
+let fileCounter = 0;
+let dragSrcId = null;
+const canvasCache = {};  // `${fileId}_${pageNumInFile}` -> dataURL
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const pageGrid = document.getElementById('pageGrid');
+const emptyMsg = document.getElementById('emptyMsg');
+const pageCountEl = document.getElementById('pageCount');
+const undoBtn = document.getElementById('undoBtn');
+const saveBtn = document.getElementById('saveBtn');
+const filenameInput = document.getElementById('filenameInput');
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function uid(){ return 'p' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+function pushUndoSnapshot(){
+  history.push(pages.map(p => ({...p})));
+  if(history.length > 40) history.shift();
+  undoBtn.disabled = false;
+}
+
+// ---- drag & drop file intake ----
+['dragenter','dragover'].forEach(evt=>{
+  dropzone.addEventListener(evt, e=>{
+    e.preventDefault(); e.stopPropagation();
+    dropzone.classList.add('dragover');
+  });
+});
+['dragleave','drop'].forEach(evt=>{
+  dropzone.addEventListener(evt, e=>{
+    e.preventDefault(); e.stopPropagation();
+    dropzone.classList.remove('dragover');
+  });
+});
+dropzone.addEventListener('drop', e=>{
+  const files = Array.from(e.dataTransfer.files || []).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+  if(files.length) loadFiles(files);
+});
+dropzone.addEventListener('click', ()=> fileInput.click());
+dropzone.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+});
+fileInput.addEventListener('change', e=>{
+  const files = Array.from(e.target.files || []);
+  if(files.length) loadFiles(files);
+  fileInput.value = '';
+});
+
+// ---- load PDFs ----
+async function loadFiles(fileList){
+  for(const file of fileList){
+    try{
+      const fileId = 'f' + (fileCounter++);
+      const buf1 = await file.arrayBuffer();
+      const buf2 = await file.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: buf1 }).promise;
+      const pdfLibDoc = await PDFLib.PDFDocument.load(buf2);
+      const numPages = pdfDoc.numPages;
+      filesData[fileId] = { name: file.name, pdfDoc, pdfLibDoc, numPages };
+
+      for(let i = 1; i <= numPages; i++){
+        pages.push({ id: uid(), fileId, pageNumInFile: i, fileName: file.name });
+      }
+      renderGrid();
+
+      for(let i = 1; i <= numPages; i++){
+        renderThumbnail(fileId, i).catch(()=>{});
+      }
+    }catch(err){
+      alert('"' + file.name + '" 파일을 여는 중 문제가 생겼어요. PDF 파일이 맞는지 확인해주세요.');
+      console.error(err);
+    }
+  }
+}
+
+async function renderThumbnail(fileId, pageNumInFile){
+  const key = fileId + '_' + pageNumInFile;
+  if(canvasCache[key]) return canvasCache[key];
+  const doc = filesData[fileId].pdfDoc;
+  const page = await doc.getPage(pageNumInFile);
+  const baseViewport = page.getViewport({ scale: 1 });
+  const targetWidth = 320;
+  const scale = targetWidth / baseViewport.width;
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  const dataUrl = canvas.toDataURL('image/png');
+  canvasCache[key] = dataUrl;
+  const img = pageGrid.querySelector('img[data-thumb-key="' + key + '"]');
+  if(img) img.src = dataUrl;
+  return dataUrl;
+}
+
+// ---- render ----
+function renderGrid(){
+  pageCountEl.textContent = pages.length;
+  emptyMsg.style.display = pages.length ? 'none' : 'block';
+  pageGrid.innerHTML = pages.map((p, idx) => {
+    const key = p.fileId + '_' + p.pageNumInFile;
+    const cached = canvasCache[key];
+    const imgHtml = cached
+      ? '<img data-thumb-key="' + key + '" src="' + cached + '" alt="' + (idx+1) + '번째 페이지" />'
+      : '<img data-thumb-key="' + key + '" alt="' + (idx+1) + '번째 페이지" /><span class="thumb-loading">불러오는 중…</span>';
+    return (
+      '<div class="page-card" draggable="true" data-id="' + p.id + '">' +
+        '<div class="page-badge">' + (idx+1) + '</div>' +
+        '<div class="thumb-wrap">' + imgHtml + '</div>' +
+        '<div class="page-controls">' +
+          '<button class="btn-back" data-action="forward" ' + (idx===0 ? 'disabled' : '') + ' title="앞으로 보내기">◀ 앞으로</button>' +
+          '<button class="btn-fwd" data-action="backward" ' + (idx===pages.length-1 ? 'disabled' : '') + ' title="뒤로 보내기">뒤로 ▶</button>' +
+          '<button class="btn-remove-page" data-action="remove" title="이 페이지 빼기">✕</button>' +
+        '</div>' +
+        '<div class="page-caption">' + escapeHtml(p.fileName) + '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+// ---- button actions (event delegation) ----
+pageGrid.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const card = e.target.closest('.page-card');
+  const id = card.dataset.id;
+  const idx = pages.findIndex(p => p.id === id);
+  if(idx === -1) return;
+
+  const action = btn.dataset.action;
+  if(action === 'forward' && idx > 0){
+    pushUndoSnapshot();
+    [pages[idx-1], pages[idx]] = [pages[idx], pages[idx-1]];
+    renderGrid();
+  }else if(action === 'backward' && idx < pages.length-1){
+    pushUndoSnapshot();
+    [pages[idx+1], pages[idx]] = [pages[idx], pages[idx+1]];
+    renderGrid();
+  }else if(action === 'remove'){
+    pushUndoSnapshot();
+    pages.splice(idx, 1);
+    renderGrid();
+  }
+});
+
+// ---- drag & drop reordering (works across different source files) ----
+pageGrid.addEventListener('dragstart', e=>{
+  const card = e.target.closest('.page-card');
+  if(!card) return;
+  dragSrcId = card.dataset.id;
+  card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcId);
+});
+pageGrid.addEventListener('dragend', e=>{
+  const card = e.target.closest('.page-card');
+  if(card) card.classList.remove('dragging');
+  pageGrid.querySelectorAll('.drop-target-before,.drop-target-after').forEach(el=>{
+    el.classList.remove('drop-target-before','drop-target-after');
+  });
+});
+pageGrid.addEventListener('dragover', e=>{
+  e.preventDefault();
+  const card = e.target.closest('.page-card');
+  pageGrid.querySelectorAll('.drop-target-before,.drop-target-after').forEach(el=>{
+    el.classList.remove('drop-target-before','drop-target-after');
+  });
+  if(card && card.dataset.id !== dragSrcId){
+    const rect = card.getBoundingClientRect();
+    const before = (e.clientX - rect.left) < rect.width / 2;
+    card.classList.add(before ? 'drop-target-before' : 'drop-target-after');
+  }
+});
+pageGrid.addEventListener('drop', e=>{
+  e.preventDefault();
+  if(!dragSrcId) return;
+  const card = e.target.closest('.page-card');
+  const srcIdx = pages.findIndex(p => p.id === dragSrcId);
+  if(srcIdx === -1) return;
+
+  pushUndoSnapshot();
+  const [moved] = pages.splice(srcIdx, 1);
+
+  if(!card){
+    pages.push(moved);
+  }else{
+    const targetId = card.dataset.id;
+    let targetIdx = pages.findIndex(p => p.id === targetId);
+    const rect = card.getBoundingClientRect();
+    const before = (e.clientX - rect.left) < rect.width / 2;
+    if(targetIdx === -1) targetIdx = pages.length;
+    else if(!before) targetIdx++;
+    pages.splice(targetIdx, 0, moved);
+  }
+  dragSrcId = null;
+  renderGrid();
+});
+
+// ---- undo ----
+undoBtn.addEventListener('click', ()=>{
+  if(!history.length) return;
+  pages = history.pop();
+  undoBtn.disabled = history.length === 0;
+  renderGrid();
+});
+
+// ---- merge & save ----
+saveBtn.addEventListener('click', async ()=>{
+  if(pages.length === 0){
+    alert('합칠 페이지가 없어요. 먼저 PDF를 올려주세요.');
+    return;
+  }
+  let filename = filenameInput.value.trim();
+  if(!filename) filename = '합친문서';
+  if(!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+
+  const original = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = '만드는 중…';
+  try{
+    const newDoc = await PDFLib.PDFDocument.create();
+    for(const p of pages){
+      const srcDoc = filesData[p.fileId].pdfLibDoc;
+      const [copiedPage] = await newDoc.copyPages(srcDoc, [p.pageNumInFile - 1]);
+      newDoc.addPage(copiedPage);
+    }
+    const bytes = await newDoc.save();
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }catch(err){
+    alert('PDF를 만드는 중 문제가 생겼어요: ' + err.message);
+    console.error(err);
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = original;
+  }
+});
+
+renderGrid();
+</script>
+</body>
+</html>

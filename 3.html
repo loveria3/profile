@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3차시 — 코스 카드로 짜는 2박 3일 국내 여행 (v3)</title>
+<style>
+  :root{--ink:#1f2328;--sub:#6b7480;--line:#e3e6ea;--bg:#f7f8fa;--navy:#1f3864;--soft:#eef1f7;--ok:#2f6b4f;--warn:#8a5a00;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 70px}
+
+  header{border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:8px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .ver{font-size:12px;font-weight:700;color:#fff;background:var(--navy);
+    border-radius:3px;padding:2px 7px;vertical-align:3px;margin-left:8px}
+  .sub{font-size:13px;color:var(--sub);margin:8px 0 0}
+
+  section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin:14px 0}
+  section.challenge{border:1px dashed var(--navy);background:#fcfcfe}
+  .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .num.ch{background:#fff;color:var(--navy);border:1px dashed var(--navy)}
+  h2{font-size:19px;margin:0;letter-spacing:-.01em}
+  .badge{font-size:11px;font-weight:700;color:var(--navy);border:1px solid var(--navy);
+    border-radius:3px;padding:1px 6px}
+  .time{margin-left:auto;font-size:12px;color:var(--sub)}
+  .one{font-size:14px;color:var(--sub);margin:8px 0 0}
+  .only{font-size:13px;color:var(--warn);margin:8px 0 0}
+
+  .box{background:#fbfcfd;border:1px solid var(--line);border-radius:5px;margin:14px 0 0}
+  .bar{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;
+    background:#f2f4f7;border-bottom:1px solid var(--line);border-radius:5px 5px 0 0}
+  .bar span{font-size:12px;font-weight:700;color:var(--navy)}
+  .txt{padding:14px 16px;font-size:15px;white-space:pre-wrap;word-break:keep-all}
+  button{background:var(--navy);color:#fff;border:0;border-radius:4px;padding:6px 14px;
+    font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{background:#16294a}
+  button.copied{background:var(--ok)}
+
+  .jump{position:sticky;top:0;z-index:10;display:flex;gap:6px;flex-wrap:wrap;
+    padding:10px 0 9px;background:rgba(247,248,250,.96);border-bottom:1px solid var(--line)}
+  .jump a{width:40px;height:40px;border:1px solid var(--line);border-radius:6px;background:#fff;
+    color:var(--sub);text-decoration:none;font-weight:700;font-size:16px;
+    display:flex;align-items:center;justify-content:center}
+  .jump a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  section{scroll-margin-top:64px}
+
+  .ph{color:#1668dc;font-weight:700}
+  .note{font-size:13px;color:var(--sub);margin:12px 0 0}
+  .warnnote{font-size:13px;color:var(--warn);margin:12px 0 0}
+  ul{list-style:none;padding:0;margin:12px 0 0}
+  li{font-size:14px;color:var(--sub);padding:3px 0 3px 22px;position:relative}
+  li::before{content:"☐";position:absolute;left:0;color:var(--navy)}
+
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+  th{background:var(--soft);color:var(--navy);width:30%}
+  td{color:var(--sub)}
+
+  .end{background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px 22px;margin:22px 0 0}
+  .end b{color:var(--navy)}
+  .end p{margin:6px 0;font-size:14px;color:var(--sub)}
+  footer{margin-top:26px;font-size:12px;color:var(--sub);text-align:center}
+
+  /* ── Claude에서만 배우는 기능 ── */
+  section.feat{border-left-width:5px;border-left-style:solid}
+  .ftag{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:3px;
+    padding:2px 8px;letter-spacing:-.01em;white-space:nowrap;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section.feat.c-conn{border-left-color:#6b3fa0} .ftag.c-conn{background:#6b3fa0}
+  section.feat.c-art{border-left-color:#0d7a86}  .ftag.c-art{background:#0d7a86}
+  section.feat.c-web{border-left-color:#2f6b4f}  .ftag.c-web{background:#2f6b4f}
+  section.feat.c-file{border-left-color:#a4551a} .ftag.c-file{background:#a4551a}
+  .flegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;
+    padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    font-size:12px;color:var(--sub)}
+  .flegend b{color:var(--ink);font-size:12px}
+  .free{display:inline-block;font-size:11px;font-weight:700;color:#2f6b4f;
+    border:1px solid #2f6b4f;border-radius:3px;padding:1px 6px;white-space:nowrap;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* ── 코스 카드 ── */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:14px}
+  .card{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:#fbfcfd}
+  .card .k{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:700;
+    border-radius:3px;padding:1px 7px;margin-bottom:6px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card .t{font-size:15px;font-weight:700;margin:0 0 4px;color:var(--ink)}
+  .card .d{font-size:12px;color:var(--sub);margin:0;line-height:1.55}
+
+  /* ── 별도 링크 배너 ── */
+  .banner{display:block;text-decoration:none;background:var(--navy);color:#fff;
+    border-radius:6px;padding:16px 20px;margin:14px 0 0;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .banner b{display:block;font-size:16px;margin-bottom:4px}
+  .banner span{font-size:13px;opacity:.85}
+  .banner:hover{background:#16294a}
+
+  @media(max-width:600px){h1{font-size:21px}h2{font-size:17px}.txt{font-size:14px}.time{margin-left:0}}
+  @media print{body{background:#fff}button,.jump{display:none}section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<!-- ▼ PDF 저장 버튼 (상단 오른쪽) -->
+<style>
+#pdfSaveBtn{position:fixed;top:14px;right:16px;z-index:9999;
+  background:#1f3864;color:#fff !important;text-decoration:none !important;
+  border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:inherit;line-height:1;display:inline-block;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);border:0}
+#pdfSaveBtn:hover{background:#16294a}
+@media print{#pdfSaveBtn{display:none !important}}
+@media(max-width:600px){#pdfSaveBtn{top:8px;right:8px;padding:7px 12px;font-size:12px}}
+</style>
+<a href="#" id="pdfSaveBtn" title="인쇄 창에서 '대상'을 [PDF로 저장]으로 고르세요"
+   onclick="window.print();return false;">⬇ PDF 저장</a>
+<!-- ▲ PDF 저장 버튼 -->
+
+<div class="wrap">
+
+<header>
+  <h1>3차시 · 코스 카드로 짜는 2박 3일 국내 여행<span class="ver">v3</span></h1>
+  <p class="sub">파란 대괄호 <span class="ph">[이렇게]</span> 표시된 곳만 내 상황으로 바꾸세요. 오늘 나오는 것은 <b>전부 무료로 됩니다.</b></p>
+</header>
+
+<div class="flegend"><b>색 테두리 = Claude에서만 배우는 기능</b>
+  <span class="ftag c-web">웹 검색</span>
+  <span class="ftag c-art">아티팩트</span>
+  <span class="ftag c-file">파일 만들기</span>
+  <span class="free">무료 가능</span>
+</div>
+
+
+<nav class="jump">
+  <a href="#s1">1</a>
+  <a href="#s2">2</a>
+  <a href="#s3">3</a>
+  <a href="#s4">4</a>
+  <a href="#s5">5</a>
+  <a href="#s6">6</a>
+  <a href="#s7">7</a>
+  <a href="#s8">8</a>
+  <a href="#s9">9</a>
+  <a href="#s10">10</a>
+</nav>
+
+<!-- 1 -->
+<section id="s1" class="feat c-art">
+  <div class="head"><span class="num">1</span><h2>오늘 갈 곳 — 여행 테마부터 만들어 보기</h2><span class="ftag c-art">아티팩트</span><span class="free">무료 가능</span><span class="time">12분</span></div>
+  <p class="one">제주에서 <b>비행기로 나가는 2박 3일</b> 여행입니다. 어디로 갈지 <b>내가 정하지 않습니다.</b> 클로드에게 <b>고를 거리를 만들어 달라</b>고 먼저 시킵니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 1-A — 여행 테마 여섯 가지 만들어 달라기</span><button>복사</button></div>
+    <div class="txt">나는 제주에 살고, 육지로 <span class="ph">[2박 3일]</span> 여행을 가려고 해. 어디로 갈지 아직 못 정했어.
+
+우리나라 국내 여행 테마를 <span class="ph">[여섯]</span> 가지 만들어줘.
+
+이렇게 만들어줘.
+- 지역이 서로 겹치지 않게 (강원 · 충청 · 전라 · 경상 · 수도권 · 남해 처럼)
+- 하고 싶은 일도 서로 다르게 (쉬기 · 먹기 · 걷기 · 구경하기 처럼)
+- <span class="ph">[2박 3일]</span> 안에 무리 없이 다닐 수 있는 범위로
+- 제주에서 비행기로 갈 수 있는 곳으로
+
+하나마다 이렇게, 순서와 줄바꿈 그대로 적어줘.
+
+[A] 짧고 끌리는 이름 (지역 이름이 아니라 &quot;파도 앞에서 멈추기&quot; 처럼 하고 싶은 일로)
+지역·대표 도시: 지역 · 대표 도시 두 곳
+어울리는 사람: 한 줄
+주의할 점: 한 줄 (많이 걷는다 · 차가 꼭 필요하다 같은 것)
+어울리는 숙소: 유형과 동네 한 줄 (오션뷰 리조트 · 한옥 게스트하우스 처럼)
+
+표나 카드 이미지가 아니라 <b>이렇게 줄글로만</b> 보여줘.
+- 항목 이름(지역·대표 도시, 어울리는 사람, 주의할 점, 어울리는 숙소)은 굵게
+- 테마와 테마 사이는 ——— 로 구분선 넣기
+- 글씨 크기·배경색·아이콘 없이 담백하게 — 화면이 아니라 인쇄해서 읽는다는 느낌으로</div>
+  </div>
+  <p class="note">아래 <b>참고 카드와 같은 내용</b>이 줄글 형태로 오른쪽 화면(<b>아티팩트</b>)에 나옵니다. 2차시에 배운 그 화면입니다.</p>
+  <ul>
+    <li>마음에 안 들면 → <b>&quot;여섯 개 다시 만들어줘&quot;</b></li>
+    <li>조건을 붙여 다시 → <b>&quot;걷기 적은 것만 여섯 개로&quot;</b> · <b>&quot;운전 안 하는 것만&quot;</b> · <b>&quot;먹는 것 위주로&quot;</b></li>
+    <li>남겨 두고 싶으면 → <b>&quot;문서 파일로도 만들어줘&quot;</b> 하고 내려받기</li>
+    <li>골랐으면 → <b>&quot;C가 좋아. 그걸로 하자&quot;</b></li>
+  </ul>
+  <p class="note">🔑 오늘의 둘째 기술 — <b>내가 답을 정해서 시키는 대신, 고를 거리를 만들어 달라고 하는 것.</b> 무엇을 원하는지 나도 모를 때 이 방법이 제일 빠릅니다. (선물 고르기 · 모임 이름 짓기 · 저녁 메뉴에도 똑같이 씁니다)</p>
+
+  <p class="one" style="margin-top:18px"><b>참고 — 제가 미리 만들어 본 여섯 가지입니다.</b> 클로드가 만든 것이 마음에 안 들거나 시간이 없으면 여기서 하나 고르세요.</p>
+  <div class="cards">
+    <div class="card"><span class="k">A</span><p class="t">강원 — 동해 걷기</p><p class="d">강릉 · 속초. 하루 종일 걸어도 좋은 사람에게 맞음. 많이 걷는다, 바람이 세다. 숙소 — 속초 외옹치 오션뷰 호텔</p></div>
+    <div class="card"><span class="k">B</span><p class="t">충청 — 충청 쉼표</p><p class="d">청주 · 아산. 일정 없이 늘어지고 싶은 사람에게 맞음. 볼거리가 적어 심심할 수 있다. 숙소 — 아산 온양온천역 근처 온천 딸린 호텔</p></div>
+    <div class="card"><span class="k">C</span><p class="t">전라 — 남도 한상</p><p class="d">광주 · 담양. 여행의 절반이 밥인 사람에게 맞음. 담양까지는 차가 편하다. 숙소 — 담양 죽녹원 옆 한옥 게스트하우스</p></div>
+    <div class="card"><span class="k">D</span><p class="t">경상 — 천년 경주</p><p class="d">대구 · 경주. 유적과 박물관이 재미있는 사람에게 맞음. 차가 꼭 필요하다. 숙소 — 경주 황리단길 한옥 스테이</p></div>
+    <div class="card"><span class="k">E</span><p class="t">수도권 — 서울 하루</p><p class="d">서울 · 인천. 도시 북적임이 좋은 사람에게 맞음. 표는 미리, 차 없이 지하철로. 숙소 — 서울역·시청 근처 역세권 비즈니스 호텔</p></div>
+    <div class="card"><span class="k">F</span><p class="t">남해 — 남해 섬길</p><p class="d">부산 · 통영. 제주와 다른 바다를 보고 싶은 사람에게 맞음. 날씨 나쁘면 배가 끊긴다. 숙소 — 통영 도남동 바다 보이는 펜션</p></div>
+  </div>
+  <p class="warnnote">⚠ <b>같은 대화창에서 이어 하면</b> 클로드는 방금 자기가 만든 테마를 기억하고 있어 &quot;C로 하자&quot; 로 통합니다. 하지만 <b>새 창을 열었거나 위 참고 카드에서 골랐다면</b> 클로드는 그게 뭔지 모릅니다 — <b>이름과 설명줄을 같이</b> 옮겨 적으세요.</p>
+  <p class="note">실제로 계획 중인 여행이 있으면 <b>테마 대신 그걸로</b> 하셔도 됩니다. 지역과 하고 싶은 일을 한 줄로 적으면 똑같이 됩니다.</p>
+
+  <p class="one" style="margin-top:16px"><b>테마가 정해졌으면, 내 조건을 정합니다.</b></p>
+  <table>
+    <tr><th>테마</th><td><span class="ph">[고른 테마 이름 + 설명줄 그대로]</span></td></tr>
+    <tr><th>인원</th><td><span class="ph">[어른 2명]</span></td></tr>
+    <tr><th>기간</th><td><span class="ph">[2박 3일]</span></td></tr>
+    <tr><th>비행기</th><td><span class="ph">[제주 출발 / 첫날 오후 3시 도착 · 마지막날 저녁 7시 출발]</span></td></tr>
+    <tr><th>현지 이동</th><td><span class="ph">[렌터카]</span> 또는 <span class="ph">[기차 + 버스]</span></td></tr>
+    <tr><th>예산</th><td><span class="ph">[60만 원]</span> · 항공료는 빼고</td></tr>
+    <tr><th>선호</th><td><span class="ph">[걷기 적게]</span></td></tr>
+  </table>
+  <p class="note">✈ 시간은 <b>대략</b> 정해 둔 것입니다. 첫날은 오후 3시부터, 마지막날은 저녁 7시 비행기 전까지 — <b>첫날과 마지막날은 반나절</b>뿐입니다. 이 시간을 알려 줘야 무리 없는 일정이 나옵니다. 실제 표를 예약했다면 그 시간으로 바꿔 적으세요.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2" class="feat c-web">
+  <div class="head"><span class="num">2</span><h2>일정 만들고 · 진짜인지 확인하기</h2><span class="ftag c-web">웹 검색</span><span class="free">무료 가능</span><span class="time">20분</span></div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 2 — 테마 일정 만들기</span><button>복사</button></div>
+    <div class="txt">너는 국내 여행 전문가야.
+오늘 내가 고른 테마는 <span class="ph">[강원 — 동해 걷기 · 강릉·속초, 하루 종일 걸어도 좋은 사람에게 맞음, 많이 걷는다·바람이 세다]</span> 이야.
+
+조건은 이래.
+- 인원 <span class="ph">[어른 2명]</span>
+- 기간 <span class="ph">[2박 3일]</span>
+- 비행기 <span class="ph">[제주 출발 / 첫날 오후 3시 도착, 마지막날 저녁 7시 출발]</span>
+- 현지 이동 <span class="ph">[렌터카]</span>
+- 걷기 <span class="ph">[적게]</span>
+- 예산 <span class="ph">[60만]</span> 원 (항공료는 빼고)
+
+이 테마에 맞는 곳만 골라서 날짜별 · 시간대별 일정표를 만들어줘.
+첫날은 오후 3시 공항 도착 이후부터, 마지막날은 저녁 7시 비행기라 공항에 5시까지 가는 걸로 맞춰 짜줘.
+장소마다 왜 이 테마에 맞는지 한 줄씩 붙여줘.
+이동 시간도 분 단위로 적어줘.
+숙소는 <span class="ph">[10만 원]</span> 전후로, <span class="ph">[2박 내내 묵을 곳]</span> 딱 한 곳만 정해줘. 위치와 가격, 이 숙소를 고른 이유도 같이 알려줘.</div>
+  </div>
+  <p class="note">숙소를 하나로 <b>고정</b>해 두면, 뒤에 이동 시간 · 예산표 · 인포그래픽까지 전부 그 숙소를 기준으로 짜여서 다시 헷갈릴 일이 없습니다. 마음에 안 들면 &quot;다른 곳으로 바꿔줘&quot; 한 마디로 충분합니다.</p>
+  <p class="warnnote">⚠ 추천한 가게 · 숙소는 <b>폐업했거나 아예 지어낸 곳일 수 있습니다.</b> 그대로 믿고 가면 헛걸음합니다.</p>
+  <p class="only">※ 강사만 시연 — 수강생은 집에서 해 보세요.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 3 — 웹에서 확인시키기</span><button>복사</button></div>
+    <div class="txt">위 일정에 나온 식당 · 카페 · 관광지 · 숙소가 지금도 영업하는지 웹에서 찾아서 확인해줘.
+문 닫았거나 못 찾은 곳은 [확인 필요] 라고 표시하고, 대신 갈 만한 곳을 알려줘.
+확인한 곳은 출처 링크도 같이 줘.</div>
+  </div>
+  <ul>
+    <li>답에 <b>링크</b>가 붙어 있는지 보기</li>
+    <li>링크를 눌러 <b>내 눈으로</b> 한 번 더 확인</li>
+    <li>[확인 필요] 로 표시된 곳은 지도앱에서 검색</li>
+  </ul>
+  <p class="note">클로드가 원래 아는 것과 <b>웹에서 방금 찾은 것</b>은 다릅니다. 링크가 없으면 아직 못 믿습니다.</p>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="head"><span class="num">3</span><h2>조건 바꾸기 — 오늘의 핵심</h2><span class="time">10분</span></div>
+  <p class="only">※ 강사만 시연 — 수강생은 집에서 해 보세요.</p>
+  <p class="one">전체를 다시 부탁하지 않습니다. <b>바꿀 것만</b> 말합니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 4 — 하나 골라 이어서</span><button>복사</button></div>
+    <div class="txt"><span class="ph">[비 오는 날 일정으로 바꿔줘 / 둘째 날을 좀 더 여유 있게 바꿔줘 / 아이 동반으로 바꿔줘 / 렌터카 없이 기차와 버스로 바꿔줘 / 부모님 모시고 가는 것으로 바꿔줘]</span></div>
+  </div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 5 — 테마를 통째로 갈아 끼우기</span><button>복사</button></div>
+    <div class="txt">같은 조건인데 테마만 <span class="ph">[충청 — 충청 쉼표 · 청주·아산, 일정 없이 늘어지고 싶은 사람에게 맞음, 볼거리가 적어 심심할 수 있다]</span> 로 바꿔줘.
+인원 · 기간 · 예산 · 비행기 조건은 그대로 두고 지역과 장소만 바꿔줘.</div>
+  </div>
+  <p class="note">아까 클로드가 만든 카드 여섯 장 중 <b>둘째로 마음에 들었던 것</b>을 넣어 보면 좋습니다. 같은 창이면 &quot;D 테마로 바꿔줘&quot; 만으로도 됩니다.</p>
+  <p class="note">🔁 <b>옆자리와 테마를 바꿔서</b> 한 번씩 돌려 보세요. 같은 조건인데 지역만 바꿨을 때 얼마나 달라지는지 보입니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 6 — 표로</span><button>복사</button></div>
+    <div class="txt">위 일정을 표로 정리해줘. 시간 / 장소 / 할 일 / 이동시간 / 메모 5칸으로.</div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4" class="feat c-file">
+  <div class="head"><span class="num">4</span><h2>예산표 · 엑셀로 받기</h2><span class="ftag c-file">파일 만들기</span><span class="free">무료 가능</span><span class="time">8분</span></div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 7</span><button>복사</button></div>
+    <div class="txt">위 여행의 예산표를 만들어줘.
+숙박 · 식비 · 교통(렌터카 · 기름값) · 관람료로 나누고, 날짜별 금액과 합계를 넣어줘.
+항공료는 따로 한 줄로 빼 줘.
+엑셀 파일로도 만들어서 내려받게 해줘.</div>
+  </div>
+  <p class="only">※ 강사만 시연 — 수강생은 집에서 해 보세요.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 8 — 다듬기</span><button>복사</button></div>
+    <div class="txt"><span class="ph">[숙박비를 두 밤에 20만 원으로 줄이면 / 항공료 빼고 전체 50만 원에 맞춰줘]</span> 어떻게 돼?</div>
+  </div>
+  <p class="warnnote">⚠ <b>AI는 계산기가 아닙니다.</b> 합계가 맞는지 엑셀에서 <b>=SUM( )</b> 으로 한 번 검산하세요. (5차시에 자세히 합니다)</p>
+</section>
+
+<!-- 5 -->
+<section id="s5" class="feat c-art">
+  <div class="head"><span class="num">5</span><h2>인포그래픽 한 장</h2><span class="ftag c-art">아티팩트</span><span class="free">무료 가능</span><span class="time">12분</span></div>
+  <p class="only">※ 강사만 시연 — 수강생은 집에서 해 보세요.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 9</span><button>복사</button></div>
+    <div class="txt">위 일정과 예산표를 한 장짜리 인포그래픽으로 만들어줘.
+맨 위에 코스 이름과 지역, 그 아래 1일차 · 2일차 · 3일차 일정, 맨 아래 예산 합계가 한눈에 보이게.
+글씨는 크게, 색은 밝게. 인쇄해도 잘 보이게 만들어줘.</div>
+  </div>
+  <ul>
+    <li>&quot;글씨 더 크게&quot; · &quot;파란색 계열로&quot; 로 다듬기</li>
+    <li>&quot;그림 파일(PNG)로도 만들어줘&quot;</li>
+    <li>오른쪽 위 내려받기 단추</li>
+    <li>안 되면 윈도우 + Shift + S</li>
+  </ul>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="head"><span class="num">6</span><h2>제미나이로 그림</h2><span class="free">무료 가능</span><span class="time">12분</span></div>
+  <p class="one">Claude는 그림을 못 그립니다. <b>gemini.google.com</b> 에 쓰던 구글(Gmail) 계정으로 로그인하세요.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 10 — 수채화 여행 노트</span><button>복사</button></div>
+    <div class="txt">아래 여행 일정을 한 장 인포그래픽으로 그려줘.
+그림풍 — 부드러운 수채화 손그림, 파스텔 색.
+모양 — 세로로 길게, 위에서 아래로 시간 순서.
+글자 — 아래 내용 그대로, 크고 또렷하게.
+
+<span class="ph">[여기에 Claude가 만든 일정 붙여넣기]</span></div>
+  </div>
+  <p class="note">그림 아래 내려받기(↓) 단추로 저장. 마음에 안 들면 &quot;다시 그려줘&quot;.</p>
+  <p class="warnnote">⚠ 그림 속 <b>한글이 자주 틀립니다.</b> 정확한 일정·금액은 5번에서 만든 Claude 인포그래픽으로 확인하세요.</p>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="head"><span class="num">7</span><h2>확인하고 나누기</h2><span class="time">3분</span></div>
+  <ul>
+    <li>그림 속 <b>한글이 틀리지 않았는지</b> 확인</li>
+    <li>두 장(인포그래픽 + 그림)을 <b>가족 단톡방</b>에 보내기</li>
+    <li>다음 시간 준비물 — 알릴 행사 하나, 예전에 받은 안내문 사진, <b>카카오톡 비밀번호</b></li>
+  </ul>
+  <div class="box">
+    <div class="bar"><span>숙제</span><button>복사</button></div>
+    <div class="txt">코스 카드를 <span class="ph">[하나 더]</span> 골라서 <span class="ph">[2박 3일]</span> 일정 1개를 만들어 인포그래픽까지 완성해줘.</div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8" class="challenge">
+  <div class="head"><span class="num ch">8</span><h2>AI에게 점검시키기</h2><span class="badge">도전</span><span class="time">10분</span></div>
+  <p class="only">※ 먼저 끝낸 분만 — 안 해도 다음 시간에 지장 없습니다.</p>
+  <div class="box">
+    <div class="bar"><span>도전</span><button>복사</button></div>
+    <div class="txt">위 일정과 예산을 여행 전문가 입장에서 냉정하게 점검해줘.
+이동 시간이 무리한 곳, 빠뜨린 것, 예산이 어긋난 부분을 짚어줘.
+좋은 점은 빼고 고칠 점만 알려줘.</div>
+  </div>
+  <p class="note">지적받은 것 중 <b>내가 동의하는 것만</b> 고칩니다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9" class="challenge">
+  <div class="head"><span class="num ch">9</span><h2>스타일 B — 플랫 카드</h2><span class="badge">도전</span><span class="time">10분</span></div>
+  <p class="only">※ 먼저 끝낸 분만 — 제미나이에서 이어서 합니다.</p>
+  <div class="box">
+    <div class="bar"><span>도전</span><button>복사</button></div>
+    <div class="txt">그림풍만 바꿔줘.
+그림풍 — 깔끔한 플랫 디자인, 흰 바탕에 남색 · 주황 포인트.
+모양 — 가로로 길게. 아이콘 — 자동차 · 밥 · 바다 정도만.</div>
+  </div>
+  <p class="note">또렷해서 인쇄용으로 좋습니다. &quot;~만 바꿔줘&quot; 를 그림에도 그대로 씁니다.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10" class="challenge">
+  <div class="head"><span class="num ch">10</span><h2>공짜 책에서 좋은 글귀 뽑아 노션에 담기</h2><span class="badge">도전</span><span class="time">별도</span></div>
+  <p class="only">※ 별도 자료입니다. 수업 중 시간이 남거나 집에서 해 보세요.</p>
+  <p class="one">저작권이 끝난 <b>무료 디지털책</b>을 클로드에게 읽히고, 마음에 드는 글귀만 뽑아 <b>노션</b>에 정리합니다.</p>
+  <a class="banner" href="책글귀_노션.html">
+    <b>📖 무료 디지털책 → 좋은 글귀 → 노션 정리하기</b>
+    <span>여는 방법부터 노션에 옮기는 것까지 · 전 과정 무료</span>
+  </a>
+  <p class="note">완성 예시 → <a href="https://www.notion.so/3b5dd95edc5c8160a24fcc7b164f3f3e" target="_blank" rel="noopener"><b>노션 페이지 보기</b></a></p>
+</section>
+
+<div class="end">
+  <p><b>1.</b> <b>지역 + 하고 싶은 일</b>을 정하면 일정의 성격이 정해진다</p>
+  <p><b>2.</b> 모르겠으면 <b>&quot;고를 거리를 여섯 개 만들어 줘&quot;</b></p>
+  <p><b>3.</b> 같은 창에서 <b>&quot;~만 바꿔줘&quot;</b></p>
+  <p><b>4.</b> 의심스러우면 <b>&quot;웹에서 찾아서 확인해줘&quot;</b></p>
+  <p><b>5.</b> <b>글자는 Claude, 그림은 제미나이</b></p>
+</div>
+
+<footer>클로드로 바꾸는 내 일상 · 3차시 (v3 · 국내 2박 3일 코스 카드)  |  제주도민대학 · 강사 강지애</footer>
+
+</div>
+
+<script>
+// 위쪽 번호 버튼 — 현재 보고 있는 섹션 표시
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.jump a'));
+  var secs  = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function mark(){
+    var i = 0;
+    for (var k = 0; k < secs.length; k++){
+      if (secs[k] && secs[k].getBoundingClientRect().top <= 80) i = k;
+    }
+    links.forEach(function(a, k){ a.classList.toggle('on', k === i); });
+  }
+  window.addEventListener('scroll', mark, {passive:true});
+  mark();
+})();
+
+document.querySelectorAll('.bar button').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.closest('.box').querySelector('.txt').innerText;
+    var ok=function(){b.textContent='복사됨!';b.classList.add('copied');
+      setTimeout(function(){b.textContent='복사';b.classList.remove('copied');},1500);};
+    if(navigator.clipboard&&window.isSecureContext){
+      navigator.clipboard.writeText(t).then(ok,function(){fb(t,ok);});
+    }else{fb(t,ok);}
+  });
+});
+function fb(t,ok){
+  var a=document.createElement('textarea');
+  a.value=t;a.style.position='fixed';a.style.opacity='0';
+  document.body.appendChild(a);a.select();
+  try{document.execCommand('copy');ok();}catch(e){alert('직접 드래그해서 복사해 주세요.');}
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>

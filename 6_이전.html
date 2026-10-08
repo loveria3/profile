@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>보너스 — 예약증으로 만드는 일정표 · 구글 캘린더</title>
+<title>6차시 — AI로 관리하는 생활 일정</title>
 <style>
   :root{--ink:#1f2328;--sub:#6b7480;--line:#e3e6ea;--bg:#f7f8fa;--navy:#1f3864;--soft:#eef1f7;--ok:#2f6b4f;--warn:#8a5a00;}
   *{box-sizing:border-box}
@@ -78,33 +78,16 @@
     font-size:12px;color:var(--sub)}
   .flegend b{color:var(--ink);font-size:12px}
 
-  .hb{display:inline-block;vertical-align:middle;font-size:12px;font-weight:700;color:#fff;
-    background:var(--warn);border-radius:3px;padding:3px 8px;margin-left:8px;letter-spacing:-.01em;
-    -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .back{color:var(--navy);font-weight:700;text-decoration:none}
-  .back:hover{text-decoration:underline}
-  #pdfSaveBtn{position:fixed;top:14px;right:16px;z-index:9999;
-    background:#1f3864;color:#fff !important;text-decoration:none !important;
-    border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
-    font-family:inherit;line-height:1;display:inline-block;
-    box-shadow:0 2px 6px rgba(0,0,0,.18);border:0}
-  #pdfSaveBtn:hover{background:#16294a}
-  @media print{#pdfSaveBtn{display:none !important}}
-  @media(max-width:600px){#pdfSaveBtn{top:8px;right:8px;padding:7px 12px;font-size:12px}}
   @media(max-width:600px){h1{font-size:21px}h2{font-size:17px}.txt{font-size:14px}.time{margin-left:0}}
   @media print{body{background:#fff}button,.jump,.dl{display:none}section{page-break-inside:avoid}}
 </style>
 </head>
 <body>
-<a href="#" id="pdfSaveBtn" title="인쇄 창에서 '대상'을 [PDF로 저장]으로 고르세요"
-   onclick="window.print();return false;">⬇ PDF 저장</a>
-
 <div class="wrap">
 
 <header>
-  <h1>보너스 · 예약증으로 만드는 일정표 <span class="hb">집에서</span></h1>
-  <p class="sub">수업에서 다루지 않은 <b>보너스 편</b>입니다. 집에서 천천히 혼자 해 보세요. 파란 대괄호 <span class="ph">[이렇게]</span> 표시된 곳만 내 상황으로 바꾸면 됩니다.</p>
-  <p class="sub"><a class="back" href="6.html">← 6차시 교안으로 돌아가기</a></p>
+  <h1>6차시 · 예약증으로 만드는 일정표</h1>
+  <p class="sub">파란 대괄호 <span class="ph">[이렇게]</span> 표시된 곳만 내 상황으로 바꾸세요. 지난 시간 가계부와 같은 순서입니다.</p>
 </header>
 
 <div class="flegend"><b>색 테두리 = Claude에서만 배우는 기능</b><span class="ftag c-art">아티팩트</span> <span class="ftag c-conn">커넥터</span></div>
@@ -164,19 +147,16 @@
     <li>여러 장 한꺼번에 선택</li>
     <li>병명 · 주민번호는 가리고 찍기</li>
   </ul>
-  <p class="one" style="margin-top:14px"><b>가져온 사진이 없으면</b> 연습용 샘플을 받아서 올려 보세요.
-    <b>일곱 장이 한 파일에 다 들어 있습니다.</b></p>
-  <p>
-    <a class="dl" href="img/6차시_예약증_실습샘플.zip" download>연습용 예약증 샘플 <b>모두 내려받기</b> (압축 파일)</a>
+  <p class="note"><b>가져온 사진이 없으면</b> 아래 연습용 샘플을 내려받아 올려 보세요.</p>
+  <p style="margin:8px 0 0;line-height:2.4">
+    <a class="dl" href="실습_샘플_6차시/01_예약확인서_하나내과.png" download>① 하나내과 예약확인서</a>
+    <a class="dl" href="실습_샘플_6차시/02_예약문자_튼튼정형외과.png" download>② 정형외과 예약문자</a>
+    <a class="dl" href="실습_샘플_6차시/03_건강검진안내문.png" download>③ 건강검진 안내문</a>
+    <a class="dl" href="실습_샘플_6차시/04_치과_정기검진안내.png" download>④ 치과 정기검진</a>
+    <a class="dl" href="실습_샘플_6차시/05_모임공지_한라올레걷기.png" download>⑤ 걷기모임 공지</a>
+    <a class="dl" href="실습_샘플_6차시/06_예약안내문_흐릿함_바다안과.png" download>⑥ 흐릿한 안내문</a>
   </p>
-  <p class="note">받은 뒤 <b>압축을 꼭 푸세요</b> — 파일 위에서 <b>오른쪽 단추 → 압축 풀기</b>.
-    안에 사진 <b>일곱 장</b>이 있고, 이름 앞 번호가 <b>쓰는 순서</b>입니다.
-    푼 폴더는 <b>바탕화면</b>에 두면 찾기 쉽습니다.</p>
-  <table>
-    <tr><th>① ~ ⑤</th><td>예약확인서 · 예약문자 · 건강검진 안내문 · 치과 안내 · 걷기모임 공지</td></tr>
-    <tr><th>⑥ 흐릿한 안내문</th><td><b>일부러 흐리게</b> 만든 것입니다. AI가 <b>[확인 필요]</b> 라고 적는지 보세요.</td></tr>
-    <tr><th>⑦ 새봄한의원</th><td>뒤 <b>7번 앱 만들기</b>에서 쓸 예약증입니다. 지금은 두세요.</td></tr>
-  </table>
+  <p class="note">⑥번은 <b>일부러 흐리게</b> 만든 것입니다. AI가 <b>[확인 필요]</b> 라고 적는지 보세요.</p>
 </section>
 
 <!-- 4 -->
@@ -250,7 +230,7 @@
   </div>
   <ul>
     <li>앞서 만든 <b>일정 엑셀</b>을 올려서 목록 채우기</li>
-    <li>오늘 일정 1~2건 직접 입력 · 압축 푼 폴더의 <b>⑦ 새봄한의원 예약증</b>도 올려 보기</li>
+    <li>오늘 일정 1~2건 직접 입력 · <a href="실습_샘플_6차시/앱등록용샘플/07_앱등록용_예약증_새봄한의원.png" download><b>새 예약증 샘플</b></a>도 올려 보기</li>
     <li><b>[이번 주]</b> 눌러 확인</li>
     <li>한꺼번에 다 안 되면 &quot;1번만 먼저 해줘&quot;</li>
   </ul>
@@ -322,7 +302,6 @@
 </section>
 
 <div class="end">
-  <p style="color:var(--warn);font-weight:700;margin-bottom:10px">이 장은 수업 시간에 하지 않은 보너스입니다. 막히면 언제든 6차시 교안으로 돌아가세요.</p>
   <p><b>1.</b> 예약증은 <b>찍어 올리면</b> 일정표가 된다</p>
   <p><b>2.</b> 정렬 · 추리기는 한마디로 끝</p>
   <p><b>3.</b> <b>날짜는 원본으로 대조</b> — AI는 달력이 아니다</p>
@@ -332,7 +311,7 @@
   <p style="margin-top:10px;">막히면 &quot;쉽게 알려줘&quot; 한마디면 됩니다. <b>6주간 고생 많으셨습니다.</b></p>
 </div>
 
-<footer>클로드로 바꾸는 내 일상 · 보너스(집에서 하기)  |  제주도민대학 · 강사 강지애</footer>
+<footer>클로드로 바꾸는 내 일상 · 6차시  |  제주도민대학 · 강사 강지애</footer>
 
 </div>
 

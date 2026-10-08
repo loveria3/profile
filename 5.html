@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5차시 — AI로 만드는 가계부</title>
+<style>
+  :root{--ink:#1f2328;--sub:#6b7480;--line:#e3e6ea;--bg:#f7f8fa;--navy:#1f3864;--soft:#eef1f7;--ok:#2f6b4f;--warn:#8a5a00;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 70px}
+
+  header{border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:8px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .sub{font-size:13px;color:var(--sub);margin:8px 0 0}
+
+  section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin:14px 0}
+  section.challenge{border:1px dashed var(--navy);background:#fcfcfe}
+  .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .num{background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .num.ch{background:#fff;color:var(--navy);border:1px dashed var(--navy)}
+  h2{font-size:19px;margin:0;letter-spacing:-.01em}
+  .badge{font-size:11px;font-weight:700;color:var(--navy);border:1px solid var(--navy);
+    border-radius:3px;padding:1px 6px}
+  .time{margin-left:auto;font-size:12px;color:var(--sub)}
+  .one{font-size:14px;color:var(--sub);margin:8px 0 0}
+  .only{font-size:13px;color:var(--warn);margin:8px 0 0}
+
+  .box{background:#fbfcfd;border:1px solid var(--line);border-radius:5px;margin:14px 0 0}
+  .bar{display:flex;align-items:center;gap:8px;padding:7px 12px;
+    background:#f2f4f7;border-bottom:1px solid var(--line);border-radius:5px 5px 0 0}
+  .bar>span:first-child{font-size:12px;font-weight:700;color:var(--navy)}
+  .bar button{margin-left:auto}
+  .txt{padding:14px 16px;font-size:15px;white-space:pre-wrap;word-break:keep-all}
+  button{background:var(--navy);color:#fff;border:0;border-radius:4px;padding:6px 14px;
+    font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  button:hover{background:#16294a}
+  button.copied{background:var(--ok)}
+
+  .jump{position:sticky;top:0;z-index:10;display:flex;gap:6px;flex-wrap:wrap;
+    padding:10px 0 9px;background:rgba(247,248,250,.96);border-bottom:1px solid var(--line)}
+  .jump a{width:40px;height:40px;border:1px solid var(--line);border-radius:6px;background:#fff;
+    color:var(--sub);text-decoration:none;font-weight:700;font-size:16px;
+    display:flex;align-items:center;justify-content:center}
+  .jump a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  section{scroll-margin-top:64px}
+
+  .ph{color:#1668dc;font-weight:700}
+  .shot{width:100%;border:1px solid var(--line);border-radius:5px;margin-top:12px;display:block}
+  .dl{display:inline-block;margin-top:10px;background:var(--navy);color:#fff;text-decoration:none;
+    border-radius:4px;padding:9px 18px;font-size:14px;font-weight:700}
+  .dl:hover{background:#16294a}
+  .dlrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .dl.ghost{background:#fff;color:var(--navy);border:1px solid var(--navy);
+    margin-top:0;padding:7px 14px;font-size:13px}
+  .dl.ghost:hover{background:var(--soft);color:var(--navy)}
+  .note{font-size:13px;color:var(--sub);margin:12px 0 0}
+  ul{list-style:none;padding:0;margin:12px 0 0}
+  li{font-size:14px;color:var(--sub);padding:3px 0 3px 22px;position:relative}
+  li::before{content:"☐";position:absolute;left:0;color:var(--navy)}
+
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+  th{background:var(--soft);color:var(--navy);width:30%}
+  td{color:var(--sub)}
+
+  .end{background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px 22px;margin:22px 0 0}
+  .end b{color:var(--navy)}
+  .end p{margin:6px 0;font-size:14px;color:var(--sub)}
+  footer{margin-top:26px;font-size:12px;color:var(--sub);text-align:center}
+
+  /* ── Claude에서만 배우는 기능 ── */
+  section.feat{border-left-width:5px;border-left-style:solid}
+  .ftag{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:3px;
+    padding:2px 8px;letter-spacing:-.01em;white-space:nowrap;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section.feat.c-skill{border-left-color:#b45309} .ftag.c-skill{background:#b45309}
+  section.feat.c-art{border-left-color:#0d7a86} .ftag.c-art{background:#0d7a86}
+  .flegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;
+    padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    font-size:12px;color:var(--sub)}
+  .flegend b{color:var(--ink);font-size:12px}
+
+  /* ── 누가 하나 표시 ── */
+  .who{display:inline-block;font-size:11px;font-weight:700;border-radius:3px;
+    padding:2px 8px;white-space:nowrap;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .who.all{background:var(--navy);color:#fff}
+  .who.demo{background:#fff;color:var(--sub);border:1px solid var(--sub)}
+  .who.opt{background:#fff;color:var(--warn);border:1px dashed var(--warn)}
+  section.demo-sec{background:#fafbfc;border-style:dashed}
+
+  /* ── 완성 화면 미리보기(모형) ── */
+  .mock{background:#f4f1ea;border:1px solid var(--line);border-radius:6px;padding:14px;margin-top:12px}
+  .mock .mtitle{text-align:center;font-size:15px;font-weight:700;color:#222;margin:0}
+  .mock .msub{text-align:center;font-size:11px;color:#888;margin:2px 0 10px}
+  .mock .mcard{background:#fff;border-radius:9px;padding:10px 12px;margin-bottom:8px;
+    box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .mock .mcard h4{margin:0 0 7px;font-size:12px;color:#222}
+  .mock .mfield{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .mock .mfield div{border:1px solid #ddd;border-radius:5px;padding:5px 7px;font-size:10px;color:#aaa;background:#fff}
+  .mock .mfield div.wide{grid-column:1 / -1}
+  .mock .mbtn{margin-top:6px;background:#d8873f;color:#fff;text-align:center;
+    border-radius:5px;padding:6px;font-size:11px;font-weight:700}
+  .mock .mbtn.blue{background:#4a6fa5;display:inline-block;padding:5px 10px;margin:0}
+  .mock table.mtbl{width:100%;border-collapse:collapse;margin:0;font-size:10px}
+  .mock table.mtbl th,.mock table.mtbl td{border:0;border-bottom:1px solid #eee;padding:4px 3px;
+    text-align:left;color:#444;background:transparent;width:auto}
+  .mock table.mtbl th{color:#999;font-size:9px}
+  .mock table.mtbl td.r{text-align:right;font-weight:700}
+  .mock .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .mock .mgrid div{background:#fdf6ec;border-radius:7px;padding:6px 4px;text-align:center;font-size:9px;color:#888}
+  .mock .mgrid div b{display:block;font-size:11px;color:#333;margin-top:2px}
+  .mock .mtotal{background:#d8873f;color:#fff;border-radius:8px;padding:9px;text-align:center;margin-top:8px}
+  .mock .mtotal span{font-size:10px;opacity:.9;display:block}
+  .mock .mtotal b{font-size:16px}
+  .mock .cap{font-size:11px;color:var(--sub);margin:0 0 10px;text-align:center}
+
+  /* ── 무료 요금제 안내 ── */
+  .tip{background:#fffaf2;border:1px solid #e8d6ac;border-radius:6px;padding:16px 20px;margin:14px 0}
+  .tip h3{margin:0 0 4px;font-size:15px;color:var(--warn)}
+  .tip ol{margin:8px 0 0;padding-left:20px}
+  .tip li{list-style:decimal;font-size:14px;color:var(--sub);padding:4px 0;position:static}
+  .tip li::before{content:none}
+  .tip b{color:var(--ink)}
+
+  @media(max-width:600px){h1{font-size:21px}h2{font-size:17px}.txt{font-size:14px}.time{margin-left:0}}
+  @media print{body{background:#fff}button,.jump,.dl{display:none}section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<!-- ▼ PDF 저장 버튼 (상단 오른쪽) -->
+<style>
+#pdfSaveBtn{position:fixed;top:14px;right:16px;z-index:9999;
+  background:#1f3864;color:#fff !important;text-decoration:none !important;
+  border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:inherit;line-height:1;display:inline-block;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);border:0}
+#pdfSaveBtn:hover{background:#16294a}
+@media print{#pdfSaveBtn{display:none !important}}
+@media(max-width:600px){#pdfSaveBtn{top:8px;right:8px;padding:7px 12px;font-size:12px}}
+</style>
+<a href="#" id="pdfSaveBtn" title="인쇄 창에서 '대상'을 [PDF로 저장]으로 고르세요"
+   onclick="window.print();return false;">⬇ PDF 저장</a>
+<!-- ▲ PDF 저장 버튼 -->
+
+<div class="wrap">
+
+<header>
+  <h1>5차시 · 영수증으로 만드는 가계부</h1>
+  <p class="sub">파란 대괄호 <span class="ph">[이렇게]</span> 표시된 곳만 내 상황으로 바꾸세요.</p>
+</header>
+
+<div class="flegend"><b>누가 하나</b>
+  <span class="who all">모두 함께</span> 내가 직접 입력
+  <span class="who demo">강사 시연</span> 화면만 보기 (무료 한도 아끼기)
+  <span class="who opt">여유 있으면</span> 안 해도 됨
+</div>
+<div class="flegend"><b>색 테두리 = Claude에서만 배우는 기능</b><span class="ftag c-skill">스킬</span> <span class="ftag c-art">아티팩트</span></div>
+
+<div class="tip">
+  <h3>⚠ 오늘은 무료 요금제로 합니다 — 이것만 지키면 끝까지 갑니다</h3>
+  <ol>
+    <li><b>사진은 3장까지만</b> 올리세요. 사진이 많을수록 한도가 빨리 줄어듭니다. (8장 전체는 강사가 시연)</li>
+    <li><b>③④번은 눈으로만</b> 보세요. 직접 입력하지 않아야 뒤의 <b>앱 만들기</b>까지 갈 수 있습니다.</li>
+    <li><b>⑤번 앱 만들기는 새 대화에서</b> 시작하세요. 앞의 긴 대화를 그대로 끌고 가면 한도가 두 배로 줄어듭니다.</li>
+    <li>기능 추가는 <b>두 번에 나눠서</b>. 한꺼번에 다 시키면 만들다 끊기고, 하나씩 네 번 시키면 한도를 두 배로 씁니다.</li>
+    <li>만들다 멈추면 → <b>“이어서 계속 만들어줘”</b> 한마디만 입력.</li>
+    <li>한도 안내가 뜨면 몇 시간 뒤 다시 열립니다. <b>만든 앱은 그 전에 꼭 [다운로드]</b> 해 두세요.</li>
+  </ol>
+</div>
+
+<nav class="jump">
+  <a href="#s1">1</a>
+  <a href="#s2">2</a>
+  <a href="#s3">3</a>
+  <a href="#s4">4</a>
+  <a href="#s5">5</a>
+  <a href="#s6">6</a>
+  <a href="#s7">7</a>
+</nav>
+
+<!-- 1 -->
+<section id="s1">
+  <div class="head"><span class="num">1</span><h2>카테고리 정하기</h2><span class="who all">모두 함께</span><span class="time">5분</span></div>
+  <table>
+    <tr><th>기본 6종</th><td>식비 · 교통 · 의료 · 생활용품 · 여가 · 경조사</td></tr>
+    <tr><th>더할 것</th><td><span class="ph">[반려동물 / 학원비 / 구독료]</span></td></tr>
+  </table>
+  <div class="box">
+    <div class="bar"><span>프롬프트 1 — 먼저 알려주기</span><span class="who all">모두 함께</span><button>복사</button></div>
+    <div class="txt">앞으로 내 지출을 정리할 때 카테고리는 이 목록으로만 나눠줘.
+식비 / 교통 / 의료 / 생활용품 / 여가 / 경조사 / <span class="ph">[반려동물 / 학원비 / 구독료]</span>
+어디에도 안 맞으면 '기타'로 넣어줘.</div>
+  </div>
+  <p class="note">이걸 먼저 입력해 두면 다음부터 AI가 <b>내가 정한 칸</b>으로 분류합니다.<br>
+  ※ 이 카테고리 목록은 <b>⑤번 앱 만들 때 한 번 더</b> 적어 줍니다 — 새 대화에서는 이 약속이 사라지기 때문입니다.</p>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="head"><span class="num">2</span><h2>영수증 사진으로</h2><span class="who all">모두 함께</span><span class="time">25분</span></div>
+  <p class="one">오늘의 하이라이트. 타이핑 없이 표가 만들어집니다.</p>
+  <div class="box">
+    <div class="bar"><span>내 영수증이 없다면 — 샘플 내려받기</span></div>
+    <div class="txt" style="white-space:normal;">
+      <p class="note" style="margin:0 0 10px;"><b>내려받아 대화창에 올리세요. 무료 요금제이므로 ①②③ 3장만</b> 올려 연습합니다. (나머지는 강사 화면으로)</p>
+      <div class="dlrow">
+        <a class="dl ghost" href="실습_샘플_5차시/01_카드영수증_이마트.png" download>① 이마트 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/02_카드영수증_스타벅스.png" download>② 스타벅스 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/03_카드영수증_온누리약국.png" download>③ 온누리약국 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/04_카드영수증_GS25편의점.png" download>④ GS25편의점 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/05_카드영수증_멍냥펫샵.png" download>⑤ 멍냥펫샵 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/06_카드영수증_CGV영화관.png" download>⑥ CGV영화관 카드영수증</a>
+        <a class="dl ghost" href="실습_샘플_5차시/07_현금_사용내역_메모.png" download>⑦ 현금 사용내역 메모</a>
+        <a class="dl ghost" href="실습_샘플_5차시/08_은행_이체내역.png" download>⑧ 은행 이체내역</a>
+      </div>
+    </div>
+  </div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 2 — 오늘의 핵심</span><span class="who all">모두 함께</span><button>복사</button></div>
+    <div class="txt">올린 영수증 사진을 표로 정리해줘.
+날짜 / 내용 / 카테고리 / 결제수단 / 금액 5칸으로.
+흐려서 안 보이는 곳은 [확인 필요] 라고 적어줘.</div>
+  </div>
+  <ul>
+    <li>입력칸 왼쪽 아래 <b>클립(+)</b> 단추</li>
+    <li>사진 3장을 한꺼번에 선택</li>
+    <li>카드번호 · 계좌번호는 가리고 찍기</li>
+    <li>표가 나오면 <b>금액 한두 개만 눈으로 확인</b> — 틀린 곳은 “○○ 금액은 ○○원이야” 라고 고치기</li>
+  </ul>
+  <div class="box">
+    <div class="bar"><span>예비 — 사진이 아예 없을 때만</span><span class="who opt">여유 있으면</span><button>복사</button></div>
+    <div class="txt">아래 지출을 표로 정리해줘. 날짜 / 내용 / 카테고리 / 결제수단 / 금액 5칸으로.
+<span class="ph">[이마트 카드 34,500원, 서울정형외과 병원비 카드 12,000원, 온누리약국 약값 현금 8,300원, 버스 교통비 현금 20,000원, 동창회 모임회비 계좌이체 50,000원]</span></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3" class="demo-sec">
+  <div class="head"><span class="num">3</span><h2>합계 내고 예산과 견주기</h2><span class="who demo">강사 시연</span><span class="time">10분</span></div>
+  <p class="only">※ 이 두 개는 <b>강사 화면으로만</b> 봅니다. 직접 입력하지 마세요 — 여기서 한도를 쓰면 뒤의 앱 만들기를 못 합니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 3 — 합계 내기</span><span class="who demo">강사 시연</span><button>복사</button></div>
+    <div class="txt">카테고리별 합계와 전체 합계를 내줘. 가장 많이 쓴 카테고리 순서로 정렬해줘.</div>
+  </div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 4 — 예산과 견주기</span><span class="who demo">강사 시연</span><button>복사</button></div>
+    <div class="txt">한 달 예산이 <span class="ph">[100만]</span> 원이면 남은 돈은 얼마야?
+줄일 만한 항목을 이유와 함께 알려줘.</div>
+  </div>
+  <p class="note">여기서 볼 것 — ① 한마디로 <b>분류 · 정렬</b>이 끝난다 ② AI가 <b>이유까지</b> 붙여 말해 준다.<br>
+  집에서 혼자 할 때 이 두 줄만 그대로 복사해 쓰시면 됩니다.</p>
+</section>
+
+<!-- 4 -->
+<section id="s4" class="feat c-skill demo-sec">
+  <div class="head"><span class="num">4</span><h2>엑셀로 정리하고 검산</h2><span class="ftag c-skill">스킬</span><span class="who demo">강사 시연</span><span class="time">10분</span></div>
+  <p class="one"><b>AI는 계산기가 아닙니다.</b> 항목이 많아지면 합계를 틀립니다. 그래서 엑셀로 받아 검산합니다.</p>
+  <p class="only">※ 만드는 과정은 강사 화면으로 보고, <b>여러분은 아래 완성 엑셀을 내려받아</b> ⑤번 앱에 올립니다. (엑셀까지 직접 만들면 한도가 모자랍니다)</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 5 — 엑셀로 정리하기</span><span class="who demo">강사 시연</span><button>복사</button></div>
+    <div class="txt">위의 정리된 자료를 엑셀 파일로 만들어줘.
+칸 순서는 날짜 / 내용 / 카테고리 / 결제수단 / 금액 으로 해줘.
+첫 줄은 제목칸(날짜 / 내용 / 카테고리 / 결제수단 / 금액)으로 넣어줘.
+금액 칸 맨 아래에 합계를 넣고, 표로 계산했던 합계와 비교해줘.
+시트 이름은 <span class="ph">[8월]</span> 로 해줘.</div>
+  </div>
+  <p class="note" style="margin-top:14px;"><b>이 엑셀을 ⑤번에서 앱에 올립니다. 지금 내려받아 두세요.</b></p>
+  <a class="dl" href="실습_샘플_5차시/8월_지출내역.xlsx" download>⬇ 8월_지출내역.xlsx 내려받기</a>
+  <ul>
+    <li>내려받은 엑셀에서 <b>=SUM( )</b> 으로 다시 더해 보기</li>
+    <li>AI 합계와 대조 — 다르면 <b>엑셀이 맞습니다</b></li>
+    <li>첫 줄 <b>제목칸</b>, 맨 아래 <b>합계 줄</b> — 이 두 줄이 어디 있는지 눈으로 확인 (⑤번에서 빼야 할 줄)</li>
+  </ul>
+</section>
+
+<!-- 5 -->
+<section id="s5" class="feat c-art">
+  <div class="head"><span class="num">5</span><h2>가계부 미니앱 만들기</h2><span class="ftag c-art">아티팩트</span><span class="who all">모두 함께</span><span class="time">30분</span></div>
+  <p class="one">코딩은 전혀 몰라도 됩니다. 오늘의 <b>최종 목표</b>입니다.</p>
+  <div class="box" style="border:2px solid var(--warn);background:#fffaf2;">
+    <div class="bar" style="background:var(--warn);"><span style="color:#fff;">🔴 여기부터 새 대화에서 — 꼭!</span></div>
+    <div class="txt" style="white-space:normal;line-height:1.7;">
+      왼쪽 위 <b>[새 대화]</b> 를 눌러 <b>빈 대화</b>를 여세요.<br>
+      앞의 영수증 대화를 그대로 이어 쓰면 사진 8장이 매번 따라다녀 <b>무료 한도가 금방 소진</b>되고, 앱이 완성되기 전에 멈춥니다.<br>
+      새 대화에는 <b>④번에서 받은 엑셀 파일만</b> 필요합니다.
+    </div>
+  </div>
+  <div class="box">
+    <div class="bar"><span>프롬프트 6 — 앱 만들기 (새 대화에 그대로 붙여넣기)</span><span class="who all">모두 함께</span><button>복사</button></div>
+    <div class="txt">간단한 가계부 웹앱을 HTML 파일 하나짜리 아티팩트로 만들어줘.
+날짜 / 내용 / 카테고리 / 결제수단 / 금액을 입력하면 목록에 쌓이고, 카테고리별 합계와 전체 합계가 아래에 보이게 해줘.
+카테고리는 식비 / 교통 / 의료 / 생활용품 / 여가 / 경조사 / 반려동물 / 학원비 / 구독료 / 기타 중에서 고르게 해줘.
+글씨는 크게, 사용법은 쉽게 부탁해.
+그리고 기존 지출내역을 담은 엑셀 파일을 올려서 목록을 채울 수 있게 해줘.
+엑셀 칸 순서는 날짜 / 내용 / 카테고리 / 결제수단 / 금액 이고, 첫 줄 제목칸과 맨 아래 '합계' 줄은 목록에 들어가지 않게 해줘.
+목록에서 한 줄씩 지울 수 있는 삭제 단추도 넣어줘.
+저장은 내려받아 열었을 때 되게 하고, 클로드 미리보기 화면에서는 경고 대신 '내려받아 열면 저장됩니다' 라고만 알려줘.
+
+화면은 아래와 같이 만들어줘.
+- 맨 위에 큰 제목 '간단 가계부', 그 아래 작은 안내문 한 줄
+- 배경은 연한 베이지색, 각 부분은 흰색 둥근 상자로 나눠줘
+- 상자는 위에서부터 ① 새 지출 입력 ② 엑셀 파일로 불러오기 ③ 지출 목록 ④ 카테고리별 합계 순서로
+- 지출 목록은 날짜 / 내용 / 카테고리 / 결제수단 / 금액 5칸짜리 표로, 금액은 오른쪽에 붙여서
+- 카테고리별 합계는 작은 네모 칸들을 바둑판처럼 늘어놓고, 맨 아래 전체 합계는 주황색 큰 상자에 흰 글씨로 크게
+- 포인트 색은 주황색 한 가지만 쓰고, 글씨는 크게, 단추와 입력칸도 누르기 쉽게 크게
+- 금액은 12,000원 처럼 쉼표와 '원'을 붙여서 보여줘</div>
+  </div>
+  <p class="note"><b>왜 이 문장들이 꼭 필요한가</b> — ① <b>“아티팩트로”</b> 라고 해야 화면 오른쪽에 실제로 쓰는 앱이 뜹니다. ② <b>카테고리 10개를 다시 적어야</b> 새 대화에서도 ①번에서 정한 칸으로 나옵니다. ③ <b>“HTML 파일 하나짜리”</b> 를 빠뜨리면 <b>.jsx 파일</b>로 만들어집니다 — .jsx는 크롬에서 더블클릭해도 열리지 않아 오늘 마지막 단계(다운로드 → 북마크)를 못 합니다. ④ <b>“첫 줄 제목칸과 합계 줄은 빼고”</b> 를 빠뜨리면 엑셀을 올렸을 때 ‘날짜·합계’ 라는 이상한 줄이 목록에 섞입니다. ⑤ <b>화면 구성까지 적어야</b> 수강생 화면이 제각각으로 나오지 않습니다 — 색·순서를 안 적으면 사람마다 전혀 다른 앱이 나와서 같이 진도를 맞추기 어렵습니다.</p>
+
+  <div class="box">
+    <div class="bar"><span>완성 화면은 이렇게 나옵니다 — 이 모양이면 성공</span></div>
+    <div class="txt" style="white-space:normal;">
+      <p class="cap" style="margin:0 0 10px;color:var(--sub);font-size:12px;">색이 조금 다르거나 글씨 크기가 달라도 괜찮습니다. <b>상자 4개의 순서와 표의 5칸</b>만 같으면 됩니다.</p>
+      <div class="mock">
+        <p class="mtitle">간단 가계부</p>
+        <p class="msub">지출을 입력하면 자동으로 정리돼요</p>
+
+        <div class="mcard">
+          <h4>새 지출 입력</h4>
+          <div class="mfield">
+            <div>날짜</div><div>내용</div>
+            <div>카테고리 ▾</div><div>결제수단</div>
+            <div class="wide">금액 (원)</div>
+          </div>
+          <div class="mbtn">＋ 추가하기</div>
+        </div>
+
+        <div class="mcard">
+          <h4>엑셀 파일로 불러오기</h4>
+          <span class="mbtn blue">📂 엑셀 파일 선택</span>
+        </div>
+
+        <div class="mcard">
+          <h4>지출 목록</h4>
+          <table class="mtbl">
+            <tr><th>날짜</th><th>내용</th><th>카테고리</th><th>결제수단</th><th style="text-align:right">금액</th><th></th></tr>
+            <tr><td>08-10</td><td>이마트 — 서울우유</td><td>식비</td><td>신한카드</td><td class="r">2,980원</td><td style="color:#c0392b">삭제</td></tr>
+            <tr><td>08-11</td><td>넷플릭스 구독료</td><td>구독료</td><td>계좌이체</td><td class="r">13,500원</td><td style="color:#c0392b">삭제</td></tr>
+            <tr><td>08-14</td><td>친구 결혼 축의금</td><td>경조사</td><td>현금</td><td class="r">50,000원</td><td style="color:#c0392b">삭제</td></tr>
+          </table>
+        </div>
+
+        <div class="mcard">
+          <h4>카테고리별 합계</h4>
+          <div class="mgrid">
+            <div>식비<b>78,080원</b></div>
+            <div>교통<b>49,500원</b></div>
+            <div>의료<b>53,600원</b></div>
+            <div>생활용품<b>20,220원</b></div>
+            <div>여가<b>70,000원</b></div>
+            <div>경조사<b>80,000원</b></div>
+            <div>학원비<b>180,000원</b></div>
+            <div>구독료<b>23,950원</b></div>
+          </div>
+          <div class="mtotal"><span>전체 합계</span><b>763,350원</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul>
+    <li>오른쪽에 앱 화면이 뜨는지 확인 — <b>위 미리보기와 비슷한 모양</b>인지</li>
+    <li><b>[📂 엑셀 파일 선택]</b> 로 ④번 엑셀 올리기 → 목록이 채워지는지</li>
+    <li>카테고리별 합계 · 전체 합계 숫자가 보이는지</li>
+    <li>오늘 지출 1건 직접 입력해 보기</li>
+    <li>중간에 멈추면 → <b>“이어서 계속 만들어줘”</b></li>
+    <li>이상하면 → <b>“○○ 고쳐줘”</b> 한 가지씩만</li>
+    <li><b>파일 이름이 .jsx 로 끝나면</b> → “리액트 말고 <b>HTML 파일 하나로</b> 다시 만들어줘” 라고 입력</li>
+  </ul>
+  <div class="box" style="border:2px solid var(--warn);background:#fffaf2;">
+    <div class="bar" style="background:var(--warn);"><span style="color:#fff;">❗ “저장하지 못했어요” 가 떠도 고장이 아닙니다</span></div>
+    <div class="txt" style="white-space:normal;line-height:1.7;">
+      클로드 <b>미리보기 화면은 저장이 막혀 있는 공간</b>이라 그렇습니다. 앱이 잘못 만들어진 게 아닙니다.<br>
+      <b>[다운로드] → 크롬으로 열면 그때부터 저장됩니다.</b> 거기서 지출 1건 넣고 새로고침해 보면 그대로 남아 있습니다.<br>
+      <span class="ph" style="color:var(--warn);">수업 중에는 “이건 원래 그렇습니다, 내려받으면 저장돼요” 라고 안내하고 그냥 넘어가세요.</span>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6" class="feat c-art">
+  <div class="head"><span class="num">6</span><h2>기능 하나씩 붙이기</h2><span class="ftag c-art">아티팩트</span><span class="who all">모두 함께</span><span class="time">20분</span></div>
+  <p class="one"><b>두 번에 나눠서</b> 붙입니다. 네 가지를 한꺼번에 시키면 만들다 끊기고, 하나씩 네 번 시키면 무료 한도를 두 배로 씁니다.</p>
+  <div class="box">
+    <div class="bar"><span>프롬프트 7 — 세 가지 한꺼번에</span><span class="who all">모두 함께</span><button>복사</button></div>
+    <div class="txt">방금 만든 가계부 앱에 아래 기능을 추가해줘. 화면 구성과 색, HTML 파일 하나인 것도 그대로 두고 기능만 더해줘.
+1. 기록을 엑셀 파일로 내려받아 보관 — 올리기 · 내려받기 모두 엑셀로
+2. 카드 / 현금 / 계좌이체 같은 결제수단도 구분해서 입력하고 목록에서도 구분되어 보이게
+3. 내려받아 크롬으로 열었을 때 다시 열어도 입력한 내용이 그대로 남아있게, 저장됐는지 화면에서 확인할 수 있게. 클로드 미리보기 화면에서는 저장이 막혀 있으니 그때는 경고 대신 '내려받아 열면 저장됩니다' 라고만 알려줘</div>
+  </div>
+  <p class="note" style="margin-top:8px;">※ <b>“화면 구성과 색은 그대로 두고”</b> 를 꼭 넣으세요 — 이 말이 없으면 기능을 더하면서 앱 모양이 통째로 바뀌어 버립니다. 2번은 ⑤에서 이미 됐다면 그대로 두고 넘어갑니다.</p>
+  <ul>
+    <li>중간에 멈추면 → <b>“이어서 계속 만들어줘”</b></li>
+    <li><b>[엑셀로 내려받기]</b> 눌러 파일이 받아지는지 확인</li>
+    <li>저장 확인은 <b>다운로드한 뒤에</b> — 클로드 화면에서 “저장하지 못했어요”가 떠도 정상 (아래 참고)</li>
+  </ul>
+  <div class="box">
+    <div class="bar"><span>프롬프트 8 — 영수증 자동 인식 (마지막에 따로)</span><span class="who opt">여유 있으면</span><button>복사</button></div>
+    <div class="txt">영수증 사진을 올리면 날짜 / 내용 / 카테고리 / 결제수단 / 금액을 자동으로 읽어 입력칸에 채워주는 기능을 넣어줘.
+화면 구성과 색, HTML 파일 하나인 것, 지금까지의 기능은 그대로 두고 이것만 더해줘.</div>
+  </div>
+  <ul>
+    <li>새 영수증으로 시험 —
+      <a class="dl ghost" style="padding:3px 10px;font-size:12px;margin:0 0 0 4px;vertical-align:middle;"
+         href="실습_샘플_5차시/앱등록용샘플/09_앱등록용_영수증_베이커리.png" download>샘플 받기</a></li>
+    <li>이 기능은 무료 요금제에서 잘 안 될 수 있습니다 — <b>안 되면 넘어가세요.</b> 앞의 7번까지만 돼도 오늘 목표는 달성입니다</li>
+    <li><b>7번이 끝나면 먼저 [다운로드]</b> 해 두고 8번을 시도하세요 (한도가 끝나도 앱은 남습니다)</li>
+  </ul>
+  <div class="box" style="border:2px solid var(--navy);background:#f4f7fc;">
+    <div class="bar" style="background:var(--navy);"><span style="color:#fff;">✅ 완성 → 다운로드 → 크롬 북마크 (이렇게 마무리)</span></div>
+    <div class="txt" style="white-space:normal;line-height:1.7;">
+      <b>1.</b> 앱이 완성되면 <b>[다운로드]</b> 눌러 <b>.html 파일</b>로 저장 — <span style="color:var(--warn);font-weight:700;">받은 파일이 .jsx 면 크롬에서 안 열립니다.</span> “리액트 말고 HTML 파일 하나로 다시 만들어줘” 라고 하세요<br>
+      <b>2.</b> 받은 파일을 <b>더블클릭 → 크롬</b>으로 열기<br>
+      <b>3.</b> 주소창 옆 <b>★</b> 눌러 <b>북마크</b> — 이후엔 북마크만 누르면 언제든 실행<br>
+      <span class="ph" style="color:var(--warn);">※ 저장은 <b>내려받아 크롬으로 연 앱</b>에서 동작합니다. 클로드 미리보기 화면에서 “저장하지 못했어요”가 떠도 정상입니다. 그래도 <b>원본은 [엑셀로 내려받기]로 따로 보관</b>하는 것이 가장 안전합니다.</span>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7" class="challenge">
+  <div class="head"><span class="num ch">7</span><h2>기능 하나 더 붙이기</h2><span class="badge">도전</span><span class="who opt">여유 있으면</span><span class="time">10분</span></div>
+  <p class="only">※ 먼저 끝낸 분만 — 안 해도 다음 시간에 지장 없습니다.</p>
+  <p class="one">프롬프트를 드리지 않습니다. 직접 만들어 보세요.</p>
+  <ul>
+    <li>필요한 카테고리 추가</li>
+    <li>예산 대비 남은 돈 표시</li>
+    <li>이번 달 합계를 큰 글씨로 위에</li>
+    <li>‘분석’ 단추 — 많이 쓴 카테고리 TOP 3와 줄일 항목 제안</li>
+  </ul>
+</section>
+
+<div class="end">
+  <p><b>1.</b> 영수증은 <b>찍어 올리면</b> 표가 된다</p>
+  <p><b>2.</b> 분류 · 정렬 · 예산 비교는 한마디로 끝</p>
+  <p><b>3.</b> <b>합계는 엑셀에서 검산</b> — AI는 계산기가 아니다</p>
+  <p><b>4.</b> 엑셀 원본 → 앱에 올려 <b>추가 · 보관</b> → 다시 엑셀로 내려받기</p>
+  <p><b>5.</b> 무료 요금제에선 <b>새 대화 · 한 번에 하나씩</b> — 이것만 지키면 끝까지 만들어집니다</p>
+  <p><b>6.</b> 완성 앱은 <b>다운로드 → 크롬 북마크</b>로 언제든 실행</p>
+  <p style="margin-top:10px;"><b>다음 시간 준비물</b> — 병원 예약증 · 안내문 사진 1~2장</p>
+</div>
+
+<footer>클로드로 바꾸는 내 일상 · 5차시  |  제주도민대학 · 강사 강지애</footer>
+
+</div>
+
+<script>
+// 위쪽 번호 버튼 — 현재 보고 있는 섹션 표시
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.jump a'));
+  var secs  = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function mark(){
+    var i = 0;
+    for (var k = 0; k < secs.length; k++){
+      if (secs[k] && secs[k].getBoundingClientRect().top <= 80) i = k;
+    }
+    links.forEach(function(a, k){ a.classList.toggle('on', k === i); });
+  }
+  window.addEventListener('scroll', mark, {passive:true});
+  mark();
+})();
+
+document.querySelectorAll('button').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.closest('.box').querySelector('.txt').innerText;
+    var ok=function(){b.textContent='복사됨!';b.classList.add('copied');
+      setTimeout(function(){b.textContent='복사';b.classList.remove('copied');},1500);};
+    if(navigator.clipboard&&window.isSecureContext){
+      navigator.clipboard.writeText(t).then(ok,function(){fb(t,ok);});
+    }else{fb(t,ok);}
+  });
+});
+function fb(t,ok){
+  var a=document.createElement('textarea');
+  a.value=t;a.style.position='fixed';a.style.opacity='0';
+  document.body.appendChild(a);a.select();
+  try{document.execCommand('copy');ok();}catch(e){alert('직접 드래그해서 복사해 주세요.');}
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
