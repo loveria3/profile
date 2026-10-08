@@ -1,374 +1,2714 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>보너스 — 예약증으로 만드는 일정표 · 구글 캘린더</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강의 스케쥴 관리 · 강지애</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌼</text></svg>">
+<meta name="description" content="강지애 강의 스케쥴 관리 페이지 (비공개).">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="강의 스케쥴 관리 · 강지애">
+<meta property="og:image" content="https://loveria3.github.io/profile/assets/og-image.png">
+<meta property="og:url" content="https://loveria3.github.io/profile/schedule.html">
+
+<!-- ── 홈 화면 앱(아이폰/안드로이드) ────────────────────────────
+     아이폰: 공유 → 홈 화면에 추가 → 전체화면 앱으로 실행 -->
+<link rel="apple-touch-icon" sizes="180x180" href="assets/schedule-icon-180.png">
+<link rel="manifest" href="schedule.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="강의 스케쥴">
+<meta name="theme-color" content="#2a3b2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script>
+/* 이미 인증된 세션이면 PIN 화면 플래시 방지 */
+if (localStorage.getItem('kja_sch_v1') === '1') {
+  document.documentElement.classList.add('pin-authed');
+}
+</script>
 <style>
-  :root{--ink:#1f2328;--sub:#6b7480;--line:#e3e6ea;--bg:#f7f8fa;--navy:#1f3864;--soft:#eef1f7;--ok:#2f6b4f;--warn:#8a5a00;}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;
-    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
-  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 70px}
+.pin-authed #pinLock { display:none !important; }
+/* ── 프로필 페이지 팔레트 ── */
+:root {
+  --bg:          #f4ede2;
+  --bg-deep:     #ebe1d0;
+  --paper:       #fbf6ec;
+  --ink:         #1b1a18;
+  --ink-soft:    #3d3a36;
+  --muted:       #7a716a;
+  --line:        #d9cfbe;
+  --line-soft:   #e6ddcc;
+  --accent:      #2a3b2e;
+  --accent-warm: #b3753a;
+  --gold:        #c9a35b;
+  --nav-bg:      #c9c3b9;
+  --r:           8px;
+  --r-sm:        5px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  background:var(--bg); color:var(--ink);
+  font-size:16px; line-height:1.65;
+  -webkit-font-smoothing:antialiased; letter-spacing:-0.01em;
+}
+a { color:inherit; text-decoration:none; }
 
-  header{border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:8px}
-  h1{font-size:26px;margin:0;letter-spacing:-.02em}
-  .sub{font-size:13px;color:var(--sub);margin:8px 0 0}
+/* ── TOP BAR ── */
+.topbar {
+  position:sticky; top:0; z-index:50;
+  background:#c9c3b9; border-bottom:1px solid var(--line-soft);
+}
+.topbar-inner {
+  max-width:1280px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 40px;
+}
+.brand { display:flex; align-items:baseline; gap:14px; }
+.brand-mark { width:50px; height:50px; object-fit:contain; align-self:center; flex-shrink:0; }
+.brand-name { font-family:'Noto Serif KR',serif; font-size:19px; font-weight:600; }
+.brand-sub  { font-size:12px; color:var(--muted); letter-spacing:0.14em; text-transform:uppercase; }
+.nav { display:flex; align-items:center; gap:6px; }
+.nav a { font-size:14px; color:var(--ink-soft); padding:10px 16px; border-radius:999px; transition:background .15s, color .15s; }
+.nav a:hover { background:var(--bg-deep); color:var(--ink); }
+.nav a[aria-current="page"] { font-size:14px; font-weight:600; color:var(--ink); }
+.nav a.cta { background:var(--accent); color:var(--paper); display:inline-flex; align-items:center; gap:8px; }
+.nav a.cta:hover { background:#14201a; color:var(--paper); }
+.nav a.cta.alt { background:var(--paper); color:var(--ink); border:1px solid var(--line); }
+.nav a.cta.alt:hover { background:var(--bg-deep); }
+.live-dot { width:7px; height:7px; border-radius:50%; background:#e5573f; box-shadow:0 0 0 0 rgba(229,87,63,.6); animation:pulse 1.6s infinite; display:inline-block; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(229,87,63,.55);} 70%{box-shadow:0 0 0 8px rgba(229,87,63,0);} 100%{box-shadow:0 0 0 0 rgba(229,87,63,0);} }
+/* Mobile toggle */
+.nav-toggle { display:none; flex-direction:column; justify-content:center; gap:5px; background:none; border:none; cursor:pointer; padding:8px; border-radius:8px; transition:background .15s; width:40px; height:40px; flex-shrink:0; }
+.nav-toggle:hover { background:var(--bg-deep); }
+.nav-toggle .bar { display:block; width:22px; height:2px; background:var(--ink); border-radius:2px; transition:transform .28s ease, opacity .28s; }
+.nav-toggle.open .bar:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.nav-toggle.open .bar:nth-child(2) { opacity:0; transform:scaleX(0); }
+.nav-toggle.open .bar:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.nav-mobile { display:none; position:fixed; inset:0; z-index:200; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:40px 24px; }
+.nav-mobile.open { display:flex; }
+.nav-mobile a { font-size:22px; font-family:'Noto Serif KR',serif; color:var(--ink); padding:16px 36px; border-radius:12px; transition:background .15s; width:100%; max-width:340px; text-align:center; }
+.nav-mobile a:hover { background:var(--bg-deep); }
+.nav-mobile a.cta { background:var(--accent); color:var(--paper); display:flex; align-items:center; justify-content:center; gap:10px; }
+.nav-mobile a.cta:hover { background:#14201a; }
+.nav-mobile-divider { width:40px; height:1px; background:var(--line); }
+/* Wrap & Footer */
+.wrap { max-width:1280px; margin:0 auto; padding:0 40px; }
+/* ── 플라워 바 ── */
+.flower-bar-wrap { width:100%; overflow:hidden; line-height:0; }
+.flower-bar { width:100%; height:80px; object-fit:cover; display:block; }
+footer { background:#1b1a18; color:#c9bfae; padding:64px 0 32px; }
+.foot-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:48px; border-bottom:1px solid #2e2a25; }
+.foot-brand-name { font-family:'Noto Serif KR',serif; font-size:24px; color:var(--paper); }
+.foot-brand-sub { font-size:13px; margin-top:10px; color:#8a8074; max-width:320px; line-height:1.6; }
+.foot-col h5 { font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:#8a8074; margin-bottom:16px; }
+.foot-col ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-col a { font-size:14px; color:#c9bfae; transition:color .15s; }
+.foot-col a:hover { color:var(--paper); }
+.foot-bottom { padding-top:24px; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#6c6457; }
+.claude-made { display:inline-flex; align-items:center; gap:6px; color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.08em; }
+.claude-made::before { content:'✦'; font-size:10px; color:var(--accent-warm); }
 
-  section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 22px;margin:14px 0}
-  section.challenge{border:1px dashed var(--navy);background:#fcfcfe}
-  .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .num{background:var(--navy);color:#fff;font-size:13px;font-weight:700;
-    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-  .num.ch{background:#fff;color:var(--navy);border:1px dashed var(--navy)}
-  h2{font-size:19px;margin:0;letter-spacing:-.01em}
-  .badge{font-size:11px;font-weight:700;color:var(--navy);border:1px solid var(--navy);
-    border-radius:3px;padding:1px 6px}
-  .time{margin-left:auto;font-size:12px;color:var(--sub)}
-  .one{font-size:14px;color:var(--sub);margin:8px 0 0}
-  .only{font-size:13px;color:var(--warn);margin:8px 0 0}
+/* ── MAIN ── */
+main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 
-  .box{background:#fbfcfd;border:1px solid var(--line);border-radius:5px;margin:14px 0 0}
-  .bar{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;
-    background:#f2f4f7;border-bottom:1px solid var(--line);border-radius:5px 5px 0 0}
-  .bar span{font-size:12px;font-weight:700;color:var(--navy)}
-  .txt{padding:14px 16px;font-size:15px;white-space:pre-wrap;word-break:keep-all}
-  button{background:var(--navy);color:#fff;border:0;border-radius:4px;padding:6px 14px;
-    font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
-  button:hover{background:#16294a}
-  button.copied{background:var(--ok)}
+/* ── STATS (업체별) ── */
+.stats-row {
+  display:flex; gap:10px; flex-wrap:wrap; margin-bottom:2rem;
+}
+.stat-card {
+  border-radius:var(--r); padding:12px 14px;
+  min-width:104px; position:relative;
+}
+.stat-label { font-size:0.62rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; margin-bottom:6px; }
+.stat-val   { font-family:'Noto Serif KR',serif; font-size:1.45rem; font-weight:600; line-height:1; }
+.stat-sub   { font-size:0.72rem; margin-top:6px; display:flex; align-items:center; gap:4px; font-weight:500; letter-spacing:0.04em; opacity:.8; }
 
-  .jump{position:sticky;top:0;z-index:10;display:flex;gap:6px;flex-wrap:wrap;
-    padding:10px 0 9px;background:rgba(247,248,250,.96);border-bottom:1px solid var(--line)}
-  .jump a{width:40px;height:40px;border:1px solid var(--line);border-radius:6px;background:#fff;
-    color:var(--sub);text-decoration:none;font-weight:700;font-size:16px;
-    display:flex;align-items:center;justify-content:center}
-  .jump a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-  section{scroll-margin-top:64px}
+/* ── CAL HEADER ── */
+.cal-header {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:1.2rem; flex-wrap:wrap;
+}
+.cal-nav { display:flex; align-items:center; gap:8px; flex:1; }
+.month-title {
+  font-family:'Noto Serif KR',serif; font-size:1.5rem; font-weight:600;
+  color:var(--ink); min-width:155px; text-align:center;
+}
+.btn-arrow {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--paper); border:1px solid var(--line);
+  color:var(--ink-soft); cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.btn-arrow:hover { background:var(--bg-deep); border-color:var(--accent); color:var(--accent); }
+.cal-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.btn {
+  padding:9px 18px; border-radius:999px; font-size:0.81rem; font-weight:500;
+  cursor:pointer; transition:all .15s; font-family:inherit;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.btn:hover { transform:translateY(-1px); }
+.btn-primary { background:var(--accent); color:var(--paper); border:none; }
+.btn-primary:hover { background:#14201a; }
+.btn-ghost { background:transparent; border:1px solid var(--ink); color:var(--ink); }
+.btn-ghost:hover { background:var(--ink); color:var(--paper); }
 
-  .ph{color:#1668dc;font-weight:700}
-  .shot{width:100%;border:1px solid var(--line);border-radius:5px;margin-top:12px;display:block}
-  .dl{display:inline-block;margin-top:10px;background:var(--navy);color:#fff;text-decoration:none;
-    border-radius:4px;padding:9px 18px;font-size:14px;font-weight:700}
-  .dl:hover{background:#16294a}
-  .note{font-size:13px;color:var(--sub);margin:12px 0 0}
-  ul{list-style:none;padding:0;margin:12px 0 0}
-  li{font-size:14px;color:var(--sub);padding:3px 0 3px 22px;position:relative}
-  li::before{content:"☐";position:absolute;left:0;color:var(--navy)}
+/* ── LEGEND (업체별 색상) ── */
+.legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:1rem; }
+.lg-item { display:flex; align-items:center; gap:5px; font-size:0.74rem; color:var(--ink-soft); }
+.lg-dot  { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 
-  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
-  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
-  th{background:var(--soft);color:var(--navy);width:30%}
-  td{color:var(--sub)}
+/* ── CALENDAR ── */
+.cal-scroll { overflow-x:auto; }
+.calendar {
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:var(--r); overflow:hidden; margin-bottom:2.5rem;
+  min-width:560px;
+}
+.cal-weekdays {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  background:var(--bg-deep); border-bottom:1px solid var(--line);
+}
+.wday { padding:10px 4px; text-align:center; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; color:var(--muted); }
+.wday:first-child { color:#c04a3a; }
+.wday:last-child  { color:#2a4d8a; }
+.cal-days { display:grid; grid-template-columns:repeat(7,1fr); }
+.cal-cell {
+  min-height:90px; padding:7px 6px;
+  border-right:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);
+  cursor:pointer; transition:background .12s;
+}
+.cal-cell:nth-child(7n) { border-right:none; }
+.cal-cell:hover { background:var(--bg); }
+.cal-cell.other  { opacity:.35; pointer-events:none; }
+.cal-cell.today  { background:rgba(42,59,46,.04); }
+.dnum {
+  width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+  font-size:0.8rem; font-weight:600; color:var(--ink-soft);
+  margin-bottom:3px; border-radius:50%;
+}
+.cal-cell.today .dnum { background:var(--accent); color:var(--paper); }
+.cal-cell.is-sun .dnum { color:#c04a3a; }
+.cal-cell.is-sat .dnum { color:#2a4d8a; }
+.cal-cell.is-holiday .dnum { color:#c04a3a; }
+.cal-cell.today.is-holiday .dnum { background:#c04a3a; color:var(--paper); }
+.hol-name {
+  font-size:0.62rem; font-weight:700; color:#c04a3a;
+  line-height:1.4; margin-bottom:3px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* 업체명이 잘리지 않도록 두 줄로 나눈다 — 1줄 업체명(칸 너비 전부 사용) / 2줄 시작시각 */
+.ev-badge {
+  display:block;
+  font-size:0.63rem; font-weight:600;
+  padding:3px 5px; border-radius:4px; margin-bottom:2px;
+  cursor:pointer; max-width:100%; line-height:1.35;
+}
+.ev-top { display:flex; align-items:flex-start; gap:3px; }
+.ev-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; display:inline-block; margin-top:4px; }
+.ev-txt { flex:1; min-width:0; white-space:normal; word-break:break-all; }
+.ev-more { font-size:0.66rem; color:var(--muted); padding-left:3px; }
 
-  .end{background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px 22px;margin:22px 0 0}
-  .end b{color:var(--navy)}
-  .end p{margin:6px 0;font-size:14px;color:var(--sub)}
-  footer{margin-top:26px;font-size:12px;color:var(--sub);text-align:center}
+/* ── LIST ── */
+.list-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.sec-ttl  { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); }
+.sec-note {
+  font-size:0.7rem; color:var(--muted); line-height:1.6;
+  margin-top:5px; max-width:52ch; text-transform:none; letter-spacing:0;
+}
+.sec-note b { color:var(--ink-soft); font-weight:600; }
+.sec-badge {
+  font-size:0.72rem; color:var(--accent-warm);
+  background:rgba(179,117,58,.1); border:1px solid rgba(179,117,58,.25);
+  padding:2px 10px; border-radius:999px;
+}
+.sch-table {
+  width:100%; border-collapse:collapse; background:var(--paper);
+  border:1px solid var(--line); border-radius:var(--r); overflow:hidden;
+}
+.sch-table th {
+  padding:11px 14px; font-size:0.7rem; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
+  border-bottom:1.5px solid var(--line); text-align:left; white-space:nowrap;
+}
+.sch-table td {
+  padding:11px 14px; font-size:0.85rem; color:var(--ink-soft);
+  border-bottom:1px solid var(--line-soft); vertical-align:middle;
+}
+.sch-table tr:last-child td { border-bottom:none; }
+.sch-table tr:hover td { background:rgba(42,59,46,.025); }
+.sch-table td.date-col {
+  color:var(--ink); font-weight:600; white-space:nowrap;
+  font-family:'JetBrains Mono',monospace; font-size:0.78rem;
+}
+.co-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 9px; border-radius:5px; font-size:0.73rem; font-weight:700;
+  white-space:nowrap;
+}
+.co-chip-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.type-lbl {
+  font-size:0.68rem; color:var(--accent); font-weight:700; letter-spacing:0.05em;
+  background:rgba(42,59,46,.08);
+  padding:3px 8px; border-radius:4px; white-space:nowrap;
+}
+.act-btns { display:flex; gap:4px; }
+.btn-xs {
+  padding:3px 9px; border-radius:999px; font-size:0.67rem; font-weight:500;
+  cursor:pointer; border:1px solid var(--line); background:var(--bg);
+  color:var(--muted); transition:all .13s; font-family:inherit;
+}
+.btn-xs:hover { border-color:var(--accent); color:var(--accent); background:var(--paper); }
+.btn-xs.del:hover { border-color:#c04a3a; color:#c04a3a; }
 
-  /* ── Claude에서만 배우는 기능 ── */
-  section.feat{border-left-width:5px;border-left-style:solid}
-  .ftag{display:inline-block;font-size:11px;font-weight:700;color:#fff;border-radius:3px;
-    padding:2px 8px;letter-spacing:-.01em;white-space:nowrap;
-    -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  section.feat.c-art{border-left-color:#0d7a86} .ftag.c-art{background:#0d7a86}
-  section.feat.c-conn{border-left-color:#6b3fa0} .ftag.c-conn{background:#6b3fa0}
-  .flegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 0;
-    padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:6px;
-    font-size:12px;color:var(--sub)}
-  .flegend b{color:var(--ink);font-size:12px}
+/* ── 경력 등록 버튼 (달력 셀 내 지난 강의) ── */
+.btn-complete {
+  font-size: 0.64rem;
+  padding: 2px 0;
+  border-radius: 999px;
+  margin-top: 4px;
+  background: rgba(201,163,91,.13);
+  color: #9a7830;
+  border: 1px solid rgba(201,163,91,.45);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  letter-spacing: 0.04em;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+  line-height: 1.6;
+}
+.btn-complete::before { content: '✦'; font-size: 0.52rem; opacity: .75; }
+.btn-complete:hover {
+  background: var(--gold);
+  color: var(--paper);
+  border-color: var(--gold);
+  box-shadow: 0 2px 8px rgba(201,163,91,.35);
+}
+.ev-done {
+  font-size: 0.64rem;
+  padding: 2px 0;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--accent);
+  background: rgba(42,59,46,.09);
+  border: 1px solid rgba(42,59,46,.18);
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  width: 100%;
+}
+.ev-done::before { content: '✓'; font-size: 0.6rem; }
+.btn-settle {
+  font-size: 0.64rem;
+  padding: 2px 0;
+  border-radius: 999px;
+  margin-top: 3px;
+  background: rgba(74,124,89,.12);
+  color: #3d6b4d;
+  border: 1px solid rgba(74,124,89,.42);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn-settle::before { content: '\20A9'; font-size: 0.6rem; opacity: .8; }
+.btn-settle:hover { background: rgba(74,124,89,.22); color: #2d5238; border-color: rgba(74,124,89,.7); }
+.ev-settled {
+  font-size: 0.6rem; color: #3d6b4d; opacity: .7;
+  margin-top: 3px; text-align: center; letter-spacing: 0.04em;
+}
 
-  .hb{display:inline-block;vertical-align:middle;font-size:12px;font-weight:700;color:#fff;
-    background:var(--warn);border-radius:3px;padding:3px 8px;margin-left:8px;letter-spacing:-.01em;
-    -webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .back{color:var(--navy);font-weight:700;text-decoration:none}
-  .back:hover{text-decoration:underline}
-  #pdfSaveBtn{position:fixed;top:14px;right:16px;z-index:9999;
-    background:#1f3864;color:#fff !important;text-decoration:none !important;
-    border-radius:6px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
-    font-family:inherit;line-height:1;display:inline-block;
-    box-shadow:0 2px 6px rgba(0,0,0,.18);border:0}
-  #pdfSaveBtn:hover{background:#16294a}
-  @media print{#pdfSaveBtn{display:none !important}}
-  @media(max-width:600px){#pdfSaveBtn{top:8px;right:8px;padding:7px 12px;font-size:12px}}
-  @media(max-width:600px){h1{font-size:21px}h2{font-size:17px}.txt{font-size:14px}.time{margin-left:0}}
-  @media print{body{background:#fff}button,.jump,.dl{display:none}section{page-break-inside:avoid}}
+/* ── 정산 대기 · 정산 모달 ── */
+.stl-age { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--muted); white-space:nowrap; }
+.stl-age.late { color:#b5442f; font-weight:700; }
+.stl-list {
+  border:1px solid var(--line); border-radius:var(--r-sm);
+  background:var(--bg); max-height:230px; overflow-y:auto; margin-bottom:4px;
+}
+.stl-row {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-bottom:1px solid var(--line-soft);
+}
+.stl-row:last-child { border-bottom:none; }
+.stl-row input[type=checkbox] { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.stl-row .stl-d { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--ink); white-space:nowrap; }
+.stl-row .stl-t { flex:1; font-size:0.76rem; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.stl-row .stl-h { font-size:0.68rem; color:var(--muted); white-space:nowrap; }
+.stl-amt {
+  width:96px; flex-shrink:0; text-align:right;
+  background:var(--paper); border:1px solid var(--line); color:var(--ink);
+  padding:5px 8px; border-radius:var(--r-sm);
+  font-size:0.76rem; font-family:'JetBrains Mono',monospace;
+}
+.stl-amt:focus { outline:none; border-color:var(--accent); }
+.stl-amt:disabled { opacity:.35; }
+.stl-sum {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.78rem; padding:7px 2px 0;
+}
+.stl-sum b { font-family:'JetBrains Mono',monospace; font-size:0.92rem; color:var(--accent); }
+.stl-chk {
+  display:flex; align-items:center; gap:7px; cursor:pointer;
+  font-size:0.8rem; color:var(--ink); font-weight:600;
+}
+.stl-chk input { width:15px; height:15px; accent-color:var(--accent); cursor:pointer; }
+.stl-hint { font-size:0.7rem; color:var(--muted); line-height:1.7; margin-top:4px; }
+.stl-hint b { color:var(--accent-warm); font-family:'JetBrains Mono',monospace; }
+.stl-box {
+  background:var(--bg); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:11px 12px;
+}
+
+/* ── 돈 카드 (미수금 · 이달 입금) ── 통계 줄 오른쪽 끝에 붙인다 */
+.stat-card.money-card { background:rgba(42,59,46,.06); min-width:126px; }
+.stat-card.money-first { margin-left:auto; }   /* 같은 줄 오른쪽으로 밀기 */
+
+.stat-card.money-card .stat-label { color:var(--accent); }
+.stat-card.money-card .stat-val   { color:var(--accent); }
+.stat-card.money-card .stat-sub   { color:var(--muted); }
+.stat-card.money-card.warn        { background:rgba(192,74,58,.09); }
+.stat-card.money-card.warn .stat-label,
+.stat-card.money-card.warn .stat-val { color:#b5442f; }
+.stat-card.money-card.warn .stat-sub { color:#a9634f; }
+.stat-card.money-card.paid        { background:rgba(201,163,91,.13); }
+.stat-card.money-card.paid .stat-label { color:#9a7830; }
+.stat-card.money-card.paid .stat-val   { color:var(--accent); font-size:0.95rem; }
+.stat-card.money-card.paid .stat-sub   { color:#9a7830; }
+
+/* ── 달력 뱃지 시간 · 더보기 ── */
+.ev-tm {
+  font-family:'JetBrains Mono',monospace; font-size:0.55rem;
+  opacity:.7; letter-spacing:-.02em; padding-left:7px; line-height:1.4;
+}
+.ev-more { cursor:pointer; }
+.ev-more:hover { color:var(--accent); text-decoration:underline; }
+
+/* ── 강의 추가/수정 모달 보조 UI ── */
+.edit-banner {
+  background:rgba(179,117,58,.1); border:1px solid rgba(179,117,58,.35);
+  border-radius:var(--r-sm); padding:9px 12px; margin-bottom:1rem;
+  font-size:0.76rem; color:#8a5726; line-height:1.6;
+}
+.edit-banner b { color:var(--accent-warm); }
+.day-hint {
+  grid-column:1/-1; margin-top:-4px;
+  font-size:0.72rem; color:var(--muted); line-height:1.7;
+}
+.day-hint b { color:var(--ink-soft); font-weight:600; }
+
+/* ── 회차 반복 등록 ── */
+.rep-box {
+  grid-column:1/-1; background:var(--bg); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:11px 12px;
+}
+.rep-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:10px 0 8px; }
+.rep-radio { display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.78rem; color:var(--ink); }
+.rep-radio input { accent-color:var(--accent); cursor:pointer; }
+.rep-num { width:64px; padding:5px 8px; font-size:0.78rem; }
+.rep-pick { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
+.rep-chips { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0; }
+.rep-chip {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--paper); border:1px solid var(--line); border-radius:999px;
+  padding:3px 5px 3px 10px; font-size:0.72rem;
+  font-family:'JetBrains Mono',monospace; color:var(--ink-soft);
+}
+.rep-chip.base { border-color:var(--accent); color:var(--accent); font-weight:700; }
+.rep-chip button {
+  border:none; background:none; cursor:pointer; color:var(--muted);
+  font-size:0.8rem; line-height:1; padding:0 3px; font-family:inherit;
+}
+.rep-chip button:hover { color:#c04a3a; }
+.rep-sum { font-size:0.74rem; color:var(--accent); font-weight:600; }
+
+/* 데이 시트 — 데스크톱에서는 가운데 패널로 */
+@media(min-width:641px){
+  .day-sheet-panel {
+    left:50%; right:auto; bottom:auto; top:50%;
+    width:min(520px,92vw); border-radius:var(--r); max-height:82vh;
+    transform:translate(-50%,-44%); opacity:0;
+    transition:transform .2s cubic-bezier(.2,.8,.3,1), opacity .18s;
+    padding:18px 20px 20px;
+  }
+  .day-sheet.open .day-sheet-panel { transform:translate(-50%,-50%); opacity:1; }
+  .day-sheet-bar { display:none; }
+}
+.empty {
+  text-align:center; padding:4rem 1rem;
+  background:var(--paper); border:1px solid var(--line); border-radius:var(--r);
+}
+.empty-ico { font-size:2.2rem; margin-bottom:.6rem; opacity:.5; }
+.empty p   { font-size:0.85rem; line-height:2; color:var(--muted); }
+.empty span { color:var(--accent-warm); }
+
+/* ── OVERLAY ── */
+.overlay {
+  position:fixed; inset:0; z-index:500;
+  background:rgba(27,26,24,.6); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:var(--r); width:100%; max-width:520px; padding:1.8rem;
+  max-height:92vh; overflow-y:auto;
+  box-shadow:0 24px 48px -12px rgba(27,26,24,.25);
+}
+.modal-ttl {
+  font-family:'Noto Serif KR',serif; font-size:1.1rem; font-weight:600;
+  margin-bottom:1.3rem; padding-bottom:.9rem; border-bottom:1px solid var(--line);
+}
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fgrp { display:flex; flex-direction:column; gap:5px; }
+.fgrp.full { grid-column:1/-1; }
+.flbl { font-size:0.68rem; font-weight:700; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; }
+.finp,.fsel,.ftxt {
+  background:var(--bg); border:1px solid var(--line);
+  color:var(--ink); padding:8px 12px; border-radius:var(--r-sm);
+  font-size:0.82rem; font-family:inherit; transition:border-color .15s;
+}
+.finp:focus,.fsel:focus,.ftxt:focus { outline:none; border-color:var(--accent); background:var(--paper); }
+.fsel { cursor:pointer; }
+.ftxt { resize:vertical; min-height:58px; }
+.form-actions {
+  display:flex; gap:8px; justify-content:flex-end;
+  margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--line);
+}
+
+/* ── CUSTOM AUTOCOMPLETE ── */
+.ac-wrap { position:relative; }
+.ac-drop {
+  position:absolute; top:calc(100% + 3px); left:0; right:0; z-index:9999;
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  max-height:200px; overflow-y:auto;
+  display:none;
+  box-shadow:0 8px 20px -4px rgba(27,26,24,.18);
+}
+.ac-drop.open { display:block; }
+.ac-item {
+  padding:8px 12px; font-size:0.82rem; cursor:pointer;
+  color:var(--ink-soft); transition:background .1s;
+}
+.ac-item:hover,.ac-item.hi { background:var(--bg-deep); color:var(--ink); }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--line); border-radius:3px; }
+
+/* ── PIN LOCK ── */
+.pin-lock {
+  position:fixed; inset:0; z-index:999;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
+}
+.pin-card {
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:12px; padding:2.8rem 2rem 2rem;
+  width:100%; max-width:320px; text-align:center;
+  box-shadow:0 24px 60px -16px rgba(27,26,24,.18);
+}
+.pin-logo { margin-bottom:1rem; }
+.pin-ttl {
+  font-family:'Noto Serif KR',serif; font-size:1.15rem; font-weight:600;
+  color:var(--ink); margin-bottom:.3rem;
+}
+.pin-desc {
+  font-size:.68rem; color:var(--muted);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:1.8rem;
+}
+.pin-dots { display:flex; justify-content:center; gap:12px; margin-bottom:1.2rem; }
+.pd {
+  width:13px; height:13px; border-radius:50%;
+  border:2px solid var(--line); background:transparent;
+  transition:background .18s, border-color .18s, transform .18s;
+}
+.pd.filled { background:var(--accent); border-color:var(--accent); transform:scale(1.1); }
+.pd.err    { background:#c04a3a; border-color:#c04a3a; transform:scale(1.1); }
+.pin-inp {
+  width:100%; background:var(--bg); border:1px solid var(--line);
+  color:transparent; caret-color:var(--accent);
+  padding:10px 14px; border-radius:var(--r-sm);
+  font-size:1.5rem; text-align:center; letter-spacing:.5em;
+  font-family:inherit; outline:none;
+  transition:border-color .15s;
+}
+.pin-inp:focus { border-color:var(--accent); background:var(--paper); }
+.pin-inp.err-state { border-color:#c04a3a; }
+.pin-err { font-size:.73rem; color:#c04a3a; margin-top:.7rem; min-height:1.1em; line-height:1.4; }
+.pin-lockout {
+  font-size:.72rem; color:var(--muted);
+  background:var(--bg-deep); border:1px solid var(--line);
+  padding:.55rem 1rem; border-radius:var(--r-sm);
+  margin-top:.8rem; display:none;
+}
+.pin-submit {
+  margin-top:1.2rem; width:100%;
+  background:var(--accent); color:var(--paper);
+  border:none; border-radius:999px; padding:12px;
+  font-size:.85rem; font-weight:600; font-family:inherit;
+  cursor:pointer; transition:background .15s, opacity .15s;
+  letter-spacing:.04em;
+}
+.pin-submit:hover { background:#14201a; }
+.pin-submit:disabled { opacity:.35; cursor:not-allowed; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)} 40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+}
+.do-shake { animation:shake .38s ease; }
+
+/* ── 모바일 달력: 셀 안 색점 요약 ── */
+.m-dots { display:none; justify-content:center; gap:3px; flex-wrap:wrap; margin-top:1px; }
+.m-dot  { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.m-dot.done { opacity:.32; }
+
+/* ── 데이 시트 (모바일에서 날짜 탭 시) ── */
+.day-sheet {
+  position:fixed; inset:0; z-index:400; display:none;
+  background:rgba(27,26,24,.35); opacity:0; transition:opacity .2s;
+}
+.day-sheet.open { display:block; opacity:1; }
+.day-sheet-panel {
+  position:absolute; left:0; right:0; bottom:0;
+  background:var(--paper); border-radius:16px 16px 0 0;
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom));
+  max-height:80vh; overflow-y:auto;
+  transform:translateY(100%); transition:transform .24s cubic-bezier(.2,.8,.3,1);
+  box-shadow:0 -6px 26px rgba(0,0,0,.14);
+}
+.day-sheet.open .day-sheet-panel { transform:translateY(0); }
+.day-sheet-bar { width:38px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 12px; }
+.day-sheet-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.day-sheet-date { font-family:'Noto Serif KR',serif; font-size:1.05rem; font-weight:600; color:var(--ink); }
+.day-sheet-hol { font-size:.72rem; font-weight:700; color:#c04a3a; margin-left:7px; }
+.day-sheet-close {
+  background:none; border:none; font-size:.78rem; color:var(--muted);
+  cursor:pointer; padding:6px 8px; font-family:inherit; line-height:1;
+}
+.ds-item { border:1px solid var(--line-soft); border-radius:var(--r); padding:12px 14px; margin-bottom:10px; background:var(--bg); }
+.ds-co { font-size:.8rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.ds-meta { font-size:.74rem; color:var(--ink-soft); line-height:1.65; }
+.ds-actions { display:flex; gap:6px; margin-top:11px; flex-wrap:wrap; }
+.ds-btn {
+  flex:1; min-width:78px; min-height:40px; border-radius:999px;
+  font-size:.73rem; font-weight:700; font-family:inherit; cursor:pointer;
+  border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);
+}
+.ds-btn.gold  { background:rgba(201,163,91,.14); border-color:rgba(201,163,91,.5); color:#9a7830; }
+.ds-btn.green { background:rgba(74,124,89,.13);  border-color:rgba(74,124,89,.45); color:#3d6b4d; }
+.ds-done { flex:1; min-width:78px; text-align:center; font-size:.7rem; color:var(--muted); align-self:center; padding:11px 0; }
+.ds-empty { font-size:.8rem; color:var(--muted); text-align:center; padding:24px 0; }
+.day-sheet-add {
+  width:100%; min-height:46px; border-radius:999px; border:none;
+  background:var(--accent); color:var(--paper);
+  font-family:inherit; font-size:.82rem; font-weight:700; cursor:pointer; margin-top:2px;
+}
+
+@media(max-width:980px){
+  .foot-grid { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:640px){
+  .topbar-inner { padding-left:20px; padding-right:20px; }
+  main { padding-left:20px; padding-right:20px; }
+  .nav { display:none; }
+  .nav-toggle { display:flex; }
+  /* 달력이 가로 스크롤 없이 7일 모두 들어오게 */
+  .calendar { min-width:0; }
+  .cal-cell { min-height:58px; padding:5px 2px; cursor:pointer; }
+  .dnum { width:22px; height:22px; font-size:.72rem; margin:0 auto 2px; }
+  .wday { font-size:.62rem; padding:8px 2px; letter-spacing:.04em; }
+  .hol-name { display:none; }
+  .cal-cell.is-holiday { background:rgba(192,74,58,.05); }
+  /* 셀 안 뱃지·버튼은 감추고 색점으로 요약 → 날짜를 탭해 상세를 연다 */
+  .ev-badge, .ev-more, .btn-complete, .ev-done, .btn-settle, .ev-settled { display:none !important; }
+  .m-dots { display:flex; }
+  /* 카드가 늘면 한 줄에 짓눌리므로 크기를 지키고 옆으로 넘긴다 */
+  .stats-row { flex-wrap:nowrap; gap:7px; overflow-x:auto; padding-bottom:4px; }
+  .stat-card { flex:0 0 auto; min-width:92px; padding:11px 10px; }
+  .stat-card.money-card { min-width:112px; }
+  .stat-card.money-first { margin-left:0; }
+  .stat-label { font-size:.55rem; letter-spacing:.03em; }
+  .stat-val { font-size:1.25rem; }
+  .stat-sub { font-size:.62rem; }
+  .form-grid { grid-template-columns:1fr; }
+  .month-title { font-size:1.15rem; min-width:130px; }
+  .foot-grid { display:flex; flex-direction:column; gap:32px; padding-left:20px; padding-right:20px; }
+  .foot-bottom { padding:20px 20px 0; flex-direction:column; gap:8px; }
+  .wrap { padding-left:20px; padding-right:20px; }
+}
 </style>
 </head>
 <body>
-<a href="#" id="pdfSaveBtn" title="인쇄 창에서 '대상'을 [PDF로 저장]으로 고르세요"
-   onclick="window.print();return false;">⬇ PDF 저장</a>
 
-<div class="wrap">
-
-<header>
-  <h1>보너스 · 예약증으로 만드는 일정표 <span class="hb">집에서</span></h1>
-  <p class="sub">수업에서 다루지 않은 <b>보너스 편</b>입니다. 집에서 천천히 혼자 해 보세요. 파란 대괄호 <span class="ph">[이렇게]</span> 표시된 곳만 내 상황으로 바꾸면 됩니다.</p>
-  <p class="sub"><a class="back" href="6.html">← 6차시 교안으로 돌아가기</a></p>
-</header>
-
-<div class="flegend"><b>색 테두리 = Claude에서만 배우는 기능</b><span class="ftag c-art">아티팩트</span> <span class="ftag c-conn">커넥터</span></div>
-
-
-<nav class="jump">
-  <a href="#s1">1</a>
-  <a href="#s2">2</a>
-  <a href="#s3">3</a>
-  <a href="#s4">4</a>
-  <a href="#s5">5</a>
-  <a href="#s6">6</a>
-  <a href="#s7">7</a>
-  <a href="#s8">8</a>
-  <a href="#s9">9</a>
-</nav>
-
-<!-- 1 -->
-<section id="s1">
-  <div class="head"><span class="num">1</span><h2>지킬 선 세 가지</h2><span class="time">5분</span></div>
-  <ul>
-    <li>주민번호 · 계좌번호는 입력하지 않기</li>
-    <li>병명은 <span class="ph">[정기 검진]</span> 처럼 두루뭉술하게</li>
-    <li>사진은 민감한 부분을 가리고 찍기</li>
-  </ul>
-  <p class="note">불안하면 가상 정보로 연습해도 충분합니다.</p>
-</section>
-
-<!-- 2 -->
-<section id="s2">
-  <div class="head"><span class="num">2</span><h2>칸 정하기</h2><span class="time">5분</span></div>
-  <table>
-    <tr><th>칸 5개</th><td>장소 / 용건 / 날짜 / 시간 / 메모</td></tr>
-    <tr><th>담을 것</th><td><span class="ph">[병원 / 모임 / 약 타는 날 / 정기 결제일]</span></td></tr>
-  </table>
-  <div class="box">
-    <div class="bar"><span>프롬프트 0 — 먼저 알려주기</span><button>복사</button></div>
-    <div class="txt">앞으로 내 일정을 정리할 때는 이 5칸으로만 나눠줘.
-장소 / 용건 / 날짜 / 시간 / 메모
-종류는 <span class="ph">[병원 / 모임 / 약 타는 날 / 정기 결제]</span> 중에 골라서 메모 칸에 적어줘.</div>
-  </div>
-  <p class="note">지난 시간 가계부에서 카테고리를 먼저 정한 것과 같습니다.</p>
-</section>
-
-<!-- 3 -->
-<section id="s3">
-  <div class="head"><span class="num">3</span><h2>예약증 사진으로</h2><span class="time">15분</span></div>
-  <p class="one">오늘의 하이라이트. 타이핑 없이 일정표가 만들어집니다.</p>
-  <div class="box">
-    <div class="bar"><span>프롬프트 1 — 오늘의 핵심</span><button>복사</button></div>
-    <div class="txt">올린 예약증 · 안내문 사진을 표로 정리해줘.
-장소 / 용건 / 날짜 / 시간 / 메모 5칸으로.
-흐려서 안 보이는 곳은 [확인 필요] 라고 적어줘.</div>
-  </div>
-  <ul>
-    <li>입력칸 왼쪽 아래 <b>클립(+)</b> 단추</li>
-    <li>여러 장 한꺼번에 선택</li>
-    <li>병명 · 주민번호는 가리고 찍기</li>
-  </ul>
-  <p class="one" style="margin-top:14px"><b>가져온 사진이 없으면</b> 연습용 샘플을 받아서 올려 보세요.
-    <b>일곱 장이 한 파일에 다 들어 있습니다.</b></p>
-  <p>
-    <a class="dl" href="img/6차시_예약증_실습샘플.zip" download>연습용 예약증 샘플 <b>모두 내려받기</b> (압축 파일)</a>
-  </p>
-  <p class="note">받은 뒤 <b>압축을 꼭 푸세요</b> — 파일 위에서 <b>오른쪽 단추 → 압축 풀기</b>.
-    안에 사진 <b>일곱 장</b>이 있고, 이름 앞 번호가 <b>쓰는 순서</b>입니다.
-    푼 폴더는 <b>바탕화면</b>에 두면 찾기 쉽습니다.</p>
-  <table>
-    <tr><th>① ~ ⑤</th><td>예약확인서 · 예약문자 · 건강검진 안내문 · 치과 안내 · 걷기모임 공지</td></tr>
-    <tr><th>⑥ 흐릿한 안내문</th><td><b>일부러 흐리게</b> 만든 것입니다. AI가 <b>[확인 필요]</b> 라고 적는지 보세요.</td></tr>
-    <tr><th>⑦ 새봄한의원</th><td>뒤 <b>7번 앱 만들기</b>에서 쓸 예약증입니다. 지금은 두세요.</td></tr>
-  </table>
-</section>
-
-<!-- 4 -->
-<section id="s4">
-  <div class="head"><span class="num">4</span><h2>사진이 없을 때</h2><span class="time">10분</span></div>
-  <div class="box">
-    <div class="bar"><span>프롬프트 2</span><button>복사</button></div>
-    <div class="txt">아래를 표로 정리해줘. 장소 / 용건 / 날짜 / 시간 / 메모 5칸으로.
-<span class="ph">[하나내과 정기검진 10월 6일 오전 10시, 튼튼정형외과 8월 26일 오후 3시 예약, 걷기 모임 매주 수요일 저녁 7시]</span></div>
-  </div>
-  <p class="note">위 내용은 가상 정보입니다. 내 일정 3~4건으로 바꿔 넣어 보세요.</p>
-</section>
-
-<!-- 5 -->
-<section id="s5">
-  <div class="head"><span class="num">5</span><h2>정렬하고 추리기</h2><span class="time">10분</span></div>
-  <div class="box">
-    <div class="bar"><span>프롬프트 3</span><button>복사</button></div>
-    <div class="txt">날짜가 가까운 순서로 정렬해줘. 이번 달에 가야 할 곳만 따로 뽑아서 알려줘.</div>
-  </div>
-  <div class="box">
-    <div class="bar"><span>프롬프트 4 — 이런 것도</span><button>복사</button></div>
-    <div class="txt"><span class="ph">[석 달]</span> 마다 가는 곳은 다음이 언제야?
-겹치는 날이 있는지 봐줘. 일주일 전에 보낼 알림 문구도 만들어줘.</div>
-  </div>
-  <p class="note"><b>날짜는 꼭 예약증 원본과 대조하세요.</b> AI는 달력이 아니라서 요일 · 며칠 뒤 계산을 틀릴 수 있습니다.</p>
-</section>
-
-<!-- 6 -->
-<section id="s6">
-  <div class="head"><span class="num">6</span><h2>엑셀로 받아 두기</h2><span class="time">5분</span></div>
-  <p class="one">다음 단계에서 이 엑셀을 앱에 올립니다. 꼭 만들어 두세요.</p>
-  <div class="box">
-    <div class="bar"><span>프롬프트 5 — 엑셀로 정리하기</span><button>복사</button></div>
-    <div class="txt">위의 정리된 일정을 엑셀 파일로 만들어줘.
-칸 순서는 장소 · 용건 · 날짜 · 시간 · 메모 로 해줘.
-날짜가 가까운 순서로 정렬해주고, 시트 이름은 <span class="ph">[내 일정]</span> 으로 해줘.</div>
-  </div>
-  <ul>
-    <li><b>[다운로드]</b> 눌러 엑셀 파일 저장</li>
-    <li>날짜 · 시간이 예약증과 같은지 눈으로 확인</li>
-    <li>이 엑셀이 <b>내 일정 원본</b> — 잘 보관 (다음 ⑦에서 앱에 올립니다)</li>
-  </ul>
-</section>
-
-<!-- 7 -->
-<section id="s7" class="feat c-art">
-  <div class="head"><span class="num">7</span><h2>일정 미니앱 만들기</h2><span class="ftag c-art">아티팩트</span><span class="time">25분</span></div>
-  <p class="one">지난 시간 가계부 앱과 <b>똑같은 순서</b>입니다. 아래 박스를 순서대로 복사해 붙여넣기만 하세요.</p>
-  <div class="box">
-    <div class="bar"><span>프롬프트 6 — 기본 앱 만들기</span><button>복사</button></div>
-    <div class="txt">간단한 생활 일정 관리 웹앱을 아티팩트로 만들어줘.
-장소 · 용건 · 날짜 · 시간 · 메모를 입력하면 목록에 쌓이고, 날짜가 가까운 순서로 저절로 정렬되게 해줘.
-글씨는 크게, 사용법은 쉽게 부탁해.
-그리고 기존 일정을 담은 엑셀(.xlsx) 파일을 올려서 목록을 채울 수 있게 해줘.
-(엑셀 칸 순서는 장소 · 용건 · 날짜 · 시간 · 메모)</div>
-  </div>
-  <div class="box">
-    <div class="bar"><span>프롬프트 7 — 기능 보강하기</span><button>복사</button></div>
-    <div class="txt">방금 만든 일정 앱에 아래 기능을 추가해줘.
-1. 기록을 엑셀(.xlsx) 파일로 내려받아 보관 — 올리기 · 내려받기 모두 엑셀로
-2. 병원 · 모임 · 약 타는 날 · 정기 결제 종류를 구분해 입력하고 목록에도 표시
-3. 다시 열어도 기록이 남아있게 (저장됐는지 화면에서 확인)
-4. 예약증 사진을 올리면 장소·용건·날짜·시간을 자동으로 읽어 채워주는 기능</div>
-  </div>
-  <div class="box">
-    <div class="bar"><span>프롬프트 8 — ‘이번 주’ 버튼 붙이기</span><button>복사</button></div>
-    <div class="txt">'이번 주' 버튼을 하나 추가해줘. 누르면 지금까지 입력된 일정을 정리해서 보여주게 해줘.
-① 오늘부터 7일 안에 가야 할 곳, ② 다음 예약이 안 잡힌 곳,
-③ 같은 날 겹치는 일정, ④ 가족에게 보낼 알림 문구를 쉬운 말로 보여줘.</div>
-  </div>
-  <ul>
-    <li>앞서 만든 <b>일정 엑셀</b>을 올려서 목록 채우기</li>
-    <li>오늘 일정 1~2건 직접 입력 · 압축 푼 폴더의 <b>⑦ 새봄한의원 예약증</b>도 올려 보기</li>
-    <li><b>[이번 주]</b> 눌러 확인</li>
-    <li>한꺼번에 다 안 되면 &quot;1번만 먼저 해줘&quot;</li>
-  </ul>
-  <div class="box" style="border:2px solid var(--navy);background:#f4f7fc;">
-    <div class="bar" style="background:var(--navy);"><span style="color:#fff;">✅ 완성 → 다운로드 → 크롬 북마크 (이렇게 마무리)</span></div>
-    <div class="txt" style="white-space:normal;line-height:1.7;">
-      <b>1.</b> 앱이 완성되면 <b>[다운로드]</b> 눌러 <b>.html 파일</b>로 저장<br>
-      <b>2.</b> 받은 파일을 <b>더블클릭 → 크롬</b>으로 열기<br>
-      <b>3.</b> 주소창 옆 <b>★</b> 눌러 <b>북마크</b> — 이후엔 북마크만 누르면 언제든 실행<br>
-      <span class="ph" style="color:var(--warn);">※ 클로드 미리보기 화면 안에서는 저장이 안 됩니다. 꼭 다운로드해서 파일로 열어야 기록이 남아요. 원본은 [엑셀로 내려받기]로 따로 보관.</span>
+<!-- ── PIN LOCK OVERLAY ── -->
+<div id="pinLock" class="pin-lock">
+  <div class="pin-card">
+    <div class="pin-logo">
+      <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
     </div>
+    <div class="pin-ttl">강의 스케쥴</div>
+    <div class="pin-desc">Private · Kang Ji-ae</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <input type="password" id="pinInp" class="pin-inp"
+           maxlength="6" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" autofocus>
+    <div class="pin-err"     id="pinErr"></div>
+    <div class="pin-lockout" id="pinLockout"></div>
+    <button class="pin-submit" id="pinSubmit">입장</button>
   </div>
-  <p class="note">지난 시간 <b>가계부 앱</b>과 오늘 <b>일정 앱</b> — 이제 내 손에 앱이 두 개입니다.</p>
-</section>
-
-<!-- 8 -->
-<section id="s8" class="feat c-conn">
-  <div class="head"><span class="num">8</span><h2>구글 캘린더에 바로 넣기</h2><span class="ftag c-conn">커넥터</span><span class="time">10분</span></div>
-  <p class="one">여기서는 클로드가 <b>내 구글 캘린더에 일정을 직접 넣어 줍니다.</b> 옮겨 적을 필요가 없습니다.</p>
-
-  <table>
-    <tr><th>연결하기 (딱 한 번)</th><td>클로드 화면 <b>왼쪽 아래 내 이름</b> → <b>설정</b> → <b>커넥터</b> → 검색창에 <b>Google Calendar</b> → <b>[연결]</b> → 구글 계정 로그인 → <b>[허용]</b></td></tr>
-    <tr><th>연결됐는지 확인</th><td>대화 입력칸 아래 <b>도구(∨)</b> 를 눌러 <b>Google Calendar</b> 가 <b>켜짐</b> 인지 보기</td></tr>
-  </table>
-  <p class="note">한 번만 연결해 두면 다음부터는 그냥 말만 하면 됩니다.</p>
-
-  <div class="box">
-    <div class="bar"><span>프롬프트 9 — 하나만 넣어 보기 (가장 쉬운 예제)</span><button>복사</button></div>
-    <div class="txt">내 구글 캘린더에 일정 하나만 넣어줘.
-제목은 <span class="ph">[하나내과 정기검진]</span>, 날짜는 <span class="ph">[10월 6일]</span>, 시간은 <span class="ph">[오전 10시부터 11시까지]</span>.
-알림은 하루 전으로 해줘. 다 넣고 나면 잘 들어갔는지 알려줘.</div>
-  </div>
-  <p class="note">클로드가 <b>&quot;구글 캘린더를 사용할까요?&quot;</b> 하고 물어보면 <b>[허용]</b> 을 누르세요. 그때 실제로 들어갑니다.</p>
-
-  <div class="box">
-    <div class="bar"><span>프롬프트 10 — 표에 있는 일정 전부 넣기</span><button>복사</button></div>
-    <div class="txt">위에 정리한 일정을 전부 내 구글 캘린더에 넣어줘.
-바로 넣지 말고, 무엇을 넣을지 날짜 순서로 먼저 보여줘.
-내가 &quot;넣어줘&quot; 라고 하면 그때 넣어줘. 알림은 하루 전으로.</div>
-  </div>
-  <p class="note"><b>먼저 보여 달라</b>고 하는 것이 중요합니다. 날짜가 틀린 채로 한꺼번에 들어가는 것을 막아 줍니다.</p>
-
-  <div class="box">
-    <div class="bar"><span>프롬프트 11 — 확인하고, 잘못 넣었으면 지우기</span><button>복사</button></div>
-    <div class="txt">이번 달 내 구글 캘린더 일정을 날짜 순서로 보여줘.
-그중에 <span class="ph">[하나내과 정기검진]</span> 일정은 지워줘.</div>
-  </div>
-
-  <ul>
-    <li>내 휴대폰 구글 캘린더 앱을 열어 <b>정말 들어갔는지</b> 눈으로 확인</li>
-    <li>날짜 · 시간이 예약증과 같은지 대조</li>
-    <li>가족과 함께 보려면 &quot;<span class="ph">[가족]</span> 이라는 캘린더를 새로 만들어서 거기에 넣어줘&quot;</li>
-  </ul>
-
-  <p class="only">※ 무료 요금제는 <b>커넥터를 한 개</b>만 켤 수 있습니다. 다른 커넥터가 켜져 있으면 그것을 끄고 구글 캘린더를 켜세요. 연결이 어려우면 <b>강사 화면 시연만 보셔도</b> 됩니다.</p>
-</section>
-
-<!-- 9 -->
-<section id="s9" class="challenge">
-  <div class="head"><span class="num ch">9</span><h2>먼저 끝냈다면</h2><span class="badge">도전</span><span class="time">10분</span></div>
-  <p class="only">※ 안 해도 괜찮습니다. 앱에 대고 말하듯 &quot;○○도 되게 해줘&quot; 하면 됩니다.</p>
-  <ul>
-    <li>매주 수요일처럼 <b>반복되는 일정</b> 넣기</li>
-    <li>가족 이름별로 구분해서 보기</li>
-    <li>색 · 글씨 크기 내 취향으로</li>
-    <li>왼쪽 메뉴 <b>&#x27;프로젝트&#x27;</b> → 새 프로젝트 <span class="ph">[내 생활 AI]</span> — 6주 자료 모아 두기</li>
-  </ul>
-  <p class="note">프로젝트 방은 무료도 5개까지 만들 수 있습니다.</p>
-</section>
-
-<div class="end">
-  <p style="color:var(--warn);font-weight:700;margin-bottom:10px">이 장은 수업 시간에 하지 않은 보너스입니다. 막히면 언제든 6차시 교안으로 돌아가세요.</p>
-  <p><b>1.</b> 예약증은 <b>찍어 올리면</b> 일정표가 된다</p>
-  <p><b>2.</b> 정렬 · 추리기는 한마디로 끝</p>
-  <p><b>3.</b> <b>날짜는 원본으로 대조</b> — AI는 달력이 아니다</p>
-  <p><b>4.</b> 엑셀 원본 → 앱에 올려 <b>추가 · 확인</b> → 다시 엑셀로 보관</p>
-  <p><b>5.</b> 완성 앱은 <b>다운로드 → 크롬 북마크</b>로 언제든 실행</p>
-  <p><b>6.</b> <b>구글 캘린더 커넥터</b>를 켜면 옮겨 적지 않아도 달력에 바로 들어간다</p>
-  <p style="margin-top:10px;">막히면 &quot;쉽게 알려줘&quot; 한마디면 됩니다. <b>6주간 고생 많으셨습니다.</b></p>
 </div>
 
-<footer>클로드로 바꾸는 내 일상 · 보너스(집에서 하기)  |  제주도민대학 · 강사 강지애</footer>
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="brand">
+      <img src="assets/daisy.png" alt="데이지" class="brand-mark">
+      <div>
+        <div class="brand-name">강지애</div>
+        <div class="brand-sub">DIGITAL TUTOR · EDUTECH</div>
+      </div>
+    </a>
+    <nav class="nav">
+      <a href="index.html#about">소개</a>
+      <a href="index.html#competency">핵심역량</a>
+      <a href="index.html#certificates">자격·연수</a>
+      <a href="index.html#experience">강의 경력</a>
+      <a href="schedule.html" aria-current="page" style="font-weight:600;color:var(--ink)">강의 스케쥴</a>
+      <a href="all.html" class="cta alt">수업 앱 모음</a>
+      <a href="edu.html" class="cta">실시간&nbsp; 교육&nbsp; 모니터링</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+</header>
 
+<!-- MOBILE NAV -->
+<nav class="nav-mobile" id="navMobile">
+  <a href="index.html#about">소개</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#competency">핵심역량</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#certificates">자격·연수</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="index.html#experience">강의 경력</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="schedule.html" style="font-weight:700">강의 스케쥴 ✓</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="all.html">수업 앱 모음</a>
+  <a href="edu.html" class="cta">
+    <span class="live-dot"></span>실시간 교육 모니터링
+  </a>
+</nav>
+
+<main>
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="cal-header">
+    <div class="cal-nav">
+      <button class="btn-arrow" onclick="shiftMonth(-1)">‹</button>
+      <div class="month-title" id="monthTitle"></div>
+      <button class="btn-arrow" onclick="shiftMonth(1)">›</button>
+    </div>
+    <div class="cal-actions">
+      <button class="btn btn-ghost" onclick="openPdfModal()">⬇ PDF</button>
+      <button class="btn btn-ghost" id="calSyncBtn" onclick="syncCalendar()" title="구글 캘린더로 전체 동기화">📅 캘린더</button>
+      <button class="btn btn-primary" onclick="openAddModal()">+ 강의 및 일정 추가</button>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="cal-scroll">
+    <div class="calendar">
+      <div class="cal-weekdays">
+        <div class="wday">일</div><div class="wday">월</div><div class="wday">화</div>
+        <div class="wday">수</div><div class="wday">목</div><div class="wday">금</div><div class="wday">토</div>
+      </div>
+      <div class="cal-days" id="calDays"></div>
+    </div>
+  </div>
+
+  <div class="list-hd">
+    <div>
+      <div class="sec-ttl">이달의 강의 목록</div>
+      <div class="sec-note" id="completeNote" hidden></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn-xs" id="bulkCompleteBtn" onclick="completeMonth()" hidden></button>
+      <div class="sec-badge" id="listBadge">0건</div>
+    </div>
+  </div>
+  <div id="listWrap"></div>
+
+  <!-- ── 정산 대기 (입금 확인 전 강의 · 월 구분 없이 전체) ── -->
+  <div class="list-hd" style="margin-top:2.8rem">
+    <div>
+      <div class="sec-ttl">정산 대기</div>
+      <div class="sec-note">입금을 확인하고 <b>내가 기록할</b> 강의입니다.
+        위쪽 <b>미수금</b> 카드는 노션 기준으로 <b>아직 못 받은 돈</b>이라 건수가 다를 수 있습니다.</div>
+    </div>
+    <div class="sec-badge" id="settleBadge">0건</div>
+  </div>
+  <div id="settleWrap"></div>
+
+  <!-- ── 자격 · 연수 ── -->
+  <div class="cal-header" style="margin-top:2.8rem">
+    <div class="cal-nav"><div class="sec-ttl">자격 · 연수</div></div>
+    <div class="cal-actions">
+      <button class="btn btn-primary" onclick="openCertModal('자격증')">+ 자격증</button>
+      <button class="btn btn-primary" onclick="openCertModal('연수/교육')">+ 연수</button>
+    </div>
+  </div>
+  <div id="certWrap"></div>
+
+</main>
+
+<!-- 플라워 바 -->
+<div class="flower-bar-wrap">
+  <picture>
+    <source srcset="assets/flower-bar.webp" type="image/webp">
+    <img src="assets/flower-bar.png" alt="제주의 봄" class="flower-bar">
+  </picture>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand-name serif">강지애 · Kang Ji-ae</div>
+        <p class="foot-brand-sub">제주 기반 디지털 강사 · 에듀테크 컨설턴트<br>사람과 기술을 연결하고, 배움의 즐거움을 설계합니다.</p>
+      </div>
+      <div class="foot-col">
+        <h5>NAVIGATE</h5>
+        <ul>
+          <li><a href="index.html#about">소개</a></li>
+          <li><a href="index.html#competency">핵심 역량</a></li>
+          <li><a href="index.html#certificates">자격 · 연수</a></li>
+          <li><a href="index.html#experience">강의 경력</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>APPS &amp; LIVE</h5>
+        <ul>
+          <li><a href="all.html">수업 앱 모음</a></li>
+          <li><a href="edu.html">실시간 모니터링</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>CONTACT</h5>
+        <ul>
+          <li><a href="mailto:loveria2@nate.com">loveria2@nate.com</a></li>
+          <li><a href="#">강의 의뢰 / 컨설팅</a></li>
+          <li><a href="#">제주 기반 · 도내 전역 출강</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Kang Ji-ae. All rights reserved.</span>
+      <span class="claude-made">Made with Claude · v 1.0 · Schedule</span>
+      <span class="mono" id="verStamp" style="font-size:.62rem;color:var(--muted);opacity:.75"></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="addOverlay" onclick="overlayClick(event,'addOverlay')">
+  <div class="modal">
+    <div class="modal-ttl" id="modalTitle">강의 추가</div>
+    <div class="edit-banner" id="editBanner" hidden></div>
+    <div class="form-grid">
+      <div class="fgrp">
+        <label class="flbl" for="f-date">일시 *</label>
+        <input type="date" class="finp" id="f-date" onchange="onDateChange()">
+      </div>
+      <div class="fgrp">
+        <label class="flbl">구분</label>
+        <select class="fsel" id="f-type" onchange="onTypeChange()">
+          <option>디싹</option><option>진로</option>
+          <option>디지털</option><option>로봇교구</option>
+          <option>방과후학교</option><option>디지털튜터</option><option>교육수강</option>
+        </select>
+      </div>
+      <div class="day-hint" id="dayHint" hidden></div>
+      <div class="fgrp">
+        <label class="flbl" for="f-role">참여형태</label>
+        <select class="fsel" id="f-role">
+          <option>강사</option><option>보조강사</option><option>안전요원</option>
+        </select>
+      </div>
+      <div class="fgrp" id="modeGrp" style="display:none">
+        <label class="flbl">수강방식</label>
+        <select class="fsel" id="f-mode">
+          <option value="오프라인">오프라인</option>
+          <option value="온라인">온라인</option>
+        </select>
+      </div>
+      <div class="fgrp full">
+        <label class="flbl">업체명 * <span style="font-weight:400;color:var(--muted);font-size:0.62rem;text-transform:none;letter-spacing:0">(새 업체 입력 시 색상 자동 배정)</span></label>
+        <div class="ac-wrap" id="companyWrap">
+          <input type="text" class="finp" id="f-company" autocomplete="off" placeholder="선택하거나 새 업체명 입력">
+          <div class="ac-drop" id="companyDrop"></div>
+        </div>
+      </div>
+      <div class="fgrp full">
+        <label class="flbl">출강학교(단체)</label>
+        <input type="text" class="finp" id="f-school" placeholder="예: 한림중학교">
+      </div>
+      <div class="fgrp">
+        <label class="flbl">시간</label>
+        <input type="text" class="finp" id="f-time" placeholder="예: 10:00-12:00">
+      </div>
+      <div class="fgrp">
+        <label class="flbl">시수</label>
+        <input type="number" class="finp" id="f-hours" placeholder="예: 4" min="1" style="appearance:textfield">
+      </div>
+      <div class="fgrp full">
+        <label class="flbl">수업주제</label>
+        <input type="text" class="finp" id="f-topic" placeholder="예: AI 기초 이해">
+      </div>
+      <div class="fgrp full">
+        <label class="flbl" for="f-expected">예상금액
+          <span style="font-weight:400;color:var(--muted);font-size:0.62rem;text-transform:none;letter-spacing:0">
+            (받을 것으로 예상되는 금액 · 넣으면 노션 월별 차트에 잡힙니다)</span></label>
+        <input type="number" class="finp" id="f-expected" placeholder="예: 160000 (모르면 비워두세요)" style="appearance:textfield">
+      </div>
+      <div class="fgrp full">
+        <label class="flbl">비고</label>
+        <textarea class="ftxt" id="f-note" placeholder="기타 메모"></textarea>
+      </div>
+
+      <!-- 회차 반복 등록 — 추가할 때만 보인다 -->
+      <div class="rep-box" id="repBox">
+        <label class="stl-chk">
+          <input type="checkbox" id="f-rep" onchange="onRepToggle()">
+          여러 날에 나눠 진행 (회차 강의)
+        </label>
+        <div id="repBody" style="display:none">
+          <div class="rep-row">
+            <label class="rep-radio">
+              <input type="radio" name="repMode" value="weekly" checked onchange="onRepModeChange()"> 매주 같은 요일
+            </label>
+            <span style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--muted)">
+              총 <input type="number" class="finp rep-num" id="f-repCount" value="4" min="2" max="20"
+                        oninput="renderRepDates()" style="appearance:textfield"> 회
+            </span>
+            <label class="rep-radio">
+              <input type="radio" name="repMode" value="manual" onchange="onRepModeChange()"> 날짜 직접 선택
+            </label>
+          </div>
+          <div class="rep-pick" id="repPick" style="display:none">
+            <input type="date" class="finp" id="f-repPick" style="flex:1">
+            <button class="btn-xs" type="button" onclick="repAddDate()">+ 날짜 추가</button>
+          </div>
+          <div class="rep-chips" id="repChips"></div>
+          <label class="stl-chk" style="font-weight:500;font-size:0.76rem">
+            <input type="checkbox" id="f-repNum" checked>
+            수업주제에 회차 표시 <span style="color:var(--muted)">(1/4) (2/4) …</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('addOverlay')">취소</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveSchedule()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF MODAL -->
+<div class="overlay" id="pdfOverlay" onclick="overlayClick(event,'pdfOverlay')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-ttl">PDF 다운로드</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.2rem">
+      <div>
+        <div class="flbl" style="display:block;margin-bottom:8px">시작 월 *</div>
+        <div style="display:flex;gap:6px">
+          <select class="fsel" id="py1" style="flex:1"></select>
+          <select class="fsel" id="pm1" style="width:62px"></select>
+        </div>
+      </div>
+      <div>
+        <div class="flbl" style="display:block;margin-bottom:8px">끝 월 *</div>
+        <div style="display:flex;gap:6px">
+          <select class="fsel" id="py2" style="flex:1"></select>
+          <select class="fsel" id="pm2" style="width:62px"></select>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:1.1rem;font-size:0.72rem;color:var(--muted);line-height:1.7">
+      📅 달력 형태로 출력됩니다. 한 장에 2개월씩 배치됩니다.<br>
+      생성 후 인쇄 창에서 <strong style="color:var(--ink-soft)">대상 → PDF로 저장</strong>을 선택해주세요.
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('pdfOverlay')">취소</button>
+      <button class="btn btn-primary" onclick="generatePdf()">⬇ PDF 생성</button>
+    </div>
+  </div>
+</div>
+
+<!-- 자격 · 연수 추가/수정 MODAL -->
+<div class="overlay" id="certOverlay" onclick="overlayClick(event,'certOverlay')">
+  <div class="modal">
+    <div class="modal-ttl" id="certModalTitle">자격증 추가</div>
+    <div class="form-grid">
+      <div class="fgrp full">
+        <label class="flbl" id="lblName">자격명 *</label>
+        <input type="text" class="finp" id="cf-name" placeholder="예: 정보처리기사">
+      </div>
+      <div class="fgrp full">
+        <label class="flbl" id="lblIssuer">발급기관 *</label>
+        <input type="text" class="finp" id="cf-issuer" placeholder="예: 한국산업인력공단">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" id="lblDate">취득일</label>
+        <input type="text" class="finp" id="cf-date" placeholder="예: 2025.07">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" id="lblExtra">급수 · 등급</label>
+        <input type="text" class="finp" id="cf-extra" placeholder="예: 1급 / Level 1·2">
+      </div>
+      <div class="fgrp full" id="grpGroup">
+        <label class="flbl">분류 (메인 페이지 탭)</label>
+        <select class="fsel" id="cf-group">
+          <option value="edtech">에듀테크 &amp; SW·AI</option>
+          <option value="national">국가공인 &amp; 전문자격</option>
+        </select>
+      </div>
+      <div class="fgrp full">
+        <label class="flbl" id="lblNote">비고</label>
+        <input type="text" class="finp" id="cf-note" placeholder="기타 메모">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('certOverlay')">취소</button>
+      <button class="btn btn-primary" onclick="saveCert()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 미수금 목록 MODAL — 노션 원장에서 읽어온 미입금 건 -->
+<div class="overlay" id="unpaidOverlay" onclick="overlayClick(event,'unpaidOverlay')">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-ttl">미수금 — 아직 입금되지 않은 건</div>
+    <div id="unpaidBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="closeOverlay('unpaidOverlay')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 이달 입금 내역 MODAL — 노션 원장에서 읽어온 입금완료 건 -->
+<div class="overlay" id="paidOverlay" onclick="overlayClick(event,'paidOverlay')">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-ttl" id="paidTtl">이달 입금 내역</div>
+    <div id="paidBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="closeOverlay('paidOverlay')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 정산 등록 MODAL — 입금 확인 후 한 번에 기록 -->
+<div class="overlay" id="settleOverlay" onclick="overlayClick(event,'settleOverlay')">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-ttl">정산 등록</div>
+
+    <div class="fgrp full" style="margin-bottom:14px">
+      <label class="flbl">함께 정산할 강의 <span id="stlCoName" style="font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0"></span></label>
+      <div class="stl-list" id="stlList"></div>
+      <div class="stl-sum">
+        <span style="display:flex;gap:5px">
+          <button class="btn-xs" type="button" onclick="settleAll(true)">전체 선택</button>
+          <button class="btn-xs" type="button" onclick="settleAll(false)">전체 해제</button>
+          <button class="btn-xs" type="button" onclick="settleSpread()">총액 → 시수 비례 배분</button>
+        </span>
+        <span>강의료 합계 <b id="stlGross">0</b>원</span>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="fgrp">
+        <label class="flbl" for="sf-company">주관업체 (노션)</label>
+        <select class="fsel" id="sf-company" onchange="settleRecalc()"></select>
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="sf-role">참여형태</label>
+        <select class="fsel" id="sf-role">
+          <option>강사</option><option>보조강사</option>
+          <option>운영지원</option><option>보조강사 &amp;강사</option>
+        </select>
+      </div>
+
+      <div class="fgrp full">
+        <div class="stl-box">
+          <label class="stl-chk">
+            <input type="checkbox" id="sf-taxed" checked onchange="settleRecalc()">
+            세금 있음 (원천징수 후 입금)
+          </label>
+          <div class="stl-hint" id="stlTaxHint"></div>
+        </div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="sf-deposit">계좌 입금액 *</label>
+        <input type="number" class="finp" id="sf-deposit" placeholder="통장에 찍힌 금액" style="appearance:textfield">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="sf-paydate">입금일</label>
+        <input type="date" class="finp" id="sf-paydate">
+      </div>
+
+      <div class="fgrp full">
+        <div class="stl-box">
+          <label class="stl-chk">
+            <input type="checkbox" id="sf-hasPayback" onchange="settleTogglePayback()">
+            페이백 있음
+          </label>
+          <div id="stlPaybackGrp" style="display:none;gap:8px;margin-top:9px">
+            <select class="fsel" id="sf-paybackTo" style="flex:1">
+              <option value="현민주">현민주</option>
+              <option value="고인숙">고인숙</option>
+            </select>
+            <input type="number" class="finp" id="sf-payback" placeholder="페이백 금액" style="flex:1;appearance:textfield">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('settleOverlay')">취소</button>
+      <button class="btn btn-primary" id="stlSaveBtn" onclick="saveSettle()">정산 등록</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// 위쪽 번호 버튼 — 현재 보고 있는 섹션 표시
-(function(){
-  var links = [].slice.call(document.querySelectorAll('.jump a'));
-  var secs  = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
-  function mark(){
-    var i = 0;
-    for (var k = 0; k < secs.length; k++){
-      if (secs[k] && secs[k].getBoundingClientRect().top <= 80) i = k;
+const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
+
+/* 배포 버전 스탬프 — 페이지를 고쳐 올릴 때마다 이 값을 함께 올린다.
+   푸터에 페이지/서버 버전이 나란히 찍히므로 '올린 게 맞나?' 를 눈으로 바로 확인할 수 있다. */
+const PAGE_VERSION = '2026-09-11a';
+
+const PRESET_COMPANIES = {
+  '대정중학교':       '#1e56c8',  // 파랑
+  '에듀인플랫폼':     '#8c2dbd',  // 보라
+  '남원중학교':       '#d4561c',  // 주황
+  '에듀인플랫폼(핑퐁)': '#1a9870', // 청록 — 에듀인플랫폼 핑퐁 프로그램
+  '제주대학교':       '#2a4d8a',  // 진파랑
+  '재미에듀':         '#7a3a6e',  // 자주
+};
+const AUTO_PALETTE = [
+  '#c04a3a','#5a3a8a','#6b8a2a','#8a4a2a',
+  '#2a7a8a','#6b5a2a','#7a6b3a','#8a2a5a',
+  '#4a6b8a','#6a8a4a',
+];
+const COLOR_STORE = 'kja_co_colors_v1';
+const MN = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+/* ── 대한민국 공휴일 (2025~2028) ────────────────────────────
+   음력·대체공휴일 포함. 연도가 지나면 아래 표에 다음 해를 추가하세요. */
+const HOLIDAYS = {
+  // 2025
+  '2025-01-01':'신정','2025-01-27':'임시공휴일','2025-01-28':'설날 연휴','2025-01-29':'설날','2025-01-30':'설날 연휴',
+  '2025-03-01':'삼일절','2025-03-03':'대체공휴일','2025-05-05':'어린이날·부처님오신날','2025-05-06':'대체공휴일',
+  '2025-06-03':'대통령선거일','2025-06-06':'현충일','2025-08-15':'광복절',
+  '2025-10-03':'개천절','2025-10-05':'추석 연휴','2025-10-06':'추석','2025-10-07':'추석 연휴','2025-10-08':'대체공휴일',
+  '2025-10-09':'한글날','2025-12-25':'성탄절',
+  // 2026
+  '2026-01-01':'신정','2026-02-16':'설날 연휴','2026-02-17':'설날','2026-02-18':'설날 연휴',
+  '2026-03-01':'삼일절','2026-03-02':'대체공휴일','2026-05-05':'어린이날','2026-05-24':'부처님오신날','2026-05-25':'대체공휴일',
+  '2026-06-06':'현충일','2026-08-15':'광복절','2026-08-17':'대체공휴일',
+  '2026-09-24':'추석 연휴','2026-09-25':'추석','2026-09-26':'추석 연휴',
+  '2026-10-03':'개천절','2026-10-05':'대체공휴일','2026-10-09':'한글날','2026-12-25':'성탄절',
+  // 2027
+  '2027-01-01':'신정','2027-02-06':'설날 연휴','2027-02-07':'설날','2027-02-08':'설날 연휴','2027-02-09':'대체공휴일',
+  '2027-03-01':'삼일절','2027-05-05':'어린이날','2027-05-13':'부처님오신날','2027-06-06':'현충일',
+  '2027-08-15':'광복절','2027-08-16':'대체공휴일',
+  '2027-09-14':'추석 연휴','2027-09-15':'추석','2027-09-16':'추석 연휴',
+  '2027-10-03':'개천절','2027-10-04':'대체공휴일','2027-10-09':'한글날','2027-10-11':'대체공휴일',
+  '2027-12-25':'성탄절','2027-12-27':'대체공휴일',
+  // 2028
+  '2028-01-01':'신정','2028-01-26':'설날 연휴','2028-01-27':'설날','2028-01-28':'설날 연휴',
+  '2028-03-01':'삼일절','2028-05-02':'부처님오신날','2028-05-05':'어린이날','2028-06-06':'현충일','2028-08-15':'광복절',
+  '2028-10-02':'추석 연휴','2028-10-03':'추석·개천절','2028-10-04':'추석 연휴','2028-10-05':'대체공휴일',
+  '2028-10-09':'한글날','2028-12-25':'성탄절'
+};
+const getHoliday = d => HOLIDAYS[d] || null;
+
+/* ── 정산등록(노션 원장) 설정 ────────────────────────────────
+   · SETTLE_START 이후 날짜의 강의에만 정산 버튼이 뜬다(기존 건 중복 방지)
+   · 월급제 업체는 노션에 월 단위로 이미 기록되므로 제외한다 */
+const SETTLE_START     = '2026-09-01';
+const SALARY_COMPANIES = ['대정중학교', '남원중학교', '백록초등학교'];
+const canSettle = ev => !!ev.date && ev.date >= SETTLE_START
+                        && SALARY_COMPANIES.indexOf(ev.company) === -1;
+
+let data         = [];
+let customColors = JSON.parse(localStorage.getItem(COLOR_STORE) || '{}');
+let cy = new Date().getFullYear();
+let cm = new Date().getMonth();
+let editId = null;
+
+const saveColors = () => localStorage.setItem(COLOR_STORE, JSON.stringify(customColors));
+
+/* 마지막으로 받아둔 스케쥴을 브라우저에 남겨, 새로고침·지하철에서도 달력이 바로 뜨게 한다.
+   캐시로 먼저 그린 뒤 시트에서 받아 다시 그린다. 조회에 실패하면 캐시를 그대로 둔다. */
+const DATA_STORE = 'kja_sched_data_v1';
+
+async function loadData() {
+  try {
+    const c = JSON.parse(localStorage.getItem(DATA_STORE) || 'null');
+    if (c && Array.isArray(c.items) && c.items.length) { data = c.items; render(); }
+  } catch(e) {}
+
+  try {
+    /* 매번 다른 URL + no-store 로 브라우저 캐시를 건너뛴다.
+       예전에는 URL이 똑같아 크롬이 옛 응답을 계속 내줬다 — 폰에서 경력등록을 해도
+       PC 는 F5 를 눌러도 '등록' 버튼이 그대로였다(2026-09-11). */
+    const res  = await fetch(SCHEDULE_API_URL + '?type=schedule&_=' + Date.now(),
+                             { cache: 'no-store' });
+    const json = await res.json();
+    if (Array.isArray(json)) {
+      data = json;
+      try { localStorage.setItem(DATA_STORE, JSON.stringify({at:Date.now(), items:data})); } catch(e) {}
     }
-    links.forEach(function(a, k){ a.classList.toggle('on', k === i); });
+  } catch(e) {
+    console.error('데이터 로드 실패:', e);
+    if (!data.length) data = [];   // 캐시가 있으면 그대로 쓴다
   }
-  window.addEventListener('scroll', mark, {passive:true});
-  mark();
+  render();
+}
+
+/* 네트워크가 잠깐 끊겨 저장이 실패하는 일이 있어 자동 재시도한다.
+   예전에는 add·complete 를 재시도하지 못했다 — 요청이 서버에 닿은 뒤 응답만
+   실패해도 다시 보내면 행이 두 번 들어갔기 때문이다.
+   이제 요청마다 고유한 reqId 를 붙이고 서버가 Q열에 기록해 같은 요청을 걸러내므로,
+   **몇 번을 보내도 결과가 같다.** 그래서 모든 액션을 안전하게 재시도한다. */
+const newReqId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+async function apiPost(payload) {
+  const body = { reqId: newReqId(), ...payload };   // 같은 요청은 같은 reqId 로 재전송된다
+  let lastErr;
+  const tries = 2;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const res  = await fetch(SCHEDULE_API_URL, { method:'POST', body:JSON.stringify(body) });
+      const json = await res.json();
+      if (json.error) throw new Error(json.message || '서버 오류');
+      return json;
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await new Promise(r => setTimeout(r, 900));
+    }
+  }
+  throw lastErr;
+}
+const uid        = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const pad        = n  => String(n).padStart(2,'0');
+const trunc      = (s,n) => s && s.length > n ? s.slice(0,n)+'…' : (s||'');
+const mStr       = (y,m) => `${y}-${pad(m+1)}`;
+
+function fmtTimeShort(time) {
+  if (!time) return '';
+  const m = time.match(/^(\d{1,2}):\d{2}-(\d{1,2}):\d{2}$/);
+  return m ? `${parseInt(m[1])} to ${parseInt(m[2])}` : time;
+}
+function hexToRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function makeStyle(hex) {
+  return { dot:hex, bg:hexToRgba(hex,.11), color:hex, border:hex };
+}
+function getCompanyColor(name) {
+  if (!name) return makeStyle('#7a716a');
+  if (PRESET_COMPANIES[name]) return makeStyle(PRESET_COMPANIES[name]);
+  if (customColors[name])     return makeStyle(customColors[name]);
+  const hex = AUTO_PALETTE[Object.keys(customColors).length % AUTO_PALETTE.length];
+  customColors[name] = hex; saveColors();
+  return makeStyle(hex);
+}
+function allCompanies() {
+  return [...new Set([...Object.keys(PRESET_COMPANIES), ...Object.keys(customColors), ...data.map(s=>s.company).filter(Boolean)])];
+}
+
+function setupCompanyAc() {
+  const inp = document.getElementById('f-company');
+  const drop = document.getElementById('companyDrop');
+  const wrap = document.getElementById('companyWrap');
+
+  function showDrop(val) {
+    const list = allCompanies();
+    const filtered = val ? list.filter(c=>c.toLowerCase().includes(val.toLowerCase())) : list;
+    let html = filtered.map(c=>`<div class="ac-item" onmousedown="pickCompany(event)">${c}</div>`).join('');
+    html += `<div class="ac-item" style="color:var(--accent-warm);border-top:1px solid var(--line-soft);font-size:0.75rem" onmousedown="pickDirect(event)">✏️ 직접 입력</div>`;
+    drop.innerHTML = html;
+    drop.classList.add('open');
+  }
+  inp.addEventListener('focus', ()=>showDrop(inp.value));
+  inp.addEventListener('input', ()=>showDrop(inp.value));
+  document.addEventListener('click', e=>{ if(!wrap.contains(e.target)) drop.classList.remove('open'); });
+}
+function pickCompany(e) {
+  e.preventDefault();
+  document.getElementById('f-company').value = e.currentTarget.textContent;
+  document.getElementById('companyDrop').classList.remove('open');
+}
+function pickDirect(e) {
+  e.preventDefault();
+  const inp = document.getElementById('f-company');
+  inp.value = '';
+  document.getElementById('companyDrop').classList.remove('open');
+  inp.focus();
+}
+
+function render() {
+  const today = new Date();
+  document.getElementById('monthTitle').textContent = `${cy}년 ${cm+1}월`;
+  const fd=new Date(cy,cm,1).getDay(), dim=new Date(cy,cm+1,0).getDate(), dPrev=new Date(cy,cm,0).getDate();
+  const grid=document.getElementById('calDays'); grid.innerHTML='';
+  for (let i=fd-1;i>=0;i--) grid.appendChild(makeCell(dPrev-i,cy,cm-1,true));
+  for (let d=1;d<=dim;d++) {
+    const isT=d===today.getDate()&&cm===today.getMonth()&&cy===today.getFullYear();
+    grid.appendChild(makeCell(d,cy,cm,false,isT));
+  }
+  const rem=(fd+dim)%7===0?0:7-((fd+dim)%7);
+  for (let d=1;d<=rem;d++) grid.appendChild(makeCell(d,cy,cm+1,true));
+  renderList(); renderStats(); renderMoney(); renderLegend(); renderSettle();
+  if (daySheetDate) renderDaySheet();
+}
+
+function makeCell(day,year,month,other,isToday=false) {
+  const dt=new Date(year,month,day);
+  const dStr=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+  const cell=document.createElement('div');
+  cell.className='cal-cell'+(other?' other':'')+(isToday?' today':'');
+  const dow=dt.getDay();
+  if(dow===0) cell.classList.add('is-sun');
+  if(dow===6) cell.classList.add('is-sat');
+  const hol=getHoliday(dStr);
+  if(hol) cell.classList.add('is-holiday');
+  const dn=document.createElement('div'); dn.className='dnum'; dn.textContent=day; cell.appendChild(dn);
+  if(hol){
+    const hn=document.createElement('div'); hn.className='hol-name';
+    hn.textContent=hol; hn.title=hol; cell.appendChild(hn);
+  }
+  if (!other) {
+    // 셀(빈 영역) 클릭 시 해당 날짜로 강의 추가 — 이미 강의가 있어도 계속 추가 가능
+    cell.onclick=()=>{ isMobileView() ? openDaySheet(dStr) : openAddModal(dStr); };
+    cell.title='클릭하여 이 날짜에 강의 추가';
+    const evs=data.filter(s=>s.date===dStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    evs.slice(0,2).forEach(ev=>{
+      const c=getCompanyColor(ev.company), b=document.createElement('div');
+      b.className='ev-badge';
+      b.style.cssText=`background:${hexToRgba(c.dot,.1)};color:${c.color}`;
+      // 업체명은 자르지 않고 칸 너비에 맞춰 줄바꿈한다.
+      // 시작 시각은 아랫줄에 작게 — 같은 업체 강의가 하루에 여러 건일 때 구분용.
+      const st = ev.time ? ev.time.split(/[~\-]/)[0].trim() : '';
+      b.innerHTML=`<div class="ev-top"><span class="ev-dot" style="background:${c.dot}"></span>`
+        + `<span class="ev-txt">${escC(ev.company)}</span></div>`
+        + (st ? `<div class="ev-tm">${escC(st)}</div>` : '');
+      b.title=`[${ev.type}] ${ev.company}${ev.school?' · '+ev.school:''}${ev.time?' '+ev.time:''}`;
+      b.onclick=e=>{e.stopPropagation();openEditModal(ev.id);}; cell.appendChild(b);
+      // 수업 종료 시간 기준으로 경력 등록 버튼 / 완료 뱃지 표시
+      if (isEventPast(ev, dt)) {
+        if (ev.completed === 'Y') {
+          const done=document.createElement('div');
+          done.className='ev-done'; done.textContent='등록됨';
+          cell.appendChild(done);
+        } else {
+          const cbtn=document.createElement('button');
+          cbtn.className='btn-complete'; cbtn.textContent='등록';
+          cbtn.title='경력사항 시트에 자동 등록';
+          cbtn.onclick=e=>{e.stopPropagation();markComplete(ev.id);}; cell.appendChild(cbtn);
+        }
+        // 노션 정산 원장 등록 — 새로 추가된 강의(9월 이후·월급제 제외)만
+        if (canSettle(ev)) {
+          if (ev.settled === 'Y') {
+            const sd=document.createElement('div');
+            sd.className='ev-settled'; sd.textContent='정산됨';
+            cell.appendChild(sd);
+          } else {
+            const sbtn=document.createElement('button');
+            sbtn.className='btn-settle'; sbtn.textContent='정산';
+            sbtn.title='입금 확인 후 정산 등록 (여러 건 묶어서 가능)';
+            sbtn.onclick=e=>{e.stopPropagation();openSettleModal(ev.id);}; cell.appendChild(sbtn);
+          }
+        }
+      }
+    });
+    // 3건 이상이면 나머지는 뱃지가 없다 → 눌러서 그날 목록 전체를 연다
+    if (evs.length>2){
+      const m=document.createElement('div');
+      m.className='ev-more'; m.textContent=`+${evs.length-2}건 더보기`;
+      m.title='이 날의 일정 전체 보기';
+      m.onclick=e=>{e.stopPropagation();openDaySheet(dStr);};
+      cell.appendChild(m);
+    }
+    // 모바일용 색점 요약 (데스크톱에서는 CSS로 숨김)
+    if (evs.length) {
+      const dots=document.createElement('div'); dots.className='m-dots';
+      evs.slice(0,5).forEach(ev=>{
+        const c=getCompanyColor(ev.company), d=document.createElement('span');
+        d.className='m-dot'+(ev.completed==='Y'?' done':'');
+        d.style.background=c.dot; dots.appendChild(d);
+      });
+      cell.appendChild(dots);
+    }
+  }
+  return cell;
+}
+
+function renderLegend() {
+  const ms=mStr(cy,cm);
+  const used=[...new Set(data.filter(s=>s.date.startsWith(ms)).map(s=>s.company).filter(Boolean))];
+  const legend=document.getElementById('legend');
+  legend.innerHTML=used.map(co=>{const c=getCompanyColor(co);return`<div class="lg-item"><div class="lg-dot" style="background:${c.dot}"></div>${co}</div>`;}).join('');
+}
+
+function renderList() {
+  const ms=mStr(cy,cm);
+  const items=data.filter(s=>s.date.startsWith(ms)).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+  document.getElementById('listBadge').textContent=`${items.length}건`;
+  // 지난 강의 중 경력 미등록 건이 2개 이상이면 묶음 등록 버튼을 띄운다
+  const bc = document.getElementById('bulkCompleteBtn'), np = pendingCompletes().length;
+  bc.hidden = np < 2;
+  if (np >= 2) bc.textContent = `경력등록 ${np}건 일괄`;
+
+  // 다른 달에 밀린 경력등록 알림 (프로필 학교 칩·통계가 그만큼 비어 보인다)
+  const note = document.getElementById('completeNote');
+  const other = pendingCompletesAll().filter(s => !s.date.startsWith(ms));
+  if (!other.length) { note.hidden = true; }
+  else {
+    const months = [...new Set(other.map(s => s.date.slice(0,7)))]
+      .map(m => `${+m.slice(5)}월`).join(' · ');
+    note.innerHTML = `다른 달에 <b>경력 미등록 ${other.length}건</b>이 남아 있습니다 (${escC(months)}). `
+      + `등록해야 프로필의 출강 학교·통계에 반영됩니다.`;
+    note.hidden = false;
+  }
+  const w=document.getElementById('listWrap');
+  if (!items.length){w.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><p>이달의 강의가 없습니다.<br><span>+ 강의 추가</span> 버튼으로 등록해보세요.</p></div>`;return;}
+  let html=`<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">일시</th><th>업체명</th><th>구분</th><th>출강학교(단체)</th><th>시간</th><th>시수</th><th>수업주제</th><th>비고</th><th></th></tr></thead><tbody>`;
+  items.forEach(s=>{
+    const c=getCompanyColor(s.company), dd=s.date.slice(5).replace('-','.');
+    const hoursCell=s.hours?`${s.hours}시수`:'';
+    const typeLbl = s.type==='교육수강'&&s.mode ? `<span class="type-lbl">${s.type}</span> <span class="type-lbl" style="color:var(--accent-warm);border-color:rgba(179,117,58,.3)">${s.mode}</span>` : `<span class="type-lbl">${s.type||''}</span>`;
+    const tShort  = s.time ? `<span style="font-size:0.68rem;color:var(--muted);white-space:nowrap;margin-left:4px">(${fmtTimeShort(s.time)})</span>` : '';
+    html+=`<tr><td class="date-col" style="border-left:3px solid ${c.dot};padding-left:11px">${dd}</td><td><span class="co-chip" style="background:${hexToRgba(c.dot,.09)};color:${c.color}"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span>${tShort}</td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
+  });
+  html+='</tbody></table></div>'; w.innerHTML=html;
+}
+
+function renderStats() {
+  const ms=mStr(cy,cm), items=data.filter(s=>s.date.startsWith(ms));
+  const counts={};
+  items.forEach(s=>{const co=s.company||'미지정';counts[co]=(counts[co]||0)+1;});
+  const presets=Object.keys(PRESET_COMPANIES), others=Object.keys(counts).filter(k=>!presets.includes(k));
+  const ordered=[...presets.filter(k=>counts[k]),...others];
+  let html=ordered.map(co=>{
+    const c=getCompanyColor(co);
+    return`<div class="stat-card" style="background:${hexToRgba(c.dot,.08)}">
+      <div class="stat-label" style="color:${c.color}">${co}</div>
+      <div class="stat-val" style="color:${c.color}">${counts[co]||0}</div>
+      <div class="stat-sub" style="color:${c.color}">이번 달</div>
+    </div>`;
+  }).join('');
+  html+=`<div class="stat-card" style="background:rgba(201,163,91,.12)">
+    <div class="stat-label" style="color:var(--gold)">합 계</div>
+    <div class="stat-val" style="color:var(--accent)">${items.length}</div>
+    <div class="stat-sub" style="color:var(--gold)">이번 달 전체</div>
+  </div>`;
+  document.getElementById('statsRow').innerHTML=html;
+}
+
+function shiftMonth(d) { cm+=d; if(cm>11){cm=0;cy++;} if(cm<0){cm=11;cy--;} render(); }
+
+function onTypeChange() {
+  const t=document.getElementById('f-type').value;
+  document.getElementById('modeGrp').style.display = t==='교육수강' ? '' : 'none';
+}
+function openAddModal(presetDate) {
+  editId=null; document.getElementById('modalTitle').textContent='강의 추가';
+  document.getElementById('f-date').value=(typeof presetDate==='string'&&presetDate)?presetDate:new Date().toISOString().split('T')[0];
+  document.getElementById('f-type').value='디싹';
+  document.getElementById('f-role').value='강사';
+  document.getElementById('f-mode').value='오프라인';
+  document.getElementById('modeGrp').style.display='none';
+  ['f-company','f-school','f-time','f-hours','f-topic','f-note','f-expected'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('editBanner').hidden = true;
+  document.getElementById('saveBtn').textContent = '저장';
+  showRepBox(true); resetRep();
+  onDateChange();
+  openOverlay('addOverlay');
+}
+function openEditModal(id) {
+  const s=data.find(x=>x.id===id); if(!s) return;
+  editId=id; document.getElementById('modalTitle').textContent='강의 수정';
+  document.getElementById('f-date').value=s.date; document.getElementById('f-type').value=s.type;
+  document.getElementById('f-role').value=s.role||'강사';
+  document.getElementById('f-mode').value=s.mode||'오프라인';
+  document.getElementById('modeGrp').style.display = s.type==='교육수강' ? '' : 'none';
+  document.getElementById('f-company').value=s.company||''; document.getElementById('f-school').value=s.school||'';
+  document.getElementById('f-time').value=s.time||''; document.getElementById('f-hours').value=s.hours||'';
+  document.getElementById('f-topic').value=s.topic||''; document.getElementById('f-note').value=s.note||'';
+  document.getElementById('f-expected').value=s.expected||'';
+
+  /* 추가 모달과 겉모습이 같아 엉뚱한 강의를 덮어쓰는 일이 있었다.
+     어떤 일정을 고치는 중인지 위쪽에 크게 알려준다. */
+  const bn = document.getElementById('editBanner');
+  const md = s.date.slice(5).replace('-','.');
+  const sub = [s.time, s.school, s.topic].filter(Boolean).join(' · ');
+  bn.innerHTML = `기존 일정을 <b>수정</b> 중입니다 — <b>${escC(md)} ${escC(s.company)}</b>`
+               + (sub ? `<br><span style="color:var(--muted)">${escC(sub)}</span>` : '');
+  bn.hidden = false;
+  document.getElementById('saveBtn').textContent = '변경 저장';
+  showRepBox(false);           // 수정할 때는 회차 등록을 쓰지 않는다
+  document.getElementById('dayHint').hidden = true;
+  openOverlay('addOverlay');
+}
+
+// 추가할 때, 고른 날짜에 이미 등록된 강의를 보여준다 (중복·착각 방지)
+function onDateChange() {
+  const hint = document.getElementById('dayHint');
+  if (editId) { hint.hidden = true; return; }
+  const d = document.getElementById('f-date').value;
+  const evs = data.filter(s => s.date === d)
+                  .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  if (!d || !evs.length) { hint.hidden = true; renderRepDates(); return; }
+  hint.innerHTML = `이 날 이미 <b>${evs.length}건</b>이 있습니다 — `
+    + evs.map(s => escC([s.time ? s.time.split(/[~\-]/)[0].trim() : '', s.company]
+                          .filter(Boolean).join(' '))).join(' / ')
+    + `<br>새 일정으로 추가됩니다. 기존 건을 고치려면 달력에서 그 일정을 누르세요.`;
+  hint.hidden = false;
+  renderRepDates();
+}
+
+/* ── 회차 반복 등록 ──────────────────────────────────────────
+   같은 강의를 여러 날에 나눠 할 때, 한 번 입력으로 N건을 만든다.  */
+let repManualDates = [];
+
+function showRepBox(on) {
+  document.getElementById('repBox').style.display = on ? '' : 'none';
+}
+function resetRep() {
+  document.getElementById('f-rep').checked      = false;
+  document.getElementById('repBody').style.display = 'none';
+  document.getElementById('f-repCount').value   = '4';
+  document.getElementById('f-repNum').checked   = true;
+  document.querySelector('input[name="repMode"][value="weekly"]').checked = true;
+  document.getElementById('repPick').style.display = 'none';
+  repManualDates = [];
+  renderRepDates();
+}
+function onRepToggle() {
+  document.getElementById('repBody').style.display =
+    document.getElementById('f-rep').checked ? '' : 'none';
+  renderRepDates();
+}
+function onRepModeChange() {
+  document.getElementById('repPick').style.display = repMode() === 'manual' ? 'flex' : 'none';
+  renderRepDates();
+}
+const repMode = () => document.querySelector('input[name="repMode"]:checked').value;
+
+function repAddDate() {
+  const v = document.getElementById('f-repPick').value;
+  if (!v) return;
+  if (v === document.getElementById('f-date').value) { alert('첫 회차 날짜입니다.'); return; }
+  if (repManualDates.indexOf(v) > -1) { alert('이미 추가된 날짜입니다.'); return; }
+  repManualDates.push(v);
+  document.getElementById('f-repPick').value = '';
+  renderRepDates();
+}
+function repRemoveDate(v) {
+  repManualDates = repManualDates.filter(x => x !== v);
+  renderRepDates();
+}
+
+// 실제로 만들어질 날짜 목록 (첫 회차 = 일시 칸의 날짜)
+function repDates() {
+  const base = document.getElementById('f-date').value;
+  if (!base || !document.getElementById('f-rep').checked) return base ? [base] : [];
+  if (repMode() === 'manual') {
+    return [base].concat(repManualDates).sort();
+  }
+  const n = Math.min(20, Math.max(2, parseInt(document.getElementById('f-repCount').value, 10) || 2));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base + 'T00:00:00');
+    d.setDate(d.getDate() + i * 7);
+    out.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+  }
+  return out;
+}
+
+function renderRepDates() {
+  const box = document.getElementById('repChips');
+  if (!box) return;
+  if (!document.getElementById('f-rep').checked) { box.innerHTML=''; return; }
+  const ds = repDates(), base = document.getElementById('f-date').value;
+  const wd = ['일','월','화','수','목','금','토'];
+  box.innerHTML = ds.map(d => {
+    const dt = new Date(d + 'T00:00:00');
+    const lbl = `${d.slice(5).replace('-','.')}(${wd[dt.getDay()]})`;
+    return d === base
+      ? `<span class="rep-chip base">${escC(lbl)}</span>`
+      : `<span class="rep-chip">${escC(lbl)}`
+        + (repMode()==='manual' ? `<button type="button" title="빼기" onclick="repRemoveDate('${d}')">✕</button>` : '')
+        + `</span>`;
+  }).join('') + `<span class="rep-sum">총 ${ds.length}건 생성</span>`;
+}
+async function saveSchedule() {
+  const date=document.getElementById('f-date').value, company=document.getElementById('f-company').value.trim();
+  if(!date||!company){alert('일시와 업체명은 필수입니다.');return;}
+  getCompanyColor(company);
+  const type=document.getElementById('f-type').value;
+  const entry={date,type,company,
+    role: document.getElementById('f-role').value,
+    mode: type==='교육수강' ? document.getElementById('f-mode').value : '',
+    school:document.getElementById('f-school').value.trim(),time:document.getElementById('f-time').value.trim(),
+    hours:document.getElementById('f-hours').value.trim(),
+    topic:document.getElementById('f-topic').value.trim(),note:document.getElementById('f-note').value.trim(),
+    expected:document.getElementById('f-expected').value.trim()};
+  // 회차 등록 — 추가할 때만, 날짜가 2개 이상일 때만 갈라진다
+  const dates = editId ? [date] : repDates();
+  if (!editId && dates.length > 1) { await saveSeries(entry, dates); return; }
+
+  /* 저장 버튼을 두 번 누르면 같은 강의가 두 건 생기던 문제 —
+     응답이 올 때까지 버튼을 잠근다. */
+  const sbtn = document.getElementById('saveBtn');
+  if (sbtn.disabled) return;
+  const slabel = sbtn.textContent;
+  sbtn.disabled = true; sbtn.textContent = '저장 중…';
+
+  let calSyncId = null;
+  try {
+    if(editId){
+      await apiPost({action:'update',id:editId,...entry});
+      const i=data.findIndex(s=>s.id===editId);
+      if(i>=0) data[i]={...data[i], id:editId, ...entry}; // completed 필드 보존
+    } else {
+      const res=await apiPost({action:'add',...entry});
+      data.push({id:res.id,...entry});
+      calSyncId = res.id;
+    }
+    if(editId) calSyncId = editId;
+    closeOverlay('addOverlay'); render();
+    pushToCalendar({id:calSyncId});
+  } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
+  finally { sbtn.disabled = false; sbtn.textContent = slabel; }
+}
+
+// 같은 내용을 여러 날짜로 나눠 등록한다. 한 건씩 순서대로 보내고 진행률을 보여준다.
+async function saveSeries(entry, dates) {
+  const wd  = ['일','월','화','수','목','금','토'];
+  const num = document.getElementById('f-repNum').checked;
+  const list = dates.map((d,i) => {
+    const dt = new Date(d + 'T00:00:00');
+    return `  ${d.slice(5).replace('-','.')}(${wd[dt.getDay()]})`
+         + (num && entry.topic ? `  ${entry.topic} (${i+1}/${dates.length})` : '');
+  }).join('\n');
+  if (!confirm(`${entry.company} 강의를 ${dates.length}건으로 등록합니다.\n\n${list}\n\n진행할까요?`)) return;
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  const made = [], failed = [];
+  for (let i = 0; i < dates.length; i++) {
+    btn.textContent = `등록 중… ${i+1}/${dates.length}`;
+    const one = { ...entry, date: dates[i] };
+    if (num && entry.topic) one.topic = `${entry.topic} (${i+1}/${dates.length})`;
+    try {
+      const res = await apiPost({ action:'add', ...one });
+      data.push({ id: res.id, ...one });
+      made.push(res.id);
+    } catch(e) {
+      failed.push(dates[i]);
+    }
+  }
+  btn.disabled = false; btn.textContent = '저장';
+
+  if (made.length) { closeOverlay('addOverlay'); render(); }
+  /* 캘린더는 건별로 N번 부르지 않는다 — 동시 요청이 몰리면 시트 쓰기가 서로 막힌다.
+     한 번의 전체 동기화로 새 회차를 한꺼번에 반영한다(변경 없는 행은 서버가 건너뜀). */
+  if (made.length) pushToCalendarAll();
+  alert(failed.length
+    ? `${made.length}건 등록, ${failed.length}건 실패\n\n실패: ${failed.join(', ')}\n실패한 날짜는 다시 등록해주세요.`
+    : `${made.length}건을 등록했습니다.`);
+}
+async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; const gone=data.find(s=>s.id===id); try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); pushToCalendar({deleteId:id, date:gone?gone.date:''}); }catch(e){ alert('삭제에 실패했습니다.'); } }
+
+// ── 구글 캘린더 동기화 ─────────────────────────────
+//  저장/삭제 직후 해당 일정만 조용히 반영한다. 실패해도 페이지는 그대로 둘 —
+//  매일 새벽 4시 자동 재동기화가 다시 맞춰준다.
+function pushToCalendar(payload) {
+  if(!payload || (!payload.id && !payload.deleteId)) return;
+  try {
+    fetch(SCHEDULE_API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'syncCalendar', ...payload})
+    }).catch(()=>{});
+  } catch(e) {}
+}
+
+// 여러 건을 한꺼번에 만든 뒤 조용히 전체 동기화 (결과는 기다리지 않는다)
+function pushToCalendarAll() {
+  try {
+    fetch(SCHEDULE_API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'syncCalendar'})
+    }).catch(()=>{});
+  } catch(e) {}
+}
+
+//  헤더 버튼 — 전체 동기화
+async function syncCalendar() {
+  const btn = document.getElementById('calSyncBtn');
+  const label = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ 동기화 중…'; }
+  try {
+    const json = await apiPost({action:'syncCalendar'});
+    alert('구글 캘린더 동기화 완료\n\n'
+        + '새로 추가 ' + (json.created||0) + '건\n'
+        + '수정 반영 ' + (json.updated||0) + '건\n'
+        + '삭제 '      + (json.removed||0) + '건');
+  } catch(e) {
+    alert('동기화에 실패했습니다.\n' + (e.message||''));
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+// ── 모바일 데이 시트 ────────────────────────────────────────
+//  좁은 화면에서는 달력 칸에 색점만 찍고, 날짜를 탭하면
+//  그날 강의 목록이 아래에서 올라온다. 수정·경력등록·정산을 여기서 한다.
+const isMobileView = () => window.matchMedia('(max-width:640px)').matches;
+let daySheetDate = null;
+
+function openDaySheet(dStr) {
+  daySheetDate = dStr;
+  renderDaySheet();
+  document.getElementById('daySheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDaySheet() {
+  document.getElementById('daySheet').classList.remove('open');
+  document.body.style.overflow = '';
+  daySheetDate = null;
+}
+function daySheetBackdrop(e) {
+  if (e.target === document.getElementById('daySheet')) closeDaySheet();
+}
+
+function renderDaySheet() {
+  if (!daySheetDate) return;
+  const d   = new Date(daySheetDate + 'T00:00:00');
+  const wd  = ['일','월','화','수','목','금','토'][d.getDay()];
+  const hol = getHoliday(daySheetDate);
+  document.getElementById('daySheetDate').innerHTML =
+    `${d.getMonth()+1}월 ${d.getDate()}일 (${wd})`
+    + (hol ? `<span class="day-sheet-hol">${escC(hol)}</span>` : '');
+
+  const evs = data.filter(s => s.date === daySheetDate)
+                  .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const body = document.getElementById('daySheetBody');
+
+  if (!evs.length) {
+    body.innerHTML = '<div class="ds-empty">이 날은 등록된 일정이 없습니다.</div>';
+  } else {
+    body.innerHTML = evs.map(ev => {
+      const c    = getCompanyColor(ev.company);
+      const past = isEventPast(ev, d);
+      let acts = `<button class="ds-btn" onclick="openEditModal('${ev.id}')">수정</button>`;
+      if (past) {
+        acts += ev.completed === 'Y'
+          ? '<div class="ds-done">\u2713 경력 등록됨</div>'
+          : `<button class="ds-btn gold" onclick="dsComplete('${ev.id}')">경력 등록</button>`;
+        if (canSettle(ev)) {
+          acts += ev.settled === 'Y'
+            ? '<div class="ds-done">\u2713 정산 등록됨</div>'
+            : `<button class="ds-btn green" onclick="dsSettle('${ev.id}')">정산 등록</button>`;
+        }
+      }
+      const meta = [ev.school, ev.time, ev.hours ? ev.hours + '시간' : '', ev.topic]
+                     .filter(Boolean).join(' · ');
+      return `<div class="ds-item">
+        <div class="ds-co" style="color:${c.color}">
+          <span class="ev-dot" style="background:${c.dot}"></span>${escC(ev.company)}
+          <span style="color:var(--muted);font-weight:500">· ${escC(ev.type)}</span>
+        </div>
+        <div class="ds-meta">${escC(meta)}</div>
+        ${ev.note ? `<div class="ds-meta" style="color:var(--muted)">${escC(ev.note)}</div>` : ''}
+        <div class="ds-actions">${acts}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('daySheetAdd').onclick = () => {
+    const dd = daySheetDate; closeDaySheet(); openAddModal(dd);
+  };
+}
+
+async function dsComplete(id) { await markComplete(id); renderDaySheet(); }
+function dsSettle(id)         { openSettleModal(id); }
+
+/* ══ 노션 원장 읽기 — 미수금 · 월별 수입 ════════════════════
+   시트에는 금액이 없고 노션이 원장이므로, 돈에 관한 표시는 전부 여기서 온다.
+   느린 조회라 localStorage 에 캐시해 두고 화면을 먼저 그린 뒤 뒤에서 갱신한다. */
+const LEDGER_STORE = 'kja_ledger_v1';
+const LEDGER_TTL   = 10 * 60 * 1000;   // 10분
+let ledger = [];
+
+function loadLedgerCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LEDGER_STORE) || 'null');
+    if (c && Array.isArray(c.items)) { ledger = c.items; return c.at || 0; }
+  } catch(e) {}
+  return 0;
+}
+async function loadLedger(force) {
+  const at = loadLedgerCache();
+  if (!force && at && Date.now() - at < LEDGER_TTL) { renderMoney(); return; }
+  renderMoney();                                   // 캐시본 먼저 그린다
+  try {
+    const r = await apiPost({ action:'notionLedger' });
+    if (r && Array.isArray(r.items)) {
+      ledger = r.items;
+      try { localStorage.setItem(LEDGER_STORE, JSON.stringify({at:Date.now(), items:ledger})); } catch(e) {}
+      renderMoney();
+    }
+  } catch(e) { console.warn('정산 원장 조회 실패:', e.message || e); }
+}
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+const UNPAID   = ['입금대기','미정산','확인필요'];
+
+/* 아직 못 받은 돈의 금액 — 노션에 세 가지가 섞여 있어 우선순위를 둔다.
+   예상금액(실제로 들어올 액수 추정) → 세전총액(세금 전이라 과대) → 실입금액 */
+const amtOf   = x => x.expected || x.gross || x.net || 0;
+const isGuess = x => !x.gross && !x.net && !!x.expected;
+
+// 미수금 = 이미 지난 일인데 아직 입금이 안 된 건 (앞으로 할 강의는 뺀다)
+// 'YYYY-MM-DD' → 그달 말일 'YYYY-MM-DD'
+function monthEndOf(d) {
+  const y = +d.slice(0,4), m = +d.slice(5,7);
+  const last = new Date(y, m, 0).getDate();
+  return d.slice(0,8) + String(last).padStart(2,'0');
+}
+function unpaidRows() {
+  const t = todayStr();
+  // 월급제(대정중·남원중·백록초) 월 단위 행은 1일자로 적혀 있지만 받을 날은 그달 말일이다.
+  // 말일로 바꿔서 판정·표시·경과일을 모두 말일 기준으로 맞춘다.
+  return ledger.map(x => (x.date && SALARY_COMPANIES.indexOf(x.company) > -1)
+                          ? Object.assign({}, x, { date: monthEndOf(x.date) }) : x)
+               .filter(x => x.date && x.date <= t && UNPAID.indexOf(x.status) > -1)
+               .sort((a,b) => a.date.localeCompare(b.date));
+}
+// 이달 입금 = 입금일이 이번 달인 입금완료 건 (입금일이 없으면 강의일로 본다)
+function paidInMonth(ym) {
+  return ledger.filter(x => x.status === '입금완료'
+                            && String(x.payDate || x.date || '').startsWith(ym));
+}
+
+/* ── A. 미수금 카드 · C. 이달 입금 카드 ───────────────────── */
+function renderMoney() {
+  const row = document.getElementById('statsRow');
+  if (!row) return;
+  row.querySelectorAll('.money-card').forEach(el => el.remove());
+  if (!ledger.length) return;
+
+  const up  = unpaidRows();
+  const sum = up.reduce((t,x) => t + amtOf(x), 0);
+  const old = up.length ? daysAgo(up[0].date) : 0;
+
+  const paid = paidInMonth(mStr(cy,cm));
+  const net  = paid.reduce((t,x) => t + (x.net   || 0), 0);
+  const pb   = paid.reduce((t,x) => t + (x.payback || 0), 0);
+
+  const cards = [];
+  cards.push(`<div class="stat-card money-card money-first${up.length?' warn':''}" onclick="openUnpaid()"
+       title="클릭하면 미수금 목록을 봅니다" style="cursor:pointer">
+    <div class="stat-label">미수금</div>
+    <div class="stat-val">${up.length}</div>
+    <div class="stat-sub">${up.length ? (sum ? won(sum)+'원 · ' : '') + '최장 '+old+'일' : '없음'}</div>
+  </div>`);
+  cards.push(`<div class="stat-card money-card paid" onclick="openPaid()"
+       title="클릭하면 이달 입금 내역을 봅니다" style="cursor:pointer">
+    <div class="stat-label">${cm+1}월 입금</div>
+    <div class="stat-val">${net ? won(net) : '—'}</div>
+    <div class="stat-sub">${paid.length}건${pb ? ' · 페이백 −'+won(pb) : ''}</div>
+  </div>`);
+  row.insertAdjacentHTML('beforeend', cards.join(''));
+}
+
+/* 이달 입금 카드 클릭 → 입금일 순 내역 (실입금 · 페이백 · 내 몫) */
+function openPaid() {
+  const ym   = mStr(cy,cm);
+  const rows = paidInMonth(ym).slice()
+                 .sort((a,b) => String(a.payDate || a.date).localeCompare(String(b.payDate || b.date)));
+  document.getElementById('paidTtl').textContent = `${cm+1}월 입금 내역`;
+  const body = document.getElementById('paidBody');
+  if (!rows.length) {
+    body.innerHTML = '<div class="ds-empty">이달 입금된 건이 없습니다.</div>';
+  } else {
+    const mono = "font-family:'JetBrains Mono',monospace";
+    const sNet = rows.reduce((t,x) => t + (x.net || 0), 0);
+    const sPb  = rows.reduce((t,x) => t + (x.payback || 0), 0);
+    body.innerHTML = `<div style="overflow-x:auto"><table class="sch-table"><thead>
+      <tr style="background:var(--bg-deep)"><th style="padding-left:14px">입금일</th><th>강의</th>
+      <th>주관업체</th><th>실입금</th><th>페이백</th><th>내 몫</th></tr></thead><tbody>`
+      + rows.map(x => {
+          const d  = String(x.payDate || x.date || '');
+          const pb = x.payback || 0;
+          return `<tr>
+            <td class="date-col" style="padding-left:14px">${escC(d.slice(2).replace(/-/g,'.'))}${x.payDate ? ''
+                : ' <span style="font-size:.68rem;color:var(--muted)">강의일</span>'}</td>
+            <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
+            <td>${escC(x.company || '-')}</td>
+            <td style="${mono}">${won(x.net)}</td>
+            <td style="${mono};color:var(--muted)">${pb ? '−'+won(pb) : '—'}</td>
+            <td style="${mono}"><b>${won((x.net || 0) - pb)}</b></td>
+          </tr>`;
+        }).join('')
+      + `</tbody></table></div>
+         <div class="stl-sum" style="padding-top:12px">
+           <span style="color:var(--muted);font-size:.74rem">${rows.length}건 · 입금 ${won(sNet)}원${sPb ? ' · 페이백 −'+won(sPb)+'원' : ''}</span>
+           <span>내 몫 합계 <b>${won(sNet - sPb)}</b>원</span></div>`;
+  }
+  openOverlay('paidOverlay');
+}
+
+function openUnpaid() {
+  const up = unpaidRows();
+  const body = document.getElementById('unpaidBody');
+  if (!up.length) {
+    body.innerHTML = '<div class="ds-empty">미수금이 없습니다. 👏</div>';
+  } else {
+    const sum = up.reduce((t,x) => t + amtOf(x), 0);
+    body.innerHTML = `<div style="overflow-x:auto"><table class="sch-table"><thead>
+      <tr style="background:var(--bg-deep)"><th style="padding-left:14px">일자</th><th>강의</th>
+      <th>주관업체</th><th>금액</th><th>상태</th><th>경과</th></tr></thead><tbody>`
+      + up.map(x => {
+          const ag = daysAgo(x.date);
+          const amt = amtOf(x);
+          return `<tr>
+            <td class="date-col" style="padding-left:14px">${escC(x.date.slice(2).replace(/-/g,'.'))}</td>
+            <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
+            <td>${escC(x.company || '-')}</td>
+            <td style="font-family:'JetBrains Mono',monospace">${amt
+                ? won(amt) + (isGuess(x) ? ' <span style="font-family:inherit;font-size:.68rem;color:var(--muted)">예상</span>' : '')
+                : '<span style="color:var(--muted)">미입력</span>'}</td>
+            <td><span class="type-lbl">${escC(x.status)}</span></td>
+            <td><span class="stl-age${ag>=30?' late':''}">${ag}일</span></td>
+          </tr>`;
+        }).join('')
+      + `</tbody></table></div>
+         <div class="stl-sum" style="padding-top:12px">
+           <span style="color:var(--muted);font-size:.74rem">금액이 비어 있는 건은 노션에서 채워주세요</span>
+           <span>합계 <b>${won(sum)}</b>원</span></div>`;
+  }
+  openOverlay('unpaidOverlay');
+}
+
+/* ══ 정산 등록 (노션 원장) ═══════════════════════════════════
+   입금이 확인된 시점에 한 번만 기록한다. 한 번의 입금에 여러 강의가
+   묶이므로, 같은 업체의 미정산 강의를 함께 골라 강의료를 나눠 넣는다.
+   ─ 사용자가 넣는 값: 건별 강의료 · 계좌 입금액 · 세금 있음/없음
+   ─ 원천징수세액 = 강의료 - 실입금액 (자동 역산, 입력받지 않음)     */
+
+// 노션 '주관업체' 선택지 (노션 DB 옵션과 문자열이 정확히 같아야 한다)
+const NOTION_COMPANIES = [
+  '에듀인플랫폼','에듀인플랫폼(한라도서관)','에듀인플랫폼(디지털새싹)',
+  '에듀인플랫폼(찾컨)','에듀인플랫폼(랄랄라캠프)',
+  '제주대(찾컨)','제주대(디싹)',
+  '대정중학교','남원중학교','백록초등학교',
+  '제주평생교육진흥원','도민대학','한국표준협회',
+  '목포대랄랄라','제미에듀','프리랜서','제주고등학교'
+];
+
+// 업체별 원천징수 세율(%) — 과거 정산 기록에서 확인된 값.
+// 사용자는 세율을 고르지 않고 '세금 있음'만 체크한다.
+const NOTION_TAX_RATE = {
+  '에듀인플랫폼': 3.3, '에듀인플랫폼(한라도서관)': 3.3,
+  '에듀인플랫폼(디지털새싹)': 8.8, '에듀인플랫폼(찾컨)': 3.3,
+  '에듀인플랫폼(랄랄라캠프)': 3.3,
+  '제주대(찾컨)': 8.8, '제주대(디싹)': 8.8,
+  '대정중학교': 3.3, '남원중학교': 3.3, '백록초등학교': 3.3,
+  '제주평생교육진흥원': 3.3, '도민대학': 3.3, '한국표준협회': 8.8,
+  '목포대랄랄라': 3.3, '제미에듀': 3.3, '프리랜서': 3.3, '제주고등학교': 3.3
+};
+const DEFAULT_TAX_RATE = 3.3;
+// 프리랜서는 발주처가 매번 달라 세율이 일정하지 않다(3.3%·8.8% 둘 다 확인됨).
+// 어느 쪽이든 계좌 입금액을 실제 금액으로 고치면 세액·소득구분이 알아서 맞는다.
+
+// 시트 업체명 → 노션 주관업체 초기 선택값 (다르면 모달에서 바꾸면 된다)
+const NOTION_CO_GUESS = {
+  '에듀인플랫폼':'에듀인플랫폼', '에듀인플랫폼(핑퐁)':'에듀인플랫폼',
+  '제주대학교':'제주대(디싹)', '제주대':'제주대(디싹)',
+  '도민대학':'도민대학', '제주평생교육진흥원':'제주평생교육진흥원',
+  '한국표준협회':'한국표준협회', '목포대랄랄라':'목포대랄랄라',
+  '제미에듀':'제미에듀', '재미에듀':'제미에듀', '프리랜서':'프리랜서',
+  '제주고등학교':'제주고등학교', '대정중학교':'대정중학교',
+  '남원중학교':'남원중학교', '백록초등학교':'백록초등학교'
+};
+
+const won = n => Number(n || 0).toLocaleString('ko-KR');
+
+// 정산 대기 = 지난 강의 · 정산 조건 충족 · 아직 미정산 (월 구분 없이 전체)
+function pendingSettles() {
+  return data
+    .filter(s => canSettle(s) && s.settled !== 'Y'
+                 && isEventPast(s, new Date(s.date + 'T00:00:00')))
+    .sort((a,b) => a.date.localeCompare(b.date));
+}
+const daysAgo = d => Math.floor((Date.now() - new Date(d + 'T00:00:00')) / 86400000);
+
+function renderSettle() {
+  const items = pendingSettles();
+  document.getElementById('settleBadge').textContent = `${items.length}건`;
+  const w = document.getElementById('settleWrap');
+  if (!items.length) {
+    w.innerHTML = `<div class="empty"><div class="empty-ico">💰</div><p>정산을 기다리는 강의가 없습니다.<br><span>입금이 확인되면 여기에서 등록하세요.</span></p></div>`;
+    return;
+  }
+  let html = `<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)">`
+    + `<th style="padding-left:14px">일자</th><th>업체명</th><th>출강학교 · 주제</th><th>시수</th><th>경과</th><th></th>`
+    + `</tr></thead><tbody>`;
+  items.forEach(s => {
+    const c = getCompanyColor(s.company), ag = daysAgo(s.date);
+    const desc = [s.school, s.topic].filter(Boolean).join(' · ') || '—';
+    html += `<tr>
+      <td class="date-col" style="padding-left:14px">${escC(s.date.slice(2).replace(/-/g,'.'))}</td>
+      <td><span class="co-chip" style="background:${hexToRgba(c.dot,.11)};color:${c.color}">
+        <span class="co-chip-dot" style="background:${c.dot}"></span>${escC(s.company)}</span></td>
+      <td>${escC(desc)}</td>
+      <td>${s.hours ? escC(s.hours) + '시수' : ''}</td>
+      <td><span class="stl-age${ag >= 30 ? ' late' : ''}">${ag}일 경과</span></td>
+      <td style="text-align:right;padding-right:14px">
+        <button class="btn-xs" onclick="openSettleModal('${s.id}')">정산</button></td>
+    </tr>`;
+  });
+  w.innerHTML = html + '</tbody></table></div>';
+}
+
+// ── 정산 모달 ───────────────────────────────────────────────
+let stlState = { picked:{}, amounts:{}, rows:[] };
+
+function openSettleModal(id) {
+  const base = data.find(x => x.id === id);
+  if (!base) return;
+
+  // 같은 업체의 미정산 강의를 후보로 모은다 (기준 건은 항상 포함·선택)
+  const rows = pendingSettles().filter(s => s.company === base.company);
+  if (!rows.some(s => s.id === id)) rows.unshift(base);
+  rows.sort((a,b) => b.date.localeCompare(a.date));
+
+  stlState = { picked:{}, amounts:{}, rows };
+  rows.forEach(s => { stlState.picked[s.id] = (s.id === id); stlState.amounts[s.id] = ''; });
+
+  document.getElementById('stlCoName').textContent =
+    `· ${base.company} · 미정산 ${rows.length}건`;
+
+  const sel = document.getElementById('sf-company');
+  sel.innerHTML = NOTION_COMPANIES.map(c => `<option>${escC(c)}</option>`).join('');
+  sel.value = NOTION_CO_GUESS[base.company] || NOTION_COMPANIES[0];
+
+  const dep = document.getElementById('sf-deposit');
+  dep.value = ''; dep.dataset.auto = '';          // 이전에 열었던 값이 남지 않도록 초기화
+
+  /* 참여형태 — 강의에 저장된 값을 노션 선택지로 옮긴다.
+     노션에는 '안전요원' 옵션이 없어 기존 '운영지원'으로 보낸다.
+     값이 없는 예전 강의는 비고·수업주제의 표현으로 추측한다. */
+  const hint = (base.note || '') + ' ' + (base.topic || '');
+  document.getElementById('sf-role').value =
+      base.role === '안전요원'  ? '운영지원'
+    : base.role === '보조강사'  ? '보조강사'
+    : base.role === '강사'      ? '강사'
+    : /보조\s*강사/.test(hint)                    ? '보조강사'
+    : /안전\s*요원|운영\s*지원|스태?프|행사\s*지원/.test(hint) ? '운영지원'
+    : '강사';
+  document.getElementById('sf-taxed').checked  = true;
+  document.getElementById('sf-hasPayback').checked = false;
+  document.getElementById('sf-payback').value  = '';
+  document.getElementById('sf-paydate').value  = new Date().toISOString().slice(0,10);
+  settleTogglePayback();
+
+  renderSettleList();
+  settleRecalc();
+  openOverlay('settleOverlay');
+}
+
+function renderSettleList() {
+  document.getElementById('stlList').innerHTML = stlState.rows.map(s => {
+    const on = stlState.picked[s.id];
+    const desc = [s.school, s.topic].filter(Boolean).join(' · ') || s.type;
+    return `<div class="stl-row">
+      <input type="checkbox" ${on ? 'checked' : ''} onchange="settlePick('${s.id}',this.checked)">
+      <span class="stl-d">${escC(s.date.slice(5).replace('-','.'))}</span>
+      <span class="stl-t" title="${escC(desc)}">${escC(desc)}</span>
+      <span class="stl-h">${s.hours ? escC(s.hours) + '시수' : ''}</span>
+      <input type="number" class="stl-amt" placeholder="강의료" ${on ? '' : 'disabled'}
+             value="${escC(stlState.amounts[s.id])}"
+             oninput="settleAmt('${s.id}',this.value)" style="appearance:textfield">
+    </div>`;
+  }).join('');
+}
+
+function settlePick(id, on) {
+  stlState.picked[id] = on;
+  if (!on) stlState.amounts[id] = '';
+  renderSettleList(); settleRecalc();
+}
+function settleAmt(id, v) { stlState.amounts[id] = v; settleRecalc(); }
+
+// 회차로 나눠 한 업체에서 한 번에 입금될 때 하나씩 체크하지 않아도 되게
+function settleAll(on) {
+  stlState.rows.forEach(s => {
+    stlState.picked[s.id] = on;
+    if (!on) stlState.amounts[s.id] = '';
+  });
+  renderSettleList(); settleRecalc();
+}
+
+const stlPickedRows = () => stlState.rows.filter(s => stlState.picked[s.id]);
+const stlGrossSum   = () => stlPickedRows()
+  .reduce((t,s) => t + (parseFloat(stlState.amounts[s.id]) || 0), 0);
+
+// 총 강의료를 시수 비례로 나눠 채운다 (시수가 없으면 균등, 끝수는 마지막 건에)
+function settleSpread() {
+  const picked = stlPickedRows();
+  if (!picked.length) { alert('먼저 정산할 강의를 선택하세요.'); return; }
+  const raw = prompt('선택한 ' + picked.length + '건의 강의료 총액을 입력하세요. (원)');
+  if (raw === null) return;
+  const total = Math.round(parseFloat(String(raw).replace(/[,\s]/g,'')) || 0);
+  if (total <= 0) { alert('금액을 숫자로 입력해주세요.'); return; }
+
+  const parts = alloc(total, picked.map(s => parseFloat(s.hours) || 0));
+  picked.forEach((s,i) => { stlState.amounts[s.id] = String(parts[i]); });
+  renderSettleList(); settleRecalc();
+}
+
+/* total 을 weights 비율로 정수 배분한다. 가중치 합이 0이면 균등 배분하고,
+   반올림에서 생긴 끝수는 마지막 항목에 몰아 합계를 정확히 맞춘다. */
+function alloc(total, weights) {
+  const n = weights.length;
+  if (!n) return [];
+  const sum = weights.reduce((a,b) => a + b, 0);
+  const w   = sum > 0 ? weights : weights.map(() => 1);
+  const ws  = sum > 0 ? sum : n;
+  const out = w.map(x => Math.round(total * x / ws));
+  out[n-1] = total - out.slice(0,-1).reduce((a,b) => a + b, 0);
+  return out;
+}
+
+function settleRecalc() {
+  const gross = stlGrossSum();
+  document.getElementById('stlGross').textContent = won(gross);
+
+  const co    = document.getElementById('sf-company').value;
+  const taxed = document.getElementById('sf-taxed').checked;
+  const rate  = NOTION_TAX_RATE[co] != null ? NOTION_TAX_RATE[co] : DEFAULT_TAX_RATE;
+  const dep   = document.getElementById('sf-deposit');
+  const auto  = taxed ? Math.round(gross * (1 - rate/100)) : gross;
+
+  // 사용자가 아직 손대지 않았거나 이전 자동값 그대로면 다시 채워준다
+  if (!dep.value || dep.dataset.auto === dep.value) {
+    dep.value = gross ? String(auto) : '';
+    dep.dataset.auto = dep.value;
+  }
+  document.getElementById('stlTaxHint').innerHTML = taxed
+    ? `${escC(co)} 기준 <b>${rate}%</b> 적용 → 예상 실입금 <b>${won(auto)}</b>원<br>`
+      + `통장 금액이 다르면 아래 <b>계좌 입금액</b>을 고치세요. 차액이 원천징수세액으로 기록됩니다.`
+    : `세금 없이 강의료 전액(<b>${won(gross)}</b>원)이 입금된 것으로 기록합니다.`;
+}
+
+function settleTogglePayback() {
+  const on = document.getElementById('sf-hasPayback').checked;
+  document.getElementById('stlPaybackGrp').style.display = on ? 'flex' : 'none';
+}
+
+async function saveSettle() {
+  const picked = stlPickedRows();
+  if (!picked.length) { alert('정산할 강의를 선택하세요.'); return; }
+
+  const gross = stlGrossSum();
+  if (gross <= 0) { alert('강의료를 입력하세요.'); return; }
+
+  const deposit = Math.round(parseFloat(document.getElementById('sf-deposit').value) || 0);
+  if (deposit <= 0) { alert('계좌 입금액을 입력하세요.'); return; }
+
+  const co      = document.getElementById('sf-company').value;
+  const taxed   = document.getElementById('sf-taxed').checked;
+  const rate    = NOTION_TAX_RATE[co] != null ? NOTION_TAX_RATE[co] : DEFAULT_TAX_RATE;
+  const payback = document.getElementById('sf-hasPayback').checked
+                ? Math.round(parseFloat(document.getElementById('sf-payback').value) || 0) : 0;
+
+  // 입금액·페이백을 강의료 비율로 건별 배분한다
+  const gs   = picked.map(s => parseFloat(stlState.amounts[s.id]) || 0);
+  const nets = alloc(deposit, gs);
+  const pbs  = payback > 0 ? alloc(payback, gs) : gs.map(() => 0);
+
+  const items = picked.map((s,i) => ({
+    id:      s.id,
+    gross:   gs[i],
+    net:     nets[i],
+    tax:     Math.max(0, gs[i] - nets[i]),
+    payback: pbs[i]
+  }));
+
+  /* 소득구분은 '가정한 세율'이 아니라 실제로 떼인 세액으로 판정한다.
+     자동 세율이 빗나가도(예: 프리랜서 8.8% 가정 → 실제 3.3%) 계좌 입금액을
+     고치면 여기서 바로잡힌다. 반올림 오차 때문에 ±0.4%p 를 허용한다. */
+  const effRate = gross > 0 ? (gross - deposit) / gross * 100 : 0;
+  const income  = (!taxed || effRate <= 0)         ? ''
+                : Math.abs(effRate - 3.3) <= 0.4   ? '사업소득'
+                : Math.abs(effRate - 8.8) <= 0.4   ? '기타소득'
+                : '';
+  const msg = `${picked.length}건을 정산 등록합니다.\n\n`
+    + `강의료 합계  ${won(gross)}원\n`
+    + `계좌 입금액  ${won(deposit)}원\n`
+    + `원천징수     ${won(Math.max(0, gross - deposit))}원\n`
+    + (payback ? `페이백       ${won(payback)}원\n` : '')
+    + `\n노션에 ${picked.length}개 행으로 기록됩니다.`;
+  if (!confirm(msg)) return;
+
+  const btn = document.getElementById('stlSaveBtn');
+  btn.disabled = true; btn.textContent = '등록 중…';
+  try {
+    const r = await apiPost({
+      action:    'notionSettle',
+      company:   co,
+      role:      document.getElementById('sf-role').value,
+      income:    income,
+      payDate:   document.getElementById('sf-paydate').value,
+      paybackTo: payback > 0 ? document.getElementById('sf-paybackTo').value : '',
+      items:     items
+    });
+    // 구버전 Apps Script는 모르는 action 에도 {success:true} 만 돌려준다.
+    // created/updated 가 없으면 정산이 실제로 일어나지 않은 것으로 본다.
+    if (!r || (r.created === undefined && r.updated === undefined)) {
+      throw new Error('서버가 정산 액션을 처리하지 못했습니다.\n'
+        + 'Apps Script(Code.gs · notion.gs)를 최신 내용으로 재배포했는지 확인해주세요.');
+    }
+    items.forEach(it => {
+      const i = data.findIndex(x => x.id === it.id);
+      if (i > -1) data[i].settled = 'Y';
+    });
+    closeOverlay('settleOverlay');
+    render();
+    loadLedger(true);                                     // 미수금·이달 입금 카드 갱신
+    btn.disabled = false; btn.textContent = '정산 등록';   // 알림창 뜨기 전에 되돌린다
+    alert(`정산 등록 완료\n\n새로 생성 ${r.created || 0}건`
+        + `\n기존 행 갱신 ${r.updated || 0}건`
+        + ((r.failed && r.failed.length) ? `\n실패 ${r.failed.length}건 — ${r.failed.join(', ')}` : ''));
+  } catch (e) {
+    alert('정산 등록에 실패했습니다.\n' + (e.message || e));
+  } finally {
+    btn.disabled = false; btn.textContent = '정산 등록';
+  }
+}
+
+// ── 이벤트 종료 시간 초과 여부 판단 ─────────────────────────
+// time 필드가 "HH:MM-HH:MM" 형식이면 종료 시각 기준,
+// time 없으면 해당 날짜 익일 0시 기준으로 판단한다.
+function isEventPast(ev, cellDate) {
+  if (ev.time) {
+    const m = ev.time.match(/[~\-](\d{1,2}):(\d{2})/);
+    if (m) {
+      const endDt = new Date(cellDate);
+      endDt.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+      return new Date() > endDt;
+    }
+  }
+  // time 미입력: 익일 0시 기준
+  const nextDay = new Date(cellDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+  nextDay.setHours(0, 0, 0, 0);
+  return new Date() > nextDay;
+}
+
+// ── 경력 등록 완료 처리 ──────────────────────────────────────
+const completing = {};   // 같은 강의를 두 번 눌러 경력사항에 두 줄 들어가는 것 방지
+
+/* 근무기간·직위·주요업무를 만드는 규칙은 **서버(Code.gs buildCareerRow_)** 가 갖는다.
+   정산과 같은 방식으로 맞춘 것 — 규칙을 바꿀 때 Apps Script 한 곳만 고치면 된다.
+   여기서는 무엇이 등록되는지 확인만 보여주고 id 만 보낸다. */
+async function markComplete(id, silent) {
+  const s = data.find(x => x.id === id);
+  if (!s || completing[id]) return false;
+
+  if (!silent) {
+    const msg = '경력사항에 등록하시겠습니까?\n\n'
+      + '날짜: ' + s.date + '\n'
+      + '기관: ' + s.company + '\n'
+      + '학교: ' + (s.school || '-') + '\n'
+      + '시수: ' + (s.hours || '-') + '\n\n'
+      + '※ 근무기간·직위·주요업무는 규칙에 따라 자동으로 채워집니다.';
+    if (!confirm(msg)) return false;
+  }
+
+  completing[id] = true;
+  try {
+    await apiPost({ action:'complete', id });
+    const i = data.findIndex(x => x.id === id);
+    if (i >= 0) data[i] = { ...data[i], completed: 'Y' };
+    if (!silent) render();
+    return true;
+  } catch(e) {
+    if (!silent) alert('경력 등록에 실패했습니다. 다시 시도해주세요.');
+    return false;
+  } finally {
+    delete completing[id];
+  }
+}
+
+/* ── B. 묶음 경력등록 ────────────────────────────────────────
+   회차로 나눈 강의는 4회면 버튼을 4번 눌러야 했다.
+   이달의 지난 강의 중 아직 등록 안 된 건을 한 번에 올린다. */
+function pendingCompletes() {
+  const ms = mStr(cy,cm);
+  return pendingCompletesAll().filter(s => s.date.startsWith(ms));
+}
+
+/* 경력등록을 안 하면 프로필 페이지의 학교 칩·통계에 반영되지 않는다.
+   보고 있는 달 말고 다른 달에 밀린 게 있으면 알려준다. */
+function pendingCompletesAll() {
+  return data.filter(s => s.completed !== 'Y'
+                          && isEventPast(s, new Date(s.date + 'T00:00:00')))
+             .sort((a,b) => a.date.localeCompare(b.date));
+}
+
+async function completeMonth() {
+  const rows = pendingCompletes();
+  if (!rows.length) { alert('이달에 등록할 지난 강의가 없습니다.'); return; }
+
+  const list = rows.map(s => `  ${s.date.slice(5).replace('-','.')}  ${s.company}`
+                             + (s.school ? ` · ${s.school}` : '')).join('\n');
+  if (!confirm(`${cm+1}월의 지난 강의 ${rows.length}건을 경력사항에 등록합니다.\n\n${list}\n\n진행할까요?`)) return;
+
+  const btn = document.getElementById('bulkCompleteBtn');
+  const lbl = btn ? btn.textContent : '';
+  if (btn) btn.disabled = true;
+  let ok = 0, fail = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (btn) btn.textContent = `등록 중… ${i+1}/${rows.length}`;
+    (await markComplete(rows[i].id, true)) ? ok++ : fail++;
+  }
+  if (btn) { btn.disabled = false; btn.textContent = lbl; }
+  render();
+  alert(fail ? `${ok}건 등록, ${fail}건 실패\n실패한 건은 달력에서 개별로 다시 눌러주세요.`
+             : `${ok}건을 경력사항에 등록했습니다.`);
+}
+
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+function overlayClick(e,id) { if(e.target===document.getElementById(id)) closeOverlay(id); }
+
+function openPdfModal() {
+  ['py1','py2'].forEach(id=>{
+    const sel=document.getElementById(id); sel.innerHTML='';
+    for(let y=cy-1;y<=cy+2;y++){const o=document.createElement('option');o.value=y;o.textContent=y+'년';if(y===cy)o.selected=true;sel.appendChild(o);}
+  });
+  document.getElementById('pm1').innerHTML=MN.map((n,i)=>`<option value="${i+1}"${i===cm?' selected':''}>${n}</option>`).join('');
+  document.getElementById('pm2').innerHTML=MN.map((n,i)=>`<option value="${i+1}"${i===cm?' selected':''}>${n}</option>`).join('');
+  openOverlay('pdfOverlay');
+}
+
+function generatePdf() {
+  const y1=parseInt(document.getElementById('py1').value), m1=parseInt(document.getElementById('pm1').value);
+  const y2=parseInt(document.getElementById('py2').value), m2=parseInt(document.getElementById('pm2').value);
+  if(y1>y2||(y1===y2&&m1>m2)){alert('시작 월이 끝 월보다 늦습니다. 다시 선택해주세요.');return;}
+  const months=[]; let yr=y1,mo=m1;
+  while(yr<y2||(yr===y2&&mo<=m2)){months.push({y:yr,m:mo});mo++;if(mo>12){mo=1;yr++;}}
+  const pages=[]; for(let i=0;i<months.length;i+=2) pages.push(months.slice(i,i+2));
+  closeOverlay('pdfOverlay');
+  const win=window.open('','_blank'); win.document.write(buildPrintHtml(pages)); win.document.close();
+  win.onload=()=>setTimeout(()=>win.print(),400);
+}
+
+function buildPrintHtml(pages) {
+  function monthCal(y, m) {
+    const ms = `${y}-${pad(m)}`;
+    const items = data.filter(s => s.date.startsWith(ms));
+    const evMap = {};
+    items.forEach(s => { (evMap[s.date] = evMap[s.date] || []).push(s); });
+    const firstDay = new Date(y, m-1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const grid = [];
+    let week = Array(firstDay).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dStr = `${y}-${pad(m)}-${pad(d)}`;
+      week.push({ d, dStr, evs: evMap[dStr] || [] });
+      if (week.length === 7) { grid.push(week); week = []; }
+    }
+    if (week.length) { while (week.length < 7) week.push(null); grid.push(week); }
+    const rows = grid.map(row => {
+      const tds = row.map((cell, col) => {
+        if (!cell) return `<td class="ec"></td>`;
+        const evHtml = cell.evs.map(ev => {
+          const c = getCompanyColor(ev.company);
+          const rx=parseInt(c.dot.slice(1,3),16), gx=parseInt(c.dot.slice(3,5),16), bx=parseInt(c.dot.slice(5,7),16);
+          return `<div class="ev" style="background:rgba(${rx},${gx},${bx},.12);color:${c.dot};border-left:2px solid ${c.dot}">${trunc(ev.company||'',8)}</div>`;
+        }).join('');
+        const cls = `dc${col===0?' sun':col===6?' sat':''}`;
+        return `<td class="${cls}"><div class="dn">${cell.d}</div>${evHtml}</td>`;
+      }).join('');
+      return `<tr>${tds}</tr>`;
+    }).join('');
+    return `<div class="mb"><div class="hd"><span class="ttl">${y}년 ${MN[m-1]}</span><span class="sub">강지애 · 디지털 강사 · 총 ${items.length}건</span></div><table class="ct"><thead><tr><th class="wh s">일</th><th class="wh">월</th><th class="wh">화</th><th class="wh">수</th><th class="wh">목</th><th class="wh">금</th><th class="wh t">토</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  let body = '';
+  pages.forEach((pg, pi) => {
+    body += `${pi>0?'<div class="pb"></div>':''}<div class="page">${pg.map(({y,m})=>monthCal(y,m)).join('<div class="dv"></div>')}${pi===pages.length-1?`<div class="ft">출력일: ${new Date().toLocaleDateString('ko-KR')}</div>`:''}</div>`;
+  });
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>강의 스케쥴 · 강지애</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Noto Sans KR',sans-serif;color:#1b1a18;background:#fff;font-size:9pt}.page{padding:14px 18px}.pb{page-break-before:always}.mb{margin-bottom:8px}.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #2a3b2e}.ttl{font-family:'Noto Serif KR',serif;font-size:13pt;font-weight:600}.sub{font-size:7.5pt;color:#7a716a}.ct{width:100%;border-collapse:collapse;table-layout:fixed}.wh{padding:5px 4px;font-size:7pt;font-weight:700;text-align:center;background:#ebe1d0;color:#7a716a;border:1px solid #d9cfbe}.wh.s{color:#c04a3a}.wh.t{color:#2a4d8a}.dc{vertical-align:top;padding:4px 5px 3px;border:1px solid #e6ddcc;height:70px;width:14.285%}.ec{border:1px solid #f0e8d8;background:#faf7f2;width:14.285%;height:70px}.dc.sun{background:rgba(192,74,58,.025)}.dc.sat{background:rgba(42,77,138,.025)}.dn{font-size:8.5pt;font-weight:600;color:#3d3a36;margin-bottom:3px;line-height:1}.dc.sun .dn{color:#c04a3a}.dc.sat .dn{color:#2a4d8a}.ev{font-size:6.5pt;font-weight:600;padding:1px 4px 1px 5px;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}.dv{height:1px;background:#d9cfbe;margin:10px 0}.ft{text-align:right;font-size:7pt;color:#aaa;margin-top:8px;padding-top:6px;border-top:1px solid #e6ddcc}@media print{@page{size:A4;margin:8mm}body{font-size:8.5pt}}</style></head><body>${body}</body></html>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  자격 · 연수 관리 (자격증현황 시트 연동)
+// ══════════════════════════════════════════════════════════
+let certData   = [];
+let certEditId = null;
+let certType   = '자격증';
+const escC = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+async function loadCerts() {
+  try {
+    const res  = await fetch(SCHEDULE_API_URL + '?_=' + Date.now(), { cache: 'no-store' });
+    const json = await res.json();
+    certData = Array.isArray(json.certificates) ? json.certificates : [];
+  } catch(e) { console.error('자격/연수 로드 실패:', e); certData = []; }
+  renderCerts();
+}
+
+function renderCerts() {
+  const wrap = document.getElementById('certWrap');
+  if (!wrap) return;
+  const certs  = certData.filter(c => (c.category || '') !== '연수/교육');
+  const trains = certData.filter(c => (c.category || '') === '연수/교육');
+  const tabLabel = g => g === 'national' ? '국가공인' : g === 'edtech' ? '에듀테크' : '-';
+
+  let html = '';
+  html += `<div class="sec-ttl" style="margin:0 0 .7rem">자격증 <span style="color:var(--accent-warm)">${certs.length}</span></div>`;
+  if (!certs.length) {
+    html += `<div class="empty" style="padding:1.5rem 1rem"><p>등록된 자격증이 없습니다. <span>+ 자격증</span> 버튼으로 등록하세요.</p></div>`;
+  } else {
+    html += `<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">자격명</th><th>발급기관</th><th>급수</th><th>취득일</th><th>분류</th><th>비고</th><th></th></tr></thead><tbody>`;
+    certs.forEach(c => {
+      html += `<tr><td style="padding-left:14px;color:var(--ink);font-weight:600">${escC(c.name)}</td><td>${escC(c.issuer)}</td><td style="color:var(--muted)">${escC(c.extra)}</td><td style="white-space:nowrap;color:var(--muted)">${escC(c.date)}</td><td><span class="type-lbl">${escC(tabLabel(c.group))}</span></td><td style="font-size:0.72rem;color:var(--muted)">${escC(c.note)}</td><td><div class="act-btns"><button class="btn-xs" onclick="openCertModal('자격증','${c.id}')">수정</button><button class="btn-xs del" onclick="delCert('${c.id}')">삭제</button></div></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  html += `<div class="sec-ttl" style="margin:1.7rem 0 .7rem">연수 · 교육 <span style="color:var(--accent-warm)">${trains.length}</span></div>`;
+  if (!trains.length) {
+    html += `<div class="empty" style="padding:1.5rem 1rem"><p>등록된 연수가 없습니다. <span>+ 연수</span> 버튼으로 등록하세요.</p></div>`;
+  } else {
+    html += `<div style="overflow-x:auto"><table class="sch-table"><thead><tr style="background:var(--bg-deep)"><th style="padding-left:14px">연수명</th><th>주관기관</th><th>시간</th><th>이수일</th><th>결과</th><th></th></tr></thead><tbody>`;
+    trains.forEach(c => {
+      html += `<tr><td style="padding-left:14px;color:var(--ink);font-weight:600">${escC(c.name)}</td><td>${escC(c.issuer)}</td><td style="color:var(--muted)">${escC(c.extra)}</td><td style="white-space:nowrap;color:var(--muted)">${escC(c.date)}</td><td>${escC(c.note)}</td><td><div class="act-btns"><button class="btn-xs" onclick="openCertModal('연수/교육','${c.id}')">수정</button><button class="btn-xs del" onclick="delCert('${c.id}')">삭제</button></div></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function openCertModal(category, id) {
+  certType = category;
+  certEditId = id || null;
+  const isCert = category === '자격증';
+  document.getElementById('certModalTitle').textContent = (isCert ? '자격증' : '연수') + (id ? ' 수정' : ' 추가');
+  document.getElementById('lblName').textContent   = (isCert ? '자격명' : '연수명') + ' *';
+  document.getElementById('lblIssuer').textContent = (isCert ? '발급기관' : '주관기관') + ' *';
+  document.getElementById('lblDate').textContent   = isCert ? '취득일' : '이수일';
+  document.getElementById('lblExtra').textContent  = isCert ? '급수 · 등급' : '이수시간(h)';
+  document.getElementById('lblNote').textContent   = isCert ? '비고' : '결과 (수료/이수/참여)';
+  document.getElementById('grpGroup').style.display = isCert ? '' : 'none';
+  const c = id ? certData.find(x => x.id === id) : null;
+  document.getElementById('cf-name').value   = c ? c.name   : '';
+  document.getElementById('cf-issuer').value = c ? c.issuer : '';
+  document.getElementById('cf-date').value   = c ? c.date   : '';
+  document.getElementById('cf-extra').value  = c ? c.extra  : '';
+  document.getElementById('cf-group').value  = (c && c.group) ? c.group : 'edtech';
+  document.getElementById('cf-note').value   = c ? c.note   : '';
+  openOverlay('certOverlay');
+}
+
+async function saveCert() {
+  const name   = document.getElementById('cf-name').value.trim();
+  const issuer = document.getElementById('cf-issuer').value.trim();
+  if (!name || !issuer) { alert('명칭과 기관은 필수입니다.'); return; }
+  const isCert = certType === '자격증';
+  const entry = {
+    category: certType, name, issuer,
+    date:  document.getElementById('cf-date').value.trim(),
+    extra: document.getElementById('cf-extra').value.trim(),
+    group: isCert ? document.getElementById('cf-group').value : '',
+    note:  document.getElementById('cf-note').value.trim()
+  };
+  try {
+    if (certEditId) {
+      await apiPost({ action:'certUpdate', id:certEditId, ...entry });
+      const i = certData.findIndex(x => x.id === certEditId);
+      if (i >= 0) certData[i] = { ...certData[i], ...entry };
+    } else {
+      const res = await apiPost({ action:'certAdd', ...entry });
+      certData.push({ id:res.id, ...entry });
+    }
+    closeOverlay('certOverlay'); renderCerts();
+  } catch(e) { alert('저장에 실패했습니다. 다시 시도해주세요.'); }
+}
+
+async function delCert(id) {
+  if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+  try { await apiPost({ action:'certDelete', id }); certData = certData.filter(c => c.id !== id); renderCerts(); }
+  catch(e) { alert('삭제에 실패했습니다.'); }
+}
+
+loadData();
+loadCerts();
+loadLedger();
+setupCompanyAc();
+showVersions();
+
+/* ── 다른 기기에서 바꾼 내용 자동 반영 ───────────────────────
+   폰(홈 화면 앱)과 PC 가 같은 시트를 보지만, 각자 열릴 때 한 번만 읽었다.
+   폰에서 경력등록을 해도 열어둔 PC 화면은 옛 데이터를 계속 들고 있었다.
+   탭·앱으로 돌아올 때 다시 읽는다. 30초 안에 돌아온 것은 그냥 둔다
+   (창을 자주 오가도 시트를 계속 두드리지 않도록). */
+const SYNC_MIN_GAP = 30000;
+let lastSyncAt = Date.now();
+
+function syncIfStale() {
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - lastSyncAt < SYNC_MIN_GAP) return;
+  lastSyncAt = Date.now();
+  loadData();
+  loadCerts();
+}
+
+document.addEventListener('visibilitychange', syncIfStale);
+// 아이폰 홈 화면 앱은 되돌아올 때 bfcache 에서 복원되는 경우가 있다
+window.addEventListener('pageshow', e => { if (e.persisted) syncIfStale(); });
+
+/* 페이지 버전과 서버(Apps Script) 버전을 푸터에 나란히 찍는다.
+   셋 중 하나만 안 올라가 있으면 여기서 바로 보인다. */
+async function showVersions() {
+  const el = document.getElementById('verStamp');
+  if (!el) return;
+  el.textContent = 'page ' + PAGE_VERSION + ' · server …';
+  try {
+    const r = await fetch(SCHEDULE_API_URL + '?type=version&_=' + Date.now(),
+                          { cache: 'no-store' });
+    const v = await r.json();
+    const same = v.code === PAGE_VERSION;
+    el.textContent = 'page ' + PAGE_VERSION + ' · code ' + v.code
+                   + ' · notion ' + v.notion + ' · cal ' + v.calendar;
+    if (!same) { el.style.color = '#b5442f'; el.style.opacity = '1'; el.title = '페이지와 서버 버전이 다릅니다 — 배포 누락일 수 있습니다'; }
+  } catch (e) {
+    el.textContent = 'page ' + PAGE_VERSION + ' · server 확인 불가';
+  }
+}
+
+// ── PIN LOCK ──
+;(async function() {
+  const overlay = document.getElementById('pinLock');
+  if (!overlay) return;
+
+  // 이미 인증된 세션이면 즉시 숨김
+  if (localStorage.getItem('kja_sch_v1') === '1') {
+    overlay.style.display = 'none'; return;
+  }
+
+  /* ──────────────────────────────────────────
+     PIN 보안 처리
+     · PIN은 XOR 인코딩으로 소스에 평문 비노출
+     · 비교는 SubtleCrypto SHA-256으로 수행
+  ────────────────────────────────────────── */
+  const _k = [42, 17, 93, 58, 12, 77];        // XOR 키
+  const _e = [26, 38, 109, 8, 60, 116];       // XOR 인코딩된 PIN 바이트
+  const _rp = () => _e.map((b,i) => String.fromCharCode(b ^ _k[i])).join('');
+
+  async function sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  const SALT = 'kja-sch-2026';
+  const _expected = await sha256(SALT + _rp()); // 페이지 로드 시 1회 계산
+
+  async function verify(input) {
+    const h = await sha256(SALT + input);
+    return h === _expected;
+  }
+
+  /* ──────────────────────────────────────────
+     시도 횟수 제한 (Rate Limiting)
+     · 5회 실패 시 5분 잠금 (localStorage 저장)
+  ────────────────────────────────────────── */
+  const RL_KEY = 'kja_sch_rl_v1';
+  const MAX_TRY = 5, LOCK_MIN = 5;
+  const getRL  = () => JSON.parse(localStorage.getItem(RL_KEY) || '{"n":0,"until":0}');
+  const setRL  = o  => localStorage.setItem(RL_KEY, JSON.stringify(o));
+
+  const inp     = document.getElementById('pinInp');
+  const errEl   = document.getElementById('pinErr');
+  const lockEl  = document.getElementById('pinLockout');
+  const btn     = document.getElementById('pinSubmit');
+  const dots    = document.querySelectorAll('#pinDots .pd');
+
+  let cdId; // countdown interval
+  function startCountdown() {
+    if (cdId) return;
+    cdId = setInterval(() => {
+      const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(cdId); cdId = null;
+        setRL({n:0, until:0});
+        inp.disabled = false; btn.disabled = false;
+        lockEl.style.display = 'none'; errEl.textContent = '';
+      } else {
+        const m = String(Math.floor(rem/60)).padStart(2,'0');
+        const s = String(rem % 60).padStart(2,'0');
+        lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+      }
+    }, 1000);
+  }
+
+  function checkLockout() {
+    const rl = getRL();
+    if (rl.until <= Date.now()) return false;
+    const rem = Math.ceil((rl.until - Date.now()) / 1000);
+    const m = String(Math.floor(rem/60)).padStart(2,'0');
+    const s = String(rem % 60).padStart(2,'0');
+    inp.disabled = true; btn.disabled = true;
+    lockEl.style.display = ''; lockEl.textContent = `⏳  ${m}:${s} 후 다시 시도할 수 있습니다.`;
+    startCountdown(); return true;
+  }
+
+  // 초기 잠금 상태 확인
+  checkLockout();
+
+  // 입력 업데이트 (도트 표시)
+  inp.addEventListener('input', () => {
+    const v = inp.value.replace(/\D/g,'').slice(0,6);
+    inp.value = v;
+    dots.forEach((d,i) => {
+      d.classList.toggle('filled', i < v.length);
+      d.classList.remove('err');
+    });
+    errEl.textContent = '';
+    inp.classList.remove('err-state');
+    if (v.length === 6) attemptUnlock(v);
+  });
+
+  async function attemptUnlock(val) {
+    if (checkLockout()) return;
+    val = val ?? inp.value.trim();
+    if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
+
+    btn.disabled = true;
+    const ok = await verify(val);
+
+    if (ok) {
+      // 인증 성공 → 세션에 저장 후 오버레이 페이드아웃
+      localStorage.setItem('kja_sch_v1', '1');
+      setRL({n:0, until:0});
+      overlay.style.transition = 'opacity .35s';
+      overlay.style.opacity = '0';
+      setTimeout(() => { overlay.style.display = 'none'; }, 370);
+    } else {
+      // 인증 실패
+      const rl = getRL();
+      rl.n++;
+      if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
+      setRL(rl);
+
+      dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
+      inp.classList.add('err-state', 'do-shake');
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), {once:true});
+      inp.value = '';
+
+      if (rl.until > Date.now()) {
+        checkLockout();
+      } else {
+        const left = MAX_TRY - rl.n;
+        errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${left}회)`;
+        btn.disabled = false;
+      }
+    }
+  }
+
+  btn.addEventListener('click',  () => attemptUnlock(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
 })();
 
-document.querySelectorAll('button').forEach(function(b){
-  b.addEventListener('click',function(){
-    var t=b.closest('.box').querySelector('.txt').innerText;
-    var ok=function(){b.textContent='복사됨!';b.classList.add('copied');
-      setTimeout(function(){b.textContent='복사';b.classList.remove('copied');},1500);};
-    if(navigator.clipboard&&window.isSecureContext){
-      navigator.clipboard.writeText(t).then(ok,function(){fb(t,ok);});
-    }else{fb(t,ok);}
+// Mobile nav toggle
+const navToggle = document.getElementById('navToggle');
+const navMobile = document.getElementById('navMobile');
+if (navToggle && navMobile) {
+  navToggle.addEventListener('click', () => {
+    navToggle.classList.toggle('open');
+    navMobile.classList.toggle('open');
+    navToggle.setAttribute('aria-label', navMobile.classList.contains('open') ? '메뉴 닫기' : '메뉴 열기');
   });
-});
-function fb(t,ok){
-  var a=document.createElement('textarea');
-  a.value=t;a.style.position='fixed';a.style.opacity='0';
-  document.body.appendChild(a);a.select();
-  try{document.execCommand('copy');ok();}catch(e){alert('직접 드래그해서 복사해 주세요.');}
-  document.body.removeChild(a);
+  navMobile.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      navToggle.classList.remove('open');
+      navMobile.classList.remove('open');
+    });
+  });
 }
 </script>
+
+<!-- ── 모바일 데이 시트 ── -->
+<div class="day-sheet" id="daySheet" onclick="daySheetBackdrop(event)">
+  <div class="day-sheet-panel" role="dialog" aria-label="선택한 날짜의 일정">
+    <div class="day-sheet-bar"></div>
+    <div class="day-sheet-hd">
+      <div class="day-sheet-date" id="daySheetDate"></div>
+      <button class="day-sheet-close" onclick="closeDaySheet()" aria-label="닫기">✕ 닫기</button>
+    </div>
+    <div id="daySheetBody"></div>
+    <button class="day-sheet-add" id="daySheetAdd">+ 이 날짜에 강의 추가</button>
+  </div>
+</div>
 </body>
 </html>
+
