@@ -1813,9 +1813,19 @@ const amtOf   = x => x.expected || x.gross || x.net || 0;
 const isGuess = x => !x.gross && !x.net && !!x.expected;
 
 // 미수금 = 이미 지난 일인데 아직 입금이 안 된 건 (앞으로 할 강의는 뺀다)
+// 'YYYY-MM-DD' → 그달 말일 'YYYY-MM-DD'
+function monthEndOf(d) {
+  const y = +d.slice(0,4), m = +d.slice(5,7);
+  const last = new Date(y, m, 0).getDate();
+  return d.slice(0,8) + String(last).padStart(2,'0');
+}
 function unpaidRows() {
   const t = todayStr();
-  return ledger.filter(x => x.date && x.date <= t && UNPAID.indexOf(x.status) > -1)
+  // 월급제(대정중·남원중·백록초) 월 단위 행은 1일자로 적혀 있지만 받을 날은 그달 말일이다.
+  // 말일로 바꿔서 판정·표시·경과일을 모두 말일 기준으로 맞춘다.
+  return ledger.map(x => (x.date && SALARY_COMPANIES.indexOf(x.company) > -1)
+                          ? Object.assign({}, x, { date: monthEndOf(x.date) }) : x)
+               .filter(x => x.date && x.date <= t && UNPAID.indexOf(x.status) > -1)
                .sort((a,b) => a.date.localeCompare(b.date));
 }
 // 이달 입금 = 입금일이 이번 달인 입금완료 건 (입금일이 없으면 강의일로 본다)
