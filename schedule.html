@@ -1033,6 +1033,18 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
   </div>
 </div>
 
+<!-- 이달 입금 내역 MODAL — 노션 원장에서 읽어온 입금완료 건 -->
+<div class="overlay" id="paidOverlay" onclick="overlayClick(event,'paidOverlay')">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-ttl" id="paidTtl">이달 입금 내역</div>
+    <div id="paidBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="closeOverlay('paidOverlay')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 정산 등록 MODAL — 입금 확인 후 한 번에 기록 -->
 <div class="overlay" id="settleOverlay" onclick="overlayClick(event,'settleOverlay')">
   <div class="modal" style="max-width:560px">
@@ -1856,12 +1868,50 @@ function renderMoney() {
     <div class="stat-val">${up.length}</div>
     <div class="stat-sub">${up.length ? (sum ? won(sum)+'원 · ' : '') + '최장 '+old+'일' : '없음'}</div>
   </div>`);
-  cards.push(`<div class="stat-card money-card paid">
+  cards.push(`<div class="stat-card money-card paid" onclick="openPaid()"
+       title="클릭하면 이달 입금 내역을 봅니다" style="cursor:pointer">
     <div class="stat-label">${cm+1}월 입금</div>
     <div class="stat-val">${net ? won(net) : '—'}</div>
     <div class="stat-sub">${paid.length}건${pb ? ' · 페이백 −'+won(pb) : ''}</div>
   </div>`);
   row.insertAdjacentHTML('beforeend', cards.join(''));
+}
+
+/* 이달 입금 카드 클릭 → 입금일 순 내역 (실입금 · 페이백 · 내 몫) */
+function openPaid() {
+  const ym   = mStr(cy,cm);
+  const rows = paidInMonth(ym).slice()
+                 .sort((a,b) => String(a.payDate || a.date).localeCompare(String(b.payDate || b.date)));
+  document.getElementById('paidTtl').textContent = `${cm+1}월 입금 내역`;
+  const body = document.getElementById('paidBody');
+  if (!rows.length) {
+    body.innerHTML = '<div class="ds-empty">이달 입금된 건이 없습니다.</div>';
+  } else {
+    const mono = "font-family:'JetBrains Mono',monospace";
+    const sNet = rows.reduce((t,x) => t + (x.net || 0), 0);
+    const sPb  = rows.reduce((t,x) => t + (x.payback || 0), 0);
+    body.innerHTML = `<div style="overflow-x:auto"><table class="sch-table"><thead>
+      <tr style="background:var(--bg-deep)"><th style="padding-left:14px">입금일</th><th>강의</th>
+      <th>주관업체</th><th>실입금</th><th>페이백</th><th>내 몫</th></tr></thead><tbody>`
+      + rows.map(x => {
+          const d  = String(x.payDate || x.date || '');
+          const pb = x.payback || 0;
+          return `<tr>
+            <td class="date-col" style="padding-left:14px">${escC(d.slice(2).replace(/-/g,'.'))}${x.payDate ? ''
+                : ' <span style="font-size:.68rem;color:var(--muted)">강의일</span>'}</td>
+            <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
+            <td>${escC(x.company || '-')}</td>
+            <td style="${mono}">${won(x.net)}</td>
+            <td style="${mono};color:var(--muted)">${pb ? '−'+won(pb) : '—'}</td>
+            <td style="${mono}"><b>${won((x.net || 0) - pb)}</b></td>
+          </tr>`;
+        }).join('')
+      + `</tbody></table></div>
+         <div class="stl-sum" style="padding-top:12px">
+           <span style="color:var(--muted);font-size:.74rem">${rows.length}건 · 입금 ${won(sNet)}원${sPb ? ' · 페이백 −'+won(sPb)+'원' : ''}</span>
+           <span>내 몫 합계 <b>${won(sNet - sPb)}</b>원</span></div>`;
+  }
+  openOverlay('paidOverlay');
 }
 
 function openUnpaid() {
