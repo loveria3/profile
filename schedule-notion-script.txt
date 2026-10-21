@@ -1,0 +1,526 @@
+// ============================================================
+//  노션 정산 원장 연동  (파일명: notion.gs)
+//  · 강의스케쥴 시트 → 노션 "🎤 출강 및 근무 내역" DB
+//  · 토큰은 스크립트 속성 NOTION_TOKEN 에만 보관한다
+//  · 금액은 보내지 않는다 — 입금 확인 후 노션에서 직접 입력
+// ============================================================
+
+var NOTION_VERSION = '2026-10-08a';   // Code.gs 의 ?type=version 에서 보고한다
+var NOTION_DB_ID = '36b1717c-f78e-4efe-ac2e-2e1e404b4d5b';
+var NOTION_VER   = '2022-06-28';
+var COL_SETTLED  = 12;   // 강의스케쥴 시트 L열 = 정산등록
+
+// 시트 업체명 → 노션 '주관업체' 선택지
+// 여기에 없는 업체는 노션 옵션을 새로 만들지 않고 비고에 남긴다(옵션 오염 방지)
+var NOTION_COMPANY_MAP = {
+  '에듀인플랫폼':       '에듀인플랫폼',
+  '제주대학교':         '제주대(디싹)',
+  '제주대':             '제주대(디싹)',
+  '도민대학':           '도민대학',
+  '제주평생교육진흥원': '제주평생교육진흥원',
+  '한국표준협회':       '한국표준협회',
+  '목포대랄랄라':       '목포대랄랄라',
+  '제미에듀':           '제미에듀',
+  '재미에듀':           '제미에듀',
+  '프리랜서':           '프리랜서',
+  '제주고등학교':       '제주고등학교',
+  '대정중학교':         '대정중학교',
+  '남원중학교':         '남원중학교',
+  '백록초등학교':       '백록초등학교'
+};
+
+// 시트 구분 → 노션 '구분' 선택지
+var NOTION_TYPE_MAP = {
+  '방과후학교': '방과후',
+  '방과후':     '방과후',
+  '디지털튜터': '디지털튜터',
+  '로봇교구':   '로봇교구',
+  '진로':       '진로',
+  '디지털':     '디지털',
+  '디싹':       '디싹'
+};
+
+function notionHeaders_() {
+  var token = PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN');
+  if (!token) throw new Error('NOTION_TOKEN이 스크립트 속성에 없습니다.');
+  return {
+    'Authorization':  'Bearer ' + token,
+    'Notion-Version': NOTION_VER,
+    'Content-Type':   'application/json'
+  };
+}
+
+// L열 헤더가 없으면 만든다 (기존 행은 비워 둠 — 날짜 기준으로 걸러지므로)
+function ensureSettledColumn_(sheet) {
+  var h = String(sheet.getRange(1, COL_SETTLED).getValue() || '').trim();
+  if (h !== '정산등록') sheet.getRange(1, COL_SETTLED).setValue('정산등록');
+}
+
+// 같은 일정ID의 노션 페이지 ID를 찾는다 (없으면 빈 문자열)
+function notionFindPage_(scheduleId) {
+  var res = UrlFetchApp.fetch(
+    'https://api.notion.com/v1/databases/' + NOTION_DB_ID + '/query',
+    {
+      method: 'post',
+      headers: notionHeaders_(),
+      payload: JSON.stringify({
+        filter: { property: '일정ID', rich_text: { equals: scheduleId } },
+        page_size: 1
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  if (res.getResponseCode() !== 200) return '';
+  var json = JSON.parse(res.getContentText());
+  return (json.results && json.results.length > 0) ? json.results[0].id : '';
+}
+
+// 같은 일정ID가 이미 노션에 있는지 확인 (중복 생성 방지)
+function notionExists_(scheduleId) {
+  return !!notionFindPage_(scheduleId);
+}
+
+// ── 정산등록 처리 (schedule.html 의 '정산' 버튼이 호출) ──────
+function handleNotionAdd_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return errorOutput('강의스케쥴 시트를 찾을 수 없습니다.');
+
+  var rowIdx = findRowById_(sheet, data.id);
+  if (rowIdx < 0) return errorOutput('해당 강의를 찾을 수 없습니다: ' + data.id);
+
+  ensureSettledColumn_(sheet);
+
+  var r = sheet.getRange(rowIdx, 1, 1, 11).getValues()[0];
+
+  var dateRaw = r[1];
+  var dateStr = (dateRaw instanceof Date)
+    ? Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+    : String(dateRaw || '').trim();
+
+  var id      = String(r[0] || '').trim();
+  var type    = String(r[2] || '').trim();
+  var company = String(r[3] || '').trim();
+  var school  = String(r[5] || '').trim();
+  var hours   = parseFloat(String(r[7] || '0')) || 0;
+  var topic   = String(r[8] || '').trim();
+  var note    = String(r[9] || '').trim();
+
+  // 이미 노션에 있으면 다시 만들지 않고 플래그만 맞춘다
+  if (notionExists_(id)) {
+    sheet.getRange(rowIdx, COL_SETTLED).setValue('Y');
+    return jsonOutput({ success: true, skipped: true });
+  }
+
+  var props = {
+    '강의명':   { title: [{ text: { content: (topic || school || type || '강의') } }] },
+    '기간':     { date: { start: dateStr } },
+    '출강학교': { rich_text: [{ text: { content: school } }] },
+    '시간':     { number: hours },
+    '완료여부': { select: { name: '완료' } },
+    '입금여부': { select: { name: '입금대기' } },
+    '일정ID':   { rich_text: [{ text: { content: id } }] }
+  };
+
+  var memo = note;
+
+  var co = NOTION_COMPANY_MAP[company];
+  if (co) {
+    props['주관업체'] = { select: { name: co } };
+  } else if (company) {
+    memo = (memo ? memo + ' / ' : '') + '업체확인필요: ' + company;
+  }
+
+  var tp = NOTION_TYPE_MAP[type];
+  if (tp) props['구분'] = { select: { name: tp } };
+
+  if (memo) props['비고'] = { rich_text: [{ text: { content: memo } }] };
+
+  var res = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+    method: 'post',
+    headers: notionHeaders_(),
+    payload: JSON.stringify({
+      parent: { database_id: NOTION_DB_ID },
+      properties: props
+    }),
+    muteHttpExceptions: true
+  });
+
+  if (res.getResponseCode() !== 200) {
+    return errorOutput('노션 등록 실패(' + res.getResponseCode() + '): '
+                       + res.getContentText().slice(0, 200));
+  }
+
+  sheet.getRange(rowIdx, COL_SETTLED).setValue('Y');
+  return jsonOutput({ success: true });
+}
+
+// ============================================================
+//  정산 등록 — 입금 확인 후 여러 건을 금액까지 한 번에 기록
+//  schedule.html 의 정산 모달이 호출한다.
+//
+//  payload = {
+//    action:'notionSettle',
+//    company:'에듀인플랫폼(디지털새싹)',  // 노션 주관업체 (사용자가 고름)
+//    role:'강사',                         // 참여형태
+//    income:'사업소득',                   // 소득구분 (세율로 자동 판정, 빈값 가능)
+//    payDate:'2026-09-09',                // 입금일
+//    paybackTo:'현민주',                  // 페이백 대상 (없으면 '')
+//    items:[ { id, gross, net, tax, payback }, ... ]
+//  }
+//  금액은 페이지에서 이미 건별로 배분해 보내므로 여기서는 그대로 기록한다.
+//  같은 일정ID의 행이 이미 있으면 새로 만들지 않고 그 행을 갱신한다.
+// ============================================================
+function handleNotionSettle_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return errorOutput('강의스케쥴 시트를 찾을 수 없습니다.');
+
+  var items = data.items || [];
+  if (!items.length) return errorOutput('정산할 강의가 없습니다.');
+
+  ensureSettledColumn_(sheet);
+
+  var created = 0, updated = 0, failed = [];
+
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    try {
+      var rowIdx = findRowById_(sheet, it.id);
+      if (rowIdx < 0) { failed.push(String(it.id)); continue; }
+
+      var r = sheet.getRange(rowIdx, 1, 1, 11).getValues()[0];
+
+      var dateRaw = r[1];
+      var dateStr = (dateRaw instanceof Date)
+        ? Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : String(dateRaw || '').trim();
+
+      var id     = String(r[0] || '').trim();
+      var type   = String(r[2] || '').trim();
+      var school = String(r[5] || '').trim();
+      var hours  = parseFloat(String(r[7] || '0')) || 0;
+      var topic  = String(r[8] || '').trim();
+      var note   = String(r[9] || '').trim();
+
+      var props = {
+        '강의명':   { title: [{ text: { content: (topic || school || type || '강의') } }] },
+        '기간':     { date: { start: dateStr } },
+        '출강학교': { rich_text: [{ text: { content: school } }] },
+        '시간':     { number: hours },
+        '완료여부': { select: { name: '완료' } },
+        '입금여부': { select: { name: '입금완료' } },
+        '세전총액': { number: Number(it.gross) || 0 },
+        '실입금액': { number: Number(it.net)   || 0 },
+        '일정ID':   { rich_text: [{ text: { content: id } }] }
+      };
+
+      if (data.company)   props['주관업체'] = { select: { name: String(data.company) } };
+      if (data.role)      props['참여형태'] = { select: { name: String(data.role) } };
+      if (data.income)    props['소득구분'] = { select: { name: String(data.income) } };
+      if (data.payDate)   props['입금일']   = { date: { start: String(data.payDate) } };
+      if (Number(it.tax)     > 0) props['원천징수세액'] = { number: Number(it.tax) };
+      if (Number(it.payback) > 0) {
+        props['페이백'] = { number: Number(it.payback) };
+        if (data.paybackTo) props['페이백대상'] = { select: { name: String(data.paybackTo) } };
+      }
+
+      var tp = NOTION_TYPE_MAP[type];
+      if (tp) props['구분'] = { select: { name: tp } };
+      if (note) props['비고'] = { rich_text: [{ text: { content: note } }] };
+
+      var pageId = notionFindPage_(id);
+      var res;
+      if (pageId) {
+        res = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + pageId, {
+          method: 'patch',
+          headers: notionHeaders_(),
+          payload: JSON.stringify({ properties: props }),
+          muteHttpExceptions: true
+        });
+      } else {
+        res = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+          method: 'post',
+          headers: notionHeaders_(),
+          payload: JSON.stringify({
+            parent: { database_id: NOTION_DB_ID },
+            properties: props
+          }),
+          muteHttpExceptions: true
+        });
+      }
+
+      if (res.getResponseCode() !== 200) {
+        failed.push(dateStr + ' (' + res.getResponseCode() + ')');
+        continue;
+      }
+
+      sheet.getRange(rowIdx, COL_SETTLED).setValue('Y');
+      if (pageId) { updated++; } else { created++; }
+
+    } catch (err) {
+      failed.push(String(it.id) + ' (' + err + ')');
+    }
+  }
+
+  return jsonOutput({ success: true, created: created, updated: updated, failed: failed });
+}
+
+// ============================================================
+//  강의 추가·수정 시 노션에 '예정' 행 만들기
+//  ------------------------------------------------------------
+//  · P열 예상금액이 있을 때만 동작한다. 금액이 없으면 아무것도 하지 않는다
+//    (금액 없는 빈 행이 노션에 쌓이는 걸 원하지 않기 때문).
+//  · 완료여부=예정 / 입금여부=입금대기 로 만들어 두면
+//    노션 '월별 최종내몫' 차트에 앞으로의 달까지 잡힌다.
+//  · 나중에 정산하면 handleNotionSettle_ 이 같은 일정ID 행을 찾아 갱신한다.
+//  · 이미 정산이 끝난 행(L열='Y')은 건드리지 않는다.
+//  · 노션이 실패해도 강의 저장은 성공으로 둔다 — 절대 예외를 던지지 않는다.
+// ============================================================
+function syncNotionPlan_(sheet, rowIdx) {
+  try {
+    if (rowIdx < 2) return 'skip';
+    var r = sheet.getRange(rowIdx, 1, 1, COL_EXPECTED).getValues()[0];
+
+    var id = String(r[0] || '').trim();
+    if (!id) return 'no-id';
+
+    // 정산이 끝난 건은 금액이 확정됐으므로 덮어쓰지 않는다
+    if (String(r[COL_SETTLED - 1] || '').trim() === 'Y') return 'settled';
+
+    var expected = parseFloat(String(r[COL_EXPECTED - 1] || '').replace(/[^0-9.]/g, '')) || 0;
+    // 예상금액을 지웠으면 예전에 만들어 둔 노션 '예정' 행도 지운다 (안 지우면 차트에 옛 금액이 남는다)
+    if (expected <= 0) { notionRemoveLinked_(id, true); return 'no-amount'; }
+
+    var dateRaw = r[1];
+    var dateStr = (dateRaw instanceof Date)
+      ? Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : String(dateRaw || '').trim();
+    if (!dateStr) return 'no-date';
+
+    var type    = String(r[2] || '').trim();
+    var company = String(r[3] || '').trim();
+    var school  = String(r[5] || '').trim();
+    var hours   = parseFloat(String(r[7] || '0')) || 0;
+    var topic   = String(r[8] || '').trim();
+    var note    = String(r[9] || '').trim();
+    var role    = String(r[COL_ROLE - 1] || '').trim();
+
+    var props = {
+      '강의명':   { title: [{ text: { content: (topic || school || type || '강의') } }] },
+      '기간':     { date: { start: dateStr } },
+      '출강학교': { rich_text: [{ text: { content: school } }] },
+      '시간':     { number: hours },
+      '완료여부': { select: { name: '예정' } },
+      '입금여부': { select: { name: '입금대기' } },
+      '예상금액': { number: expected },
+      '일정ID':   { rich_text: [{ text: { content: id } }] }
+    };
+
+    var memo = note;
+    var co = NOTION_COMPANY_MAP[company];
+    if (co) props['주관업체'] = { select: { name: co } };
+    else if (company) memo = (memo ? memo + ' / ' : '') + '업체확인필요: ' + company;
+
+    var tp = NOTION_TYPE_MAP[type];
+    if (tp) props['구분'] = { select: { name: tp } };
+
+    // 시트의 '안전요원' 은 노션에 옵션이 없어 '운영지원' 으로 보낸다
+    var rl = role === '안전요원' ? '운영지원'
+           : (role === '강사' || role === '보조강사') ? role : '';
+    if (rl) props['참여형태'] = { select: { name: rl } };
+
+    if (memo) props['비고'] = { rich_text: [{ text: { content: memo } }] };
+
+    var pageId = notionFindPage_(id);
+    var res;
+    if (pageId) {
+      res = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + pageId, {
+        method: 'patch', headers: notionHeaders_(),
+        payload: JSON.stringify({ properties: props }), muteHttpExceptions: true
+      });
+    } else {
+      res = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+        method: 'post', headers: notionHeaders_(),
+        payload: JSON.stringify({ parent: { database_id: NOTION_DB_ID }, properties: props }),
+        muteHttpExceptions: true
+      });
+    }
+
+    if (res.getResponseCode() !== 200) {
+      Logger.log('노션 예정 행 실패(' + res.getResponseCode() + '): '
+                 + res.getContentText().slice(0, 200));
+      return 'failed';
+    }
+    return pageId ? 'updated' : 'created';
+
+  } catch (err) {
+    Logger.log('노션 예정 행 오류: ' + err);   // 강의 저장은 계속 성공시킨다
+    return 'error';
+  }
+}
+
+// ============================================================
+//  일정 삭제·예상금액 삭제 시 연동된 노션 행 정리 (2026-10-08)
+//  ------------------------------------------------------------
+//  · 같은 일정ID의 노션 행을 휴지통으로 보낸다(archived). 노션 휴지통에서 복구 가능.
+//  · 입금완료 행은 절대 지우지 않는다 — 실제 받은 돈 기록이므로.
+//  · onlyPlan=true 이면 완료여부='예정' 행만 지운다 (예상금액만 지운 '수정'의 경우).
+//  · 강의 저장/삭제는 노션 결과와 무관하게 성공으로 둔다 — 예외를 던지지 않는다.
+// ============================================================
+function notionRemoveLinked_(scheduleId, onlyPlan) {
+  var removed = 0;
+  try {
+    var id = String(scheduleId || '').trim();
+    if (!id) return 0;
+    var res = UrlFetchApp.fetch(
+      'https://api.notion.com/v1/databases/' + NOTION_DB_ID + '/query', {
+        method: 'post', headers: notionHeaders_(),
+        payload: JSON.stringify({ filter: { property: '일정ID', rich_text: { equals: id } }, page_size: 10 }),
+        muteHttpExceptions: true
+      });
+    if (res.getResponseCode() !== 200) return 0;
+    var pages = JSON.parse(res.getContentText()).results || [];
+    pages.forEach(function (p) {
+      var pr   = p.properties || {};
+      var paid = pr['입금여부'] && pr['입금여부'].select ? pr['입금여부'].select.name : '';
+      var done = pr['완료여부'] && pr['완료여부'].select ? pr['완료여부'].select.name : '';
+      if (paid === '입금완료') return;            // 받은 돈 기록은 보존
+      if (onlyPlan && done !== '예정') return;
+      var r = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + p.id, {
+        method: 'patch', headers: notionHeaders_(),
+        payload: JSON.stringify({ archived: true }), muteHttpExceptions: true
+      });
+      if (r.getResponseCode() === 200) removed++;
+      else Logger.log('노션 행 삭제 실패(' + r.getResponseCode() + '): ' + r.getContentText().slice(0, 200));
+    });
+  } catch (err) {
+    Logger.log('노션 연동 행 정리 오류: ' + err);
+  }
+  return removed;
+}
+
+// ── 한 번 실행용: 시트에서 이미 지워진 일정의 노션 '예정' 행 찾기/정리 ──
+//  편집기에서 notionOrphanPreview 를 먼저 실행해 로그로 목록을 확인하고,
+//  맞으면 notionOrphanClean 을 실행한다. (예정 + 입금완료 아님 + 일정ID 있음 + 시트에 없음)
+function notionOrphanPreview() { return notionOrphans_(false); }
+function notionOrphanClean()   { return notionOrphans_(true); }
+function notionOrphans_(doDelete) {
+  var sheet = getSS_().getSheetByName(SHEET_SCHEDULE);
+  var ids = {};
+  if (sheet && sheet.getLastRow() >= 2) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues()
+      .forEach(function (r) { var v = String(r[0] || '').trim(); if (v) ids[v] = true; });
+  }
+  var found = [], cursor = null, guard = 0;
+  do {
+    var body = { filter: { and: [
+                   { property: '일정ID',   rich_text: { is_not_empty: true } },
+                   { property: '완료여부', select: { equals: '예정' } }
+                 ] }, page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    var res = UrlFetchApp.fetch('https://api.notion.com/v1/databases/' + NOTION_DB_ID + '/query', {
+      method: 'post', headers: notionHeaders_(), payload: JSON.stringify(body), muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) { Logger.log('조회 실패: ' + res.getContentText().slice(0, 200)); break; }
+    var json = JSON.parse(res.getContentText());
+    (json.results || []).forEach(function (p) {
+      var pr  = p.properties || {};
+      var sid = (pr['일정ID'].rich_text || []).map(function (t) { return t.plain_text; }).join('').trim();
+      var paid = pr['입금여부'] && pr['입금여부'].select ? pr['입금여부'].select.name : '';
+      if (!sid || ids[sid] || paid === '입금완료') return;
+      var title = (pr['강의명'].title || []).map(function (t) { return t.plain_text; }).join('');
+      var d = pr['기간'] && pr['기간'].date ? pr['기간'].date.start : '';
+      found.push({ pageId: p.id, sid: sid, date: d, title: title });
+    });
+    cursor = json.has_more ? json.next_cursor : null;
+  } while (cursor && ++guard < 20);
+
+  found.forEach(function (f) {
+    Logger.log((doDelete ? '삭제: ' : '대상: ') + f.date + ' ' + f.title + ' (' + f.sid + ')');
+    if (doDelete) {
+      UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + f.pageId, {
+        method: 'patch', headers: notionHeaders_(),
+        payload: JSON.stringify({ archived: true }), muteHttpExceptions: true });
+    }
+  });
+  Logger.log('총 ' + found.length + '건' + (doDelete ? ' 정리 완료' : ' (미리보기 — 지우려면 notionOrphanClean 실행)'));
+  return found.length;
+}
+
+// ============================================================
+//  정산 원장 읽기 — 미수금 카드 · 월별 수입 요약용
+//  { action:'notionLedger', from:'2025-04-01' }  (from 생략 시 18개월 전)
+//  노션이 원장이므로 시트에 없는 건(월급제·페이백 등)까지 전부 잡힌다.
+// ============================================================
+function handleNotionLedger_(data) {
+  var from = String(data.from || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) {
+    var d = new Date();
+    d.setMonth(d.getMonth() - 18);
+    from = Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
+  var items = [], cursor = null, guard = 0;
+  do {
+    var payload = {
+      page_size: 100,
+      filter: { property: '기간', date: { on_or_after: from } },
+      sorts:  [{ property: '기간', direction: 'ascending' }]
+    };
+    if (cursor) payload.start_cursor = cursor;
+
+    var res = UrlFetchApp.fetch(
+      'https://api.notion.com/v1/databases/' + NOTION_DB_ID + '/query',
+      { method:'post', headers: notionHeaders_(),
+        payload: JSON.stringify(payload), muteHttpExceptions: true }
+    );
+    if (res.getResponseCode() !== 200) {
+      return errorOutput('노션 조회 실패(' + res.getResponseCode() + '): '
+                         + res.getContentText().slice(0, 200));
+    }
+    var json = JSON.parse(res.getContentText());
+    (json.results || []).forEach(function (p) {
+      items.push(notionRowToObj_(p));
+    });
+    cursor = json.has_more ? json.next_cursor : null;
+  } while (cursor && ++guard < 20);
+
+  return jsonOutput({ success: true, items: items });
+}
+
+// 노션 페이지 → 가벼운 객체 (페이지에서 쓰는 값만)
+function notionRowToObj_(p) {
+  var pr = p.properties || {};
+  function txt(k) {
+    var v = pr[k]; if (!v) return '';
+    if (v.type === 'title')     return (v.title[0]     || {}).plain_text || '';
+    if (v.type === 'rich_text') return (v.rich_text[0] || {}).plain_text || '';
+    return '';
+  }
+  function sel(k)  { return (pr[k] && pr[k].select) ? pr[k].select.name : ''; }
+  function num(k)  { return (pr[k] && typeof pr[k].number === 'number') ? pr[k].number : null; }
+  function date(k) { return (pr[k] && pr[k].date && pr[k].date.start)
+                          ? String(pr[k].date.start).slice(0, 10) : ''; }
+  return {
+    title:   txt('강의명'),
+    date:    date('기간'),
+    school:  txt('출강학교'),
+    company: sel('주관업체'),
+    status:  sel('입금여부'),
+    done:    sel('완료여부'),
+    gross:    num('세전총액'),
+    net:      num('실입금액'),
+    expected: num('예상금액'),   // 입금 전에는 이 값이 가장 현실적인 '받을 돈'
+    payback:  num('페이백'),
+    payDate: date('입금일'),
+    schedId: txt('일정ID')
+  };
+}
+
+// ── 연결 확인용 (편집기에서 직접 실행) ───────────────────────
+function notionTest() {
+  var res = UrlFetchApp.fetch(
+    'https://api.notion.com/v1/databases/' + NOTION_DB_ID,
+    { method: 'get', headers: notionHeaders_(), muteHttpExceptions: true }
+  );
+  Logger.log('응답코드: ' + res.getResponseCode());
+  Logger.log(res.getContentText().slice(0, 200));
+}
