@@ -395,6 +395,15 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
 .stat-card.money-card.paid .stat-label { color:#9a7830; }
 .stat-card.money-card.paid .stat-val   { color:var(--accent); font-size:0.95rem; }
 .stat-card.money-card.paid .stat-sub   { color:#9a7830; }
+.stat-card.money-card.plan        { background:rgba(74,111,150,.10); }
+.stat-card.money-card.plan .stat-label { color:#3f6489; }
+.stat-card.money-card.plan .stat-val   { color:var(--accent); font-size:0.95rem; }
+.stat-card.money-card.plan .stat-sub   { color:#5d7a96; }
+.plan-row { cursor:pointer; }
+.plan-row:hover td { background:rgba(74,111,150,.06); }
+.plan-row.on td    { background:rgba(74,111,150,.12); font-weight:600; }
+.plan-tag { font-size:.68rem; padding:1px 6px; border-radius:8px; background:rgba(74,111,150,.13); color:#3f6489; white-space:nowrap; }
+.plan-tag.done { background:rgba(201,163,91,.18); color:#9a7830; }
 
 /* ── 달력 뱃지 시간 · 더보기 ── */
 .ev-tm {
@@ -858,7 +867,7 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
         <select class="fsel" id="f-type" onchange="onTypeChange()">
           <option>디싹</option><option>진로</option>
           <option>디지털</option><option>로봇교구</option>
-          <option>방과후학교</option><option>디지털튜터</option><option>교육수강</option>
+          <option>방과후학교</option><option>디지털튜터</option><option>교육수강</option><option>연수</option>
         </select>
       </div>
       <div class="day-hint" id="dayHint" hidden></div>
@@ -1041,6 +1050,18 @@ main { max-width:1280px; margin:0 auto; padding:2.5rem 40px 5rem; }
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
       <button class="btn btn-primary" onclick="closeOverlay('paidOverlay')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 월별 예정수입 MODAL — 노션 원장(예정 포함)에서 월별 합계 -->
+<div class="overlay" id="planOverlay" onclick="overlayClick(event,'planOverlay')">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-ttl">월별 수입 (예정 포함)</div>
+    <div id="planBody"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="loadLedger(true)">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="closeOverlay('planOverlay')">닫기</button>
     </div>
   </div>
 </div>
@@ -1429,7 +1450,7 @@ function renderList() {
   items.forEach(s=>{
     const c=getCompanyColor(s.company), dd=s.date.slice(5).replace('-','.');
     const hoursCell=s.hours?`${s.hours}시수`:'';
-    const typeLbl = s.type==='교육수강'&&s.mode ? `<span class="type-lbl">${s.type}</span> <span class="type-lbl" style="color:var(--accent-warm);border-color:rgba(179,117,58,.3)">${s.mode}</span>` : `<span class="type-lbl">${s.type||''}</span>`;
+    const typeLbl = isStudyType(s.type)&&s.mode ? `<span class="type-lbl">${s.type}</span> <span class="type-lbl" style="color:var(--accent-warm);border-color:rgba(179,117,58,.3)">${s.mode}</span>` : `<span class="type-lbl">${s.type||''}</span>`;
     const tShort  = s.time ? `<span style="font-size:0.68rem;color:var(--muted);white-space:nowrap;margin-left:4px">(${fmtTimeShort(s.time)})</span>` : '';
     html+=`<tr><td class="date-col" style="border-left:3px solid ${c.dot};padding-left:11px">${dd}</td><td><span class="co-chip" style="background:${hexToRgba(c.dot,.09)};color:${c.color}"><span class="co-chip-dot" style="background:${c.dot}"></span>${s.company||''}</span>${tShort}</td><td>${typeLbl}</td><td>${s.school||''}</td><td style="white-space:nowrap;color:var(--muted)">${s.time||''}</td><td style="white-space:nowrap;color:var(--muted);text-align:center">${hoursCell}</td><td>${s.topic||''}</td><td style="font-size:0.72rem;color:var(--muted)">${s.note||''}</td><td><div class="act-btns"><button class="btn-xs" onclick="openEditModal('${s.id}')">수정</button><button class="btn-xs del" onclick="delSchedule('${s.id}')">삭제</button></div></td></tr>`;
   });
@@ -1460,9 +1481,11 @@ function renderStats() {
 
 function shiftMonth(d) { cm+=d; if(cm>11){cm=0;cy++;} if(cm<0){cm=11;cy--;} render(); }
 
+// 수강방식(온라인/오프라인)을 고르는 구분 — 교육수강 · 연수
+const isStudyType = t => t === '교육수강' || t === '연수';
 function onTypeChange() {
   const t=document.getElementById('f-type').value;
-  document.getElementById('modeGrp').style.display = t==='교육수강' ? '' : 'none';
+  document.getElementById('modeGrp').style.display = isStudyType(t) ? '' : 'none';
 }
 function openAddModal(presetDate) {
   editId=null; document.getElementById('modalTitle').textContent='강의 추가';
@@ -1484,7 +1507,7 @@ function openEditModal(id) {
   document.getElementById('f-date').value=s.date; document.getElementById('f-type').value=s.type;
   document.getElementById('f-role').value=s.role||'강사';
   document.getElementById('f-mode').value=s.mode||'오프라인';
-  document.getElementById('modeGrp').style.display = s.type==='교육수강' ? '' : 'none';
+  document.getElementById('modeGrp').style.display = isStudyType(s.type) ? '' : 'none';
   document.getElementById('f-company').value=s.company||''; document.getElementById('f-school').value=s.school||'';
   document.getElementById('f-time').value=s.time||''; document.getElementById('f-hours').value=s.hours||'';
   document.getElementById('f-topic').value=s.topic||''; document.getElementById('f-note').value=s.note||'';
@@ -1602,7 +1625,7 @@ async function saveSchedule() {
   const type=document.getElementById('f-type').value;
   const entry={date,type,company,
     role: document.getElementById('f-role').value,
-    mode: type==='교육수강' ? document.getElementById('f-mode').value : '',
+    mode: isStudyType(type) ? document.getElementById('f-mode').value : '',
     school:document.getElementById('f-school').value.trim(),time:document.getElementById('f-time').value.trim(),
     hours:document.getElementById('f-hours').value.trim(),
     topic:document.getElementById('f-topic').value.trim(),note:document.getElementById('f-note').value.trim(),
@@ -1619,6 +1642,7 @@ async function saveSchedule() {
   sbtn.disabled = true; sbtn.textContent = '저장 중…';
 
   let calSyncId = null;
+  const prev = editId ? { ...(data.find(s=>s.id===editId) || {}) } : null;   // 연수 정보 갱신용
   try {
     if(editId){
       await apiPost({action:'update',id:editId,...entry});
@@ -1632,6 +1656,8 @@ async function saveSchedule() {
     if(editId) calSyncId = editId;
     closeOverlay('addOverlay'); render();
     pushToCalendar({id:calSyncId});
+    loadLedger(true);   // 노션 예정 행이 바뀌었을 수 있으니 미수금·입금 카드 갱신
+    if (entry.type === '연수') syncTraining(entry, [date], prev);
   } catch(e){ alert('저장에 실패했습니다. 다시 시도해주세요.'); }
   finally { sbtn.disabled = false; sbtn.textContent = slabel; }
 }
@@ -1668,11 +1694,12 @@ async function saveSeries(entry, dates) {
   /* 캘린더는 건별로 N번 부르지 않는다 — 동시 요청이 몰리면 시트 쓰기가 서로 막힌다.
      한 번의 전체 동기화로 새 회차를 한꺼번에 반영한다(변경 없는 행은 서버가 건너뜀). */
   if (made.length) pushToCalendarAll();
+  if (made.length && entry.type === '연수') await syncTraining(entry, dates, null);
   alert(failed.length
     ? `${made.length}건 등록, ${failed.length}건 실패\n\n실패: ${failed.join(', ')}\n실패한 날짜는 다시 등록해주세요.`
     : `${made.length}건을 등록했습니다.`);
 }
-async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; const gone=data.find(s=>s.id===id); try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); pushToCalendar({deleteId:id, date:gone?gone.date:''}); }catch(e){ alert('삭제에 실패했습니다.'); } }
+async function delSchedule(id) { if(!confirm('이 강의를 삭제하시겠습니까?'))return; const gone=data.find(s=>s.id===id); try{ await apiPost({action:'delete',id}); data=data.filter(s=>s.id!==id); render(); pushToCalendar({deleteId:id, date:gone?gone.date:''}); loadLedger(true); }catch(e){ alert('삭제에 실패했습니다.'); } }
 
 // ── 구글 캘린더 동기화 ─────────────────────────────
 //  저장/삭제 직후 해당 일정만 조용히 반영한다. 실패해도 페이지는 그대로 둘 —
@@ -1874,7 +1901,75 @@ function renderMoney() {
     <div class="stat-val">${net ? won(net) : '—'}</div>
     <div class="stat-sub">${paid.length}건${pb ? ' · 페이백 −'+won(pb) : ''}</div>
   </div>`);
+  const pm = planMonth(mStr(cy,cm));
+  cards.push(`<div class="stat-card money-card plan" onclick="openPlan()"
+       title="클릭하면 월별 예정수입을 봅니다" style="cursor:pointer">
+    <div class="stat-label">${cm+1}월 예정수입</div>
+    <div class="stat-val">${pm.total ? won(pm.total) : '—'}</div>
+    <div class="stat-sub">${pm.rows.length ? '받음 '+won(pm.done)+' · 예정 '+won(pm.plan) : '0건'}</div>
+  </div>`);
   row.insertAdjacentHTML('beforeend', cards.join(''));
+}
+
+/* ── 월별 예정수입 — 노션 '월별 수입 분석'처럼 강의일(기간) 기준 월로 묶는다 ──
+   입금완료 = 최종내몫(실입금 − 페이백) / 그 외 = 예상금액(없으면 세전·실입금) − 페이백 */
+const shareOf = x => x.status === '입금완료'
+  ? (x.net || 0) - (x.payback || 0)
+  : amtOf(x) - (x.payback || 0);
+function planMonth(ym) {
+  const rows = ledger.filter(x => String(x.date || '').startsWith(ym));
+  let done = 0, plan = 0;
+  rows.forEach(x => { if (x.status === '입금완료') done += shareOf(x); else plan += shareOf(x); });
+  return { rows, done, plan, total: done + plan };
+}
+let planSel = '';
+function openPlan(ym) {
+  planSel = ym || planSel || mStr(cy,cm);
+  // 보고 있는 달 기준 앞 2달 ~ 뒤 3달
+  const months = [];
+  for (let i = -2; i <= 3; i++) { const d = new Date(cy, cm + i, 1); months.push(mStr(d.getFullYear(), d.getMonth())); }
+  if (months.indexOf(planSel) < 0) planSel = mStr(cy,cm);
+  const mono = "font-family:'JetBrains Mono',monospace";
+  const lbl  = ym => `${ym.slice(2,4)}년 ${+ym.slice(5,7)}월`;
+
+  let html = `<div style="overflow-x:auto"><table class="sch-table"><thead>
+    <tr style="background:var(--bg-deep)"><th style="padding-left:14px">월</th><th>받음</th><th>예정</th><th>합계</th><th>건수</th></tr></thead><tbody>`
+    + months.map(ym => {
+        const m = planMonth(ym);
+        return `<tr class="plan-row${ym === planSel ? ' on' : ''}" onclick="openPlan('${ym}')">
+          <td style="padding-left:14px">${lbl(ym)}</td>
+          <td style="${mono}">${m.done ? won(m.done) : '—'}</td>
+          <td style="${mono};color:#3f6489">${m.plan ? won(m.plan) : '—'}</td>
+          <td style="${mono}"><b>${m.total ? won(m.total) : '—'}</b></td>
+          <td>${m.rows.length}</td></tr>`;
+      }).join('')
+    + `</tbody></table></div>`;
+
+  const sm   = planMonth(planSel);
+  const rows = sm.rows.slice().sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  html += `<div style="margin:18px 0 8px;font-weight:700">${lbl(planSel)} 내역</div>`;
+  if (!rows.length) {
+    html += '<div class="ds-empty">이 달에 잡힌 건이 없습니다.</div>';
+  } else {
+    html += `<div style="overflow-x:auto"><table class="sch-table"><thead>
+      <tr style="background:var(--bg-deep)"><th style="padding-left:14px">일자</th><th>강의</th><th>주관업체</th><th>금액</th><th>상태</th></tr></thead><tbody>`
+      + rows.map(x => {
+          const ok = x.status === '입금완료', v = shareOf(x);
+          return `<tr>
+            <td class="date-col" style="padding-left:14px">${escC(String(x.date).slice(2).replace(/-/g,'.'))}</td>
+            <td>${escC(x.title || '-')}${x.school ? ` <span style="color:var(--muted)">· ${escC(x.school)}</span>` : ''}</td>
+            <td>${escC(x.company || '-')}</td>
+            <td style="${mono}">${v ? won(v) : '<span style="color:var(--muted)">미입력</span>'}</td>
+            <td><span class="plan-tag${ok ? ' done' : ''}">${ok ? '받음' : (x.done === '예정' ? '예정' : escC(x.status || '대기'))}</span></td>
+          </tr>`;
+        }).join('')
+      + `</tbody></table></div>
+         <div class="stl-sum" style="padding-top:12px">
+           <span style="color:var(--muted);font-size:.74rem">받음 ${won(sm.done)}원 · 예정 ${won(sm.plan)}원</span>
+           <span>합계 <b>${won(sm.total)}</b>원</span></div>`;
+  }
+  document.getElementById('planBody').innerHTML = html;
+  openOverlay('planOverlay');
 }
 
 /* 이달 입금 카드 클릭 → 입금일 순 내역 (실입금 · 페이백 · 내 몫) */
@@ -2261,6 +2356,43 @@ function isEventPast(ev, cellDate) {
   nextDay.setDate(nextDay.getDate() + 1);
   nextDay.setHours(0, 0, 0, 0);
   return new Date() > nextDay;
+}
+
+// ── 구분 '연수'로 등록하면 '자격 · 연수 > 연수 · 교육' 목록에도 넣는다 ──
+//  연수명 = 수업주제(없으면 출강학교) / 주관기관 = 업체명 / 이수일 = 날짜(회차면 첫날~끝날)
+//  이수시간 = 시수 × 회차 / 결과 = 앞으로 할 연수면 '예정' (끝나면 '수료' 등으로 고쳐 쓰기)
+//  수정 저장 시에는 같은 연수명·주관기관 항목을 찾아 고친다 (없으면 새로 추가).
+async function syncTraining(entry, dates, prev) {
+  const dot = d => String(d || '').replace(/-/g, '.');
+  const ds  = dates.slice().sort();
+  const name = (entry.topic || entry.school || '연수').replace(/\s*\(\d+\/\d+\)\s*$/, '');
+  const h    = parseFloat(entry.hours) || 0;
+  const item = {
+    category: '연수/교육', name, issuer: entry.company,
+    date:  ds.length > 1 ? dot(ds[0]) + '~' + dot(ds[ds.length-1]).slice(5) : dot(ds[0]),
+    extra: h ? String(h * ds.length) : '',
+    group: '',
+    note:  ds[ds.length-1] > new Date().toISOString().slice(0,10) ? '예정' : ''
+  };
+  const prevName = prev ? (prev.topic || prev.school || '연수').replace(/\s*\(\d+\/\d+\)\s*$/, '') : name;
+  const prevCo   = prev ? prev.company : entry.company;
+  const old = certData.find(c => c.category === '연수/교육'
+                              && (c.name === prevName || c.name === name)
+                              && (c.issuer === prevCo || c.issuer === entry.company));
+  try {
+    if (old) {
+      if (!prev) return;                                   // 새로 등록인데 이미 있으면 그대로 둔다
+      const upd = { ...item, note: old.note && old.note !== '예정' ? old.note : item.note };
+      await apiPost({ action:'certUpdate', id: old.id, ...upd });
+      Object.assign(old, upd);
+    } else {
+      const res = await apiPost({ action:'certAdd', ...item });
+      certData.push({ id: res.id, ...item });
+    }
+    renderCerts();
+  } catch(e) {
+    alert('강의 일정은 저장됐지만 연수 정보 반영에 실패했습니다.\n아래 [자격 · 연수]에서 직접 추가해주세요.');
+  }
 }
 
 // ── 경력 등록 완료 처리 ──────────────────────────────────────

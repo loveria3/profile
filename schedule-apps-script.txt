@@ -18,6 +18,13 @@
 //
 // ============================================================
 
+/* ── 배포 버전 스탬프 ────────────────────────────────────────
+   "지금 돌아가는 게 이 코드가 맞나?" 를 1초에 확인하기 위한 것.
+      GET  ?type=version   →  {code, notion, calendar, page}
+   코드를 고쳐 재배포할 때마다 아래 날짜를 함께 올린다.
+   페이지(schedule.html)의 PAGE_VERSION 과 맞춰 보면 배포 누락이 바로 보인다. */
+var CODE_VERSION = '2026-09-09a';
+
 // ── 카카오 설정 (기존 설정값 그대로 유지하세요) ──────────────
 var KAKAO_REST_KEY     = '';
 var KAKAO_REDIRECT_URI = 'https://example.com';
@@ -43,6 +50,64 @@ var SHEET_CERT        = "자격증현황";
 var SHEET_SCHEDULE    = "강의스케쥴";
 var SHEET_AUTO_SEARCH = "자동검색결과"; // ← 자동 검색 결과 저장 시트
 
+/* 강의스케쥴 시트 O열 = 참여형태 (강사 / 보조강사 / 안전요원)
+   ⚠️ 컬럼 번호가 파일마다 흩어져 있으니 새 컬럼을 만들 때 반드시 시트를 열어
+      실제 헤더를 확인할 것. 아래는 2026-09-09 시트에서 눈으로 확인한 값이다.
+     K(11) 경력등록    → Code.gs   (하드코딩 11)
+     L(12) 정산등록    → notion.gs   의 COL_SETTLED
+     M(13) 캘린더ID    → calendar.gs 의 CAL_EVENTID_COL
+     N(14) 동기화서명  → calendar.gs (⚠️ 저장소 백업 schedule-calendar-script.txt
+                        에는 이 로직이 없다 — 배포본이 더 최신이다. 건드리지 말 것)
+     O(15) 참여형태    → 여기
+     P(16) 예상금액    → 여기 (노션 '예정' 행 생성용)
+     Q(17) 요청ID      → 여기 (같은 저장이 두 번 들어가는 것 방지)        */
+var COL_ROLE     = 15;
+var COL_EXPECTED = 16;
+var COL_REQID    = 17;
+
+// O·P열 헤더가 없으면 만든다 (기존 행은 비워 둠)
+function ensureRoleColumn_(sheet) {
+  var h = String(sheet.getRange(1, COL_ROLE).getValue() || '').trim();
+  if (h !== '참여형태') sheet.getRange(1, COL_ROLE).setValue('참여형태');
+}
+function ensureExpectedColumn_(sheet) {
+  ensureColumn_(sheet, COL_EXPECTED, '예상금액');
+}
+function ensureReqIdColumn_(sheet) {
+  ensureColumn_(sheet, COL_REQID, '요청ID');
+}
+function ensureColumn_(sheet, col, title) {
+  if (sheet.getMaxColumns() < col) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), col - sheet.getMaxColumns());
+  }
+  var h = String(sheet.getRange(1, col).getValue() || '').trim();
+  if (h !== title) sheet.getRange(1, col).setValue(title);
+}
+
+/* ── 같은 저장이 두 번 들어가는 것 방지 (멱등키) ──────────────
+   네트워크가 흔들려 응답만 못 받으면 페이지가 다시 보낼 수 있다.
+   그때 행이 두 번 생기지 않도록, 요청마다 붙어 오는 reqId 를 Q열에 남기고
+   같은 reqId 가 이미 있으면 새로 만들지 않고 그때 만든 결과를 그대로 돌려준다.
+   → 몇 번을 보내도 결과가 같다. 덕분에 add·complete 도 안전하게 재시도된다. */
+function findRowByReqId_(sheet, reqId) {
+  return findByReqIdInCol_(sheet, reqId, COL_REQID);
+}
+// 자격증현황 시트 I열(9) = 요청ID
+var CERT_COL_REQID = 9;
+function findCertByReqId_(sheet, reqId) {
+  return findByReqIdInCol_(sheet, reqId, CERT_COL_REQID);
+}
+function findByReqIdInCol_(sheet, reqId, col) {
+  if (!reqId) return -1;
+  var last = sheet.getLastRow();
+  if (last < 2 || sheet.getMaxColumns() < col) return -1;
+  var vals = sheet.getRange(2, col, last - 1, 1).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][0] || '').trim() === String(reqId).trim()) return i + 2;
+  }
+  return -1;
+}
+
 // ============================================================
 //  doGet — GET 요청 처리
 //  ?type=schedule  → 강의 스케쥴 데이터 반환
@@ -53,6 +118,16 @@ function doGet(e) {
     // 강의 스케쥴 요청인 경우
     if (e && e.parameter && e.parameter.type === 'schedule') {
       return getScheduleData_();
+    }
+
+    // 배포 버전 확인 — 파일이 없어도 죽지 않도록 typeof 로 감싼다
+    if (e && e.parameter && e.parameter.type === 'version') {
+      return jsonOutput({
+        code:     CODE_VERSION,
+        notion:   (typeof NOTION_VERSION   !== 'undefined') ? NOTION_VERSION   : '(notion.gs 없음)',
+        calendar: (typeof CAL_VERSION      !== 'undefined') ? CAL_VERSION      : '(calendar.gs 없음)',
+        at:       Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm')
+      });
     }
 
     // 자동 검색 결과 요청
@@ -96,6 +171,16 @@ function doPost(e) {
       return handleNotionAdd_(ss, data);
     }
 
+    // 노션 정산 등록 — 입금 확인 후 여러 건을 금액까지 함께 기록 (notion.gs)
+    if (data.action === 'notionSettle') {
+      return handleNotionSettle_(ss, data);
+    }
+
+    // 노션 정산 원장 읽기 — 미수금 카드 · 월별 수입 요약 (notion.gs)
+    if (data.action === 'notionLedger') {
+      return handleNotionLedger_(data);
+    }
+
     // 구글 캘린더 동기화 (calendar.gs)
     if (data.action === 'syncCalendar') {
       return handleCalendarSync_(data);
@@ -132,7 +217,8 @@ function doPost(e) {
 
 // ============================================================
 //  강의 스케쥴 — 읽기
-//  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고 | 경력등록
+//  시트 컬럼 순서: ID | 날짜 | 구분 | 업체명 | 수강방식 | 출강학교단체 | 시간 | 시수 | 수업주제 | 비고 | 경력등록(K)
+//                 | 정산등록(L) | 캘린더ID(M) | 동기화서명(N) | 참여형태(O) | 예상금액(P)
 // ============================================================
 function getScheduleData_() {
   var ss    = getSS_();
@@ -140,7 +226,7 @@ function getScheduleData_() {
 
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_SCHEDULE);
-    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록']);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록','정산등록','캘린더ID','동기화서명','참여형태','예상금액']);
     return jsonOutput([]);
   }
 
@@ -169,7 +255,9 @@ function getScheduleData_() {
       topic:     String(r[8]  || '').trim(),
       note:      String(r[9]  || '').trim(),
       completed: String(r[10] || '').trim(), // 경력등록 완료 여부 ('Y' or '')
-      settled:   String(r[11] || '').trim()  // 정산등록(노션) 완료 여부
+      settled:   String(r[11] || '').trim(), // 정산등록(노션) 완료 여부
+      role:      String(r[14] || '').trim(), // 참여형태 O열 (강사/보조강사/안전요원)
+      expected:  String(r[15] || '').trim()  // 예상금액 P열 (노션 '예정' 행 금액)
     });
   }
   return jsonOutput(result);
@@ -182,11 +270,17 @@ function handleSchedule_(ss, data) {
   var sheet = ss.getSheetByName(SHEET_SCHEDULE);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_SCHEDULE);
-    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록']);
+    sheet.appendRow(['ID','날짜','구분','업체명','수강방식','출강학교단체','시간','시수','수업주제','비고','경력등록','정산등록','캘린더ID','동기화서명','참여형태','예상금액']);
   }
 
   // 추가
   if (data.action === 'add') {
+    // 이미 처리한 요청이면 그때 만든 강의를 그대로 돌려준다 (중복 등록 방지)
+    var dup = findRowByReqId_(sheet, data.reqId);
+    if (dup > 0) {
+      return jsonOutput({ success: true, duplicate: true,
+                          id: String(sheet.getRange(dup, 1).getValue() || '').trim() });
+    }
     var newId = generateId_();
     sheet.appendRow([
       newId,
@@ -201,6 +295,22 @@ function handleSchedule_(ss, data) {
       String(data.note    || '').trim(),
       ''  // 경력등록 (초기값 빈 문자열)
     ]);
+    // 참여형태(O열)·예상금액(P열)은 appendRow 범위 밖 컬럼이라 따로 기록한다
+    var addedRow = sheet.getLastRow();
+    if (data.role) {
+      ensureRoleColumn_(sheet);
+      sheet.getRange(addedRow, COL_ROLE).setValue(String(data.role).trim());
+    }
+    if (data.expected) {
+      ensureExpectedColumn_(sheet);
+      sheet.getRange(addedRow, COL_EXPECTED).setValue(String(data.expected).trim());
+    }
+    if (data.reqId) {
+      ensureReqIdColumn_(sheet);
+      sheet.getRange(addedRow, COL_REQID).setValue(String(data.reqId).trim());
+    }
+    // 예상금액이 있으면 노션에 '예정' 행을 만들어 월별 차트에 잡히게 한다
+    syncNotionPlan_(sheet, addedRow);
     return jsonOutput({ success: true, id: newId });
   }
 
@@ -224,13 +334,25 @@ function handleSchedule_(ss, data) {
       String(data.note    || '').trim(),
       existingCompleted
     ]]);
+    // 참여형태(O)·예상금액(P) — 정산등록(L)·캘린더ID(M)·동기화서명(N)은 건드리지 않는다
+    if (data.role) {
+      ensureRoleColumn_(sheet);
+      sheet.getRange(rowIdx, COL_ROLE).setValue(String(data.role).trim());
+    }
+    if (data.expected !== undefined) {
+      ensureExpectedColumn_(sheet);
+      sheet.getRange(rowIdx, COL_EXPECTED).setValue(String(data.expected || '').trim());
+    }
+    syncNotionPlan_(sheet, rowIdx);
     return jsonOutput({ success: true });
   }
 
-  // 삭제
+  // 삭제 — 이미 지워졌으면 성공으로 본다 (재시도해도 오류가 나지 않게)
   if (data.action === 'delete') {
     var rowIdx = findRowById_(sheet, data.id);
-    if (rowIdx < 0) return errorOutput('해당 ID를 찾을 수 없습니다: ' + data.id);
+    // 연동된 노션 행(입금완료 제외)도 함께 지운다 — notion.gs (재시도여도 안전)
+    if (typeof notionRemoveLinked_ === 'function') notionRemoveLinked_(data.id, false);
+    if (rowIdx < 0) return jsonOutput({ success: true, alreadyGone: true });
     sheet.deleteRow(rowIdx);
     return jsonOutput({ success: true });
   }
@@ -239,16 +361,22 @@ function handleSchedule_(ss, data) {
   //  스케쥴 데이터를 경력사항 시트에 자동 입력하고 완료 플래그를 저장한다.
   // ────────────────────────────────────────────────────────────
   if (data.action === 'complete') {
+    /* 이미 등록된 강의면 경력사항에 또 넣지 않는다.
+       재시도로 같은 요청이 두 번 와도, 첫 요청이 K열을 'Y' 로 만들어 두므로 여기서 걸린다. */
+    var doneIdx = findRowById_(sheet, data.id);
+    if (doneIdx > 0 && String(sheet.getRange(doneIdx, 11).getValue() || '').trim() === 'Y') {
+      return jsonOutput({ success: true, duplicate: true });
+    }
+
     // 1. 경력사항 시트에 행 추가
     var careerSheet = ss.getSheetByName(SHEET_CAREER);
     if (!careerSheet) return errorOutput('경력사항 시트를 찾을 수 없습니다.');
-    careerSheet.appendRow([
-      String(data.period   || '').trim(),  // 근무기간
-      String(data.org      || '').trim(),  // 기관/직장명
-      String(data.position || '').trim(),  // 직위/역할
-      String(data.work     || '').trim(),  // 주요업무
-      String(data.note     || '완료').trim() // 퇴직/종료사유
-    ]);
+
+    /* 가공 규칙은 서버가 갖는다(정산과 같은 방식).
+       예전 페이지는 period/org/position/work 를 만들어 보내므로,
+       값이 오면 그대로 쓰고 없을 때만 시트에서 만들어 낸다. */
+    var c = buildCareerRow_(sheet, data);
+    careerSheet.appendRow([c.period, c.org, c.position, c.work, c.note]);
 
     // 2. 강의스케쥴 시트에 완료 플래그('Y') 저장
     var rowIdx = findRowById_(sheet, data.id);
@@ -280,6 +408,12 @@ function handleCert_(ss, data) {
   ensureCertHeader_(sheet);
 
   if (data.action === 'certAdd') {
+    // 같은 요청이 두 번 오면(재시도) 그때 만든 것을 그대로 돌려준다
+    var cdup = findCertByReqId_(sheet, data.reqId);
+    if (cdup > 0) {
+      return jsonOutput({ success: true, duplicate: true,
+                          id: String(sheet.getRange(cdup, 8).getValue() || '').trim() });
+    }
     var newId = generateId_();
     sheet.appendRow([
       String(data.category || '자격증').trim(),
@@ -291,6 +425,10 @@ function handleCert_(ss, data) {
       String(data.group  || '').trim(),
       newId
     ]);
+    if (data.reqId) {
+      ensureColumn_(sheet, CERT_COL_REQID, '요청ID');
+      sheet.getRange(sheet.getLastRow(), CERT_COL_REQID).setValue(String(data.reqId).trim());
+    }
     return jsonOutput({ success: true, id: newId });
   }
 
@@ -389,6 +527,151 @@ function readCertificates(ss) {
 // ============================================================
 //  내부 헬퍼
 // ============================================================
+/* 스케쥴 한 건 → 경력사항 행. 클라이언트가 이미 만들어 보낸 값이 있으면 그대로 쓴다.
+   (예전 schedule.html 이 그렇게 보낸다 — 하위 호환)
+   매핑: 날짜 2026-05-26 → 2026.05.26 / 교육수강·연수→수강 · 디지털튜터→디지털튜터 · 나머지→강사
+         주요업무 = 출강학교 (시수h) — 수업주제                                        */
+function buildCareerRow_(schedSheet, data) {
+  var out = {
+    period:   String(data.period   || '').trim(),
+    org:      String(data.org      || '').trim(),
+    position: String(data.position || '').trim(),
+    work:     String(data.work     || '').trim(),
+    note:     String(data.note     || '완료').trim()
+  };
+  if (out.period && out.org && out.position && out.work) return out;
+
+  var rowIdx = findRowById_(schedSheet, data.id);
+  if (rowIdx < 0) return out;
+  var r = schedSheet.getRange(rowIdx, 1, 1, 11).getValues()[0];
+
+  var dateRaw = r[1];
+  var dateStr = (dateRaw instanceof Date)
+    ? Utilities.formatDate(dateRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+    : String(dateRaw || '').trim();
+
+  var type   = String(r[2] || '').trim();
+  var school = String(r[5] || '').trim();
+  var hours  = String(r[7] || '').trim();
+  var topic  = String(r[8] || '').trim();
+
+  var hs   = hours ? ' (' + hours + 'h)' : '';
+  var what = topic || (type + ' 강의');
+
+  if (!out.period)   out.period   = dateStr.replace(/-/g, '.');
+  if (!out.org)      out.org      = String(r[3] || '').trim();
+  if (!out.position) out.position = (type === '교육수강' || type === '연수') ? '수강'
+                                  : type === '디지털튜터' ? '디지털튜터'
+                                  : '강사';
+  if (!out.work)     out.work     = school ? (school + hs + ' — ' + what)
+                                           : (what + hs);
+  return out;
+}
+
+/* ============================================================
+    경력 미등록 월간 알림 (매월 1일 오전 9시 메일)
+    ------------------------------------------------------------
+    경력등록은 사람이 직접 확인하고 누르는 게 맞다고 보아 자동 등록은 하지 않는다.
+    대신 지난 강의 중 등록이 안 된 게 남아 있으면 한 달에 한 번 메일로 알린다.
+    등록을 안 하면 프로필 페이지의 출강 학교 칩·통계에 반영되지 않는다.
+
+    [ 설치 ] 편집기에서 setupCareerReminderTrigger 를 한 번 실행 → 권한 승인
+    [ 테스트 ] monthlyCareerReminder 를 직접 실행하면 바로 메일이 온다
+   ============================================================ */
+var CAREER_ALERT_TO   = BASIC_INFO.email;   // 받는 사람
+var CAREER_ALERT_PAGE = 'https://loveria3.github.io/profile/schedule.html';
+
+// 날짜 파싱 (Date 또는 'yyyy-MM-dd')
+function careerParseDate_(v) {
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return null;
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  }
+  var m = String(v || '').trim().match(/^(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+}
+
+// 강의가 끝났는지 — 종료시각이 있으면 그 기준, 없으면 익일 0시 기준 (페이지와 같은 규칙)
+function careerIsPast_(d, timeStr, now) {
+  var m = String(timeStr || '').match(/[~\-–—](\d{1,2}):(\d{2})/);
+  if (m) return now > new Date(d.getFullYear(), d.getMonth(), d.getDate(), +m[1], +m[2], 0);
+  return now > new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0);
+}
+
+// 지난 강의 중 경력등록(K열)이 안 된 것
+function pendingCareerRows_() {
+  var sheet = getSS_().getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return [];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+
+  var values = sheet.getRange(1, 1, lastRow, 11).getValues();
+  var now = new Date(), out = [];
+  for (var i = 1; i < values.length; i++) {
+    var r = values[i];
+    if (!String(r[0] || '').trim()) continue;
+    if (String(r[10] || '').trim() === 'Y') continue;     // 이미 등록됨
+    var d = careerParseDate_(r[1]);
+    if (!d) continue;
+    if (!careerIsPast_(d, String(r[6] || '').trim(), now)) continue;
+    out.push({
+      date:    Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+      company: String(r[3] || '').trim(),
+      school:  String(r[5] || '').trim(),
+      topic:   String(r[8] || '').trim()
+    });
+  }
+  out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  return out;
+}
+
+function monthlyCareerReminder() {
+  var pend = pendingCareerRows_();
+  if (!pend.length) {
+    Logger.log('경력 미등록 없음 — 메일을 보내지 않습니다.');
+    return 0;
+  }
+
+  var months = {}, lines = [];
+  pend.forEach(function (p) {
+    months[p.date.slice(0, 7)] = true;
+    lines.push('  ' + p.date + '   ' + p.company
+             + (p.school ? ' · ' + p.school : '')
+             + (p.topic  ? ' · ' + p.topic  : ''));
+  });
+  var monthList = Object.keys(months).sort().map(function (m) {
+    return m.slice(0, 4) + '년 ' + (+m.slice(5)) + '월';
+  }).join(', ');
+
+  var NL = String.fromCharCode(10);
+  var body =
+      '지난 강의 중 경력사항에 등록되지 않은 건이 ' + pend.length + '건 남아 있습니다.' + NL
+    + '(' + monthList + ')' + NL + NL
+    + lines.join(NL) + NL + NL
+    + '등록해야 프로필 페이지의 출강 학교 칩과 통계에 반영됩니다.' + NL
+    + '스케쥴 페이지에서 해당 월로 이동해 [경력등록] 또는 [경력등록 N건 일괄] 을 눌러주세요.' + NL + NL
+    + CAREER_ALERT_PAGE + NL;
+
+  MailApp.sendEmail({
+    to:      CAREER_ALERT_TO,
+    subject: '[강의 스케쥴] 경력 미등록 ' + pend.length + '건 확인 필요',
+    body:    body
+  });
+  Logger.log('✅ 경력 미등록 ' + pend.length + '건 — ' + CAREER_ALERT_TO + ' 로 메일 발송');
+  return pend.length;
+}
+
+// 매월 1일 오전 9시 트리거 등록 (한 번만 실행하면 된다)
+function setupCareerReminderTrigger() {
+  ScriptApp.getProjectTriggers()
+    .filter(function (t) { return t.getHandlerFunction() === 'monthlyCareerReminder'; })
+    .forEach(function (t) { ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('monthlyCareerReminder')
+    .timeBased().onMonthDay(1).atHour(9).inTimezone('Asia/Seoul').create();
+  Logger.log('✅ 매월 1일 오전 9시 경력 미등록 알림 트리거 등록 완료');
+}
+
 function findRowById_(sheet, id) {
   var rows = sheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
