@@ -308,6 +308,102 @@
   border-color: var(--accent);
 }
 
+/* 자동 수집 검토함 */
+.review-box {
+  background: var(--paper);
+  border: 1px dashed var(--accent-warm);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+}
+.review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.review-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.review-cnt {
+  display: inline-block;
+  min-width: 22px;
+  padding: 2px 8px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: var(--accent-warm);
+  color: var(--paper);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-align: center;
+}
+.review-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-collect {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent-warm);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s;
+  font-family: 'Pretendard', sans-serif;
+}
+.btn-collect:hover:not(:disabled) { background: #9a6230; transform: translateY(-1px); }
+.btn-collect:disabled { opacity: .55; cursor: progress; }
+.btn-ghost {
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Pretendard', sans-serif;
+}
+.btn-ghost:hover { background: var(--bg-deep); }
+.review-list { margin-top: 18px; display: grid; gap: 10px; }
+.review-list[hidden] { display: none; }
+.review-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: var(--bg);
+}
+.review-item .ri-main { min-width: 0; }
+.review-item .ri-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.review-item .ri-title { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.5; }
+.review-item .ri-meta { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.review-item .ri-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.ri-btn {
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'Pretendard', sans-serif;
+}
+.ri-btn:hover { background: var(--bg-deep); }
+.ri-btn.keep { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.ri-btn.keep:hover { background: #14201a; }
+.review-empty { font-size: 12.5px; color: var(--muted); padding: 10px 2px; }
+
 /* 공고 그리드 */
 .program-grid {
   display: grid;
@@ -697,6 +793,13 @@ footer {
   .modal-box { border-radius: 16px; }
   .form-grid-2 { grid-template-columns: 1fr; }
   .register-banner { padding: 18px; }
+  .review-box { padding: 18px; }
+  .review-head { flex-direction: column; gap: 12px; }
+  .review-actions { width: 100%; }
+  .btn-collect, .btn-ghost { flex: 1; text-align: center; }
+  .review-item { flex-direction: column; gap: 10px; }
+  .review-item .ri-btns { width: 100%; }
+  .ri-btn { flex: 1; text-align: center; }
 }
 
 /* ── 강사모집·연수 모음함 (2026-10-29) ── */
@@ -942,6 +1045,21 @@ body.locked main.edu-main { visibility: hidden; }
         <div class="filter-row" id="statusFilter"></div>
       </div>
 
+      <!-- 자동 수집 검토함 -->
+      <section class="review-box" id="reviewBox" aria-labelledby="reviewTitle" hidden>
+        <div class="review-head">
+          <div>
+            <h2 class="review-title" id="reviewTitle">🤖 자동 수집 검토함 <span class="review-cnt" id="reviewCount">0</span></h2>
+            <div class="review-sub" id="reviewSub">매일 아침 모아 온 후보입니다. 쓸 것만 보관하세요.</div>
+          </div>
+          <div class="review-actions">
+            <button id="collectBtn" onclick="collectNow()" class="btn-collect">⬇ 지금 수집</button>
+            <button id="reviewToggle" onclick="toggleReview()" class="btn-ghost" aria-expanded="true" aria-controls="reviewList">접기</button>
+          </div>
+        </div>
+        <div class="review-list" id="reviewList"></div>
+      </section>
+
       <!-- 빈 상태 -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">🍃</div>
@@ -1094,8 +1212,12 @@ const TYPES    = ['강사모집', '연수·교육'];
 const STATUSES = ['관심', '지원함', '합격', '불합격', '수료', '패스'];
 const SOON_DAYS = 7;
 const PIN_SESSION_KEY = 'kja_edu_v1';
+// 자동 수집한 공고가 처음 들어오는 상태. 공고 목록에는 섞이지 않고 검토함에만 보인다.
+const REVIEW_STATUS = '검토대기';
 
 let items         = [];
+let lastCollect   = '';
+let collecting    = false;
 let currentType   = '전체';
 let currentStatus = '전체';
 let currentSearch = '';
@@ -1150,6 +1272,7 @@ async function loadItems(showToastMsg) {
   try {
     const data = await api({ action: 'list' });
     items = Array.isArray(data.items) ? data.items : [];
+    lastCollect = data.lastCollect || '';
     setNotice('');
     if (showToastMsg) showToast('목록을 새로 불러왔습니다.');
   } catch (e) {
@@ -1189,7 +1312,11 @@ function statusClass(s) {
 
 function render() {
   const q = currentSearch.toLowerCase();
-  const base = items.filter(p => !(hidePast && isStale(p)));
+  // 검토대기(자동 수집분)는 공고 목록·필터·카운터 어디에도 섞지 않는다
+  const confirmed = items.filter(p => p.status !== REVIEW_STATUS);
+  renderReview(items.filter(p => p.status === REVIEW_STATUS));
+
+  const base = confirmed.filter(p => !(hidePast && isStale(p)));
   const byType = base.filter(p => currentType === '전체' || p.type === currentType);
   const filtered = sortItems(byType.filter(p => {
     if (currentStatus !== '전체' && p.status !== currentStatus) return false;
@@ -1204,6 +1331,14 @@ function render() {
   grid.innerHTML = '';
   if (filtered.length === 0) {
     emptyState.style.display = 'flex';
+    // 한 건도 보관한 적이 없는 것과, 검색·필터에 안 걸리는 것은 다른 상황이다
+    const blank = confirmed.length === 0;
+    document.getElementById('emptyTitle').innerText = blank
+      ? '아직 보관한 공고가 없습니다.'
+      : '해당하는 공고가 없습니다.';
+    document.getElementById('emptyDesc').innerText = blank
+      ? "'새 공고 등록'으로 직접 넣거나, 위 검토함의 '지금 수집'을 눌러 보세요."
+      : '검색어나 필터를 바꿔 보세요.';
   } else {
     emptyState.style.display = 'none';
     filtered.forEach(p => {
@@ -1293,9 +1428,120 @@ function renderFilters(base, byType) {
 function handleSearch(v) { currentSearch = v.trim(); render(); }
 
 function updateCounters() {
-  const open = items.filter(p => !isPast(p) && p.status !== '패스');
+  const open = items.filter(p => !isPast(p) && p.status !== '패스' && p.status !== REVIEW_STATUS);
   document.getElementById('openCount').innerText = open.length;
   document.getElementById('soonCount').innerText = open.filter(p => { const n = daysLeft(p.deadline); return n !== null && n <= SOON_DAYS; }).length;
+}
+
+// ══════════════════════════════════════════════════════════
+//  🤖  자동 수집 검토함
+// ══════════════════════════════════════════════════════════
+function renderReview(list) {
+  const box  = document.getElementById('reviewBox');
+  const cnt  = document.getElementById('reviewCount');
+  const sub  = document.getElementById('reviewSub');
+  const wrap = document.getElementById('reviewList');
+
+  // 수집한 적이 없고 대기 건도 없으면 상자 자체를 숨긴다
+  if (!list.length && !lastCollect) { box.hidden = true; return; }
+  box.hidden = false;
+
+  cnt.innerText = list.length;
+  sub.innerText = list.length
+    ? '매일 아침 모아 온 후보입니다. 링크를 열어 보고 쓸 것만 보관하세요.'
+    : '지금은 검토할 것이 없습니다.';
+  if (lastCollect) sub.innerText += ' (마지막 수집 ' + lastCollect + ')';
+
+  wrap.innerHTML = '';
+  if (!list.length) {
+    wrap.innerHTML = '<div class="review-empty">새로 들어온 공고가 없습니다.</div>';
+    return;
+  }
+
+  sortItems(list).forEach(p => {
+    const row  = document.createElement('div');
+    row.className = 'review-item';
+    const link = safeUrl(p.link);
+    const meta = [p.org ? '📰 ' + p.org : '', p.deadline ? '⏰ 마감 ' + p.deadline : '마감일 확인 필요']
+      .filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
+    row.innerHTML = `
+      <div class="ri-main">
+        <div class="ri-badges">
+          <span class="type-badge${p.type === '강사모집' ? ' recruit' : ''}">${esc(p.type || '강사모집')}</span>
+          ${p.deadline ? ddayHtml(p) : ''}
+        </div>
+        <div class="ri-title">${esc(p.title)}</div>
+        <div class="ri-meta">${meta}</div>
+      </div>
+      <div class="ri-btns">
+        ${link ? `<a href="${esc(link)}" class="ri-btn" target="_blank" rel="noopener noreferrer">열기</a>` : ''}
+        <button class="ri-btn keep" data-act="keep">보관</button>
+        <button class="ri-btn" data-act="drop">버림</button>
+      </div>
+    `;
+    row.querySelector('[data-act="keep"]').onclick = e => approveItem(p, e.target);
+    row.querySelector('[data-act="drop"]').onclick = e => rejectItem(p, e.target);
+    wrap.appendChild(row);
+  });
+}
+
+function toggleReview() {
+  const wrap = document.getElementById('reviewList');
+  const btn  = document.getElementById('reviewToggle');
+  const open = wrap.hasAttribute('hidden');
+  if (open) wrap.removeAttribute('hidden'); else wrap.setAttribute('hidden', '');
+  btn.innerText = open ? '접기' : '펼치기';
+  btn.setAttribute('aria-expanded', String(open));
+}
+
+// 보관 = 상태를 '관심'으로 바꿔 정식 공고 목록으로 올린다
+async function approveItem(p, btn) {
+  btn.disabled = true;
+  try {
+    await api({ action: 'update', id: p.id, item: { ...p, status: STATUSES[0] } });
+    p.status = STATUSES[0];
+    showToast('공고 목록으로 옮겼습니다.');
+    render();
+  } catch (e) {
+    btn.disabled = false;
+    showToast('보관하지 못했습니다: ' + e.message, 'error');
+  }
+}
+
+// 버림 = 시트에서 지운다 (검토함에만 있던 것이라 되살릴 일이 없다)
+async function rejectItem(p, btn) {
+  btn.disabled = true;
+  try {
+    await api({ action: 'delete', id: p.id });
+    items = items.filter(x => x.id !== p.id);
+    render();
+  } catch (e) {
+    btn.disabled = false;
+    showToast('버리지 못했습니다: ' + e.message, 'error');
+  }
+}
+
+async function collectNow() {
+  if (collecting) return;
+  if (!EDU_API_URL) { showToast('시트가 아직 연결되지 않았습니다.', 'error'); return; }
+  const btn = document.getElementById('collectBtn');
+  collecting = true;
+  btn.disabled = true;
+  btn.innerText = '모으는 중…';
+  try {
+    const data = await api({ action: 'collect' });
+    items = Array.isArray(data.items) ? data.items : items;
+    lastCollect = data.lastCollect || lastCollect;
+    showToast(data.added
+      ? `새 공고 ${data.added}건을 검토함에 담았습니다.`
+      : '새로 들어온 공고가 없습니다.');
+    render();
+  } catch (e) {
+    showToast('수집하지 못했습니다: ' + e.message, 'error');
+  }
+  collecting = false;
+  btn.disabled = false;
+  btn.innerText = '⬇ 지금 수집';
 }
 
 // ══════════════════════════════════════════════════════════

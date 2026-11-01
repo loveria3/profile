@@ -149,8 +149,8 @@
 │   ├── 구글 시트에서 앱 목록 로드 (카테고리: 퀴즈/시뮬레이션/게임/도구/수업)
 │   └── 앱 추가·수정 (PIN 인증 후)
 │
-├── edu.html              # 실시간 교육 모니터링 페이지 (공개)
-│   └── 구글 시트 공고목록 연동 + 카카오 알림
+├── edu.html              # 강사모집·연수 모음함 (페이지 전체 PIN 보호)
+│   └── 구글 시트 공고모음 연동 (edu-board-apps-script.txt) · 추가/수정/삭제/상태 변경
 │
 ├── schedule.html         # 강의 스케쥴 관리 페이지 (PIN 보호 · 비공개)
 │   ├── 달력 뷰 (월별 강의 일정)
@@ -170,9 +170,12 @@
 profile/
 ├── index.html                  # 메인 프로필 페이지
 ├── all.html                    # 수업활용앱 모음 페이지
-├── edu.html                    # 실시간 교육 모니터링 페이지
+├── edu.html                    # 강사모집·연수 모음함 (PIN 보호)
+├── edu-board-apps-script.txt   # edu.html 용 구글 시트 Apps Script (별도 배포)
 ├── schedule.html               # 강의 스케쥴 관리 페이지 (PIN 보호)
 ├── high.html                   # 고교학점제 진로설계 실습 앱 (수업용)
+├── sns-card.html               # SNS 홍보용 소개 카드 (메뉴에 없음 · 페이지 이름 적혀 있음 ⚠️)
+├── profile-guide.html          # 사이트 구조 안내 페이지 (메뉴에 없음 · 페이지 이름 적혀 있음 ⚠️)
 ├── style.css                   # 공유 스타일시트 (index + edu 공통)
 ├── stats.json                  # 통계 데이터
 ├── resume-download.js          # 경력서 PDF 생성 스크립트 (jsPDF + html2canvas)
@@ -227,14 +230,42 @@ profile/
 - ⚠️ **기존 시트 항목 수정 불가 문제**: `앱목록` 시트 F열(ID)이 비어 있으면 수정 버튼 클릭 시 "시트에 저장된 항목이 아닙니다" 오류. Apps Script(doGet)가 F열 자동 백필하므로 **스크립트 재배포 후 페이지 로드 시 자동 해결**. 또는 시트 F열에 수동으로 고유 ID 입력해도 됨.
 - ⚠️ **apps-gallery-script.txt 재배포 필요 시점**: 구버전 스크립트는 F열(ID)을 반환하지 않아 수정 기능이 작동 안 함. 반드시 최신 로컬 파일 내용으로 재배포할 것.
 
-### edu.html — 실시간 교육 모니터링
-- **공개 여부**: 공개 (PIN 없음)
-- **APPS_SCRIPT_URL**: `https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec`
-- ⚠️ **schedule/resume URL과 다른 별도 Apps Script 배포**
-- **연결 시트**: `수집기관` (GET `?sheet=수집기관`), `공고목록` (GET `?sheet=공고목록`)
-- **카카오 알림**: `data.sheet === '알림요청'` POST 액션으로 처리 (스크립트 내장)
-- **로컬 캐시**: `localStorage` 사용 (수집기관 목록, 공고 데이터 보존)
-- 기관 추가/공고 수동 등록 기능 포함
+### edu.html — 강사모집·연수 모음함 (2026-10-29 개편, 옛 "실시간 교육 모니터링")
+- **공개 여부**: **페이지 전체 PIN 보호** (schedule.html 과 같은 PIN). `robots noindex`.
+- **PIN 게이트**: `_eduPin` 모듈 (all.html `_allPin` 과 같은 XOR+SHA-256, SALT `kja-all-2026`, 5회 실패 시 5분 잠금 `kja_edu_rl_v1`). 통과하면 입력한 PIN 을 `sessionStorage.kja_edu_v1` 에 두고 **모든 API 요청에 함께 보낸다.**
+- **이중 확인**: Apps Script 가 스크립트 속성 `EDU_PIN` 과 다시 비교한다 → 주소를 알아도 PIN 없이 시트를 읽거나 쓸 수 없다. 10번 틀리면 10분 차단(CacheService). 데이터는 **POST 로만** 오간다(PIN 을 URL 에 싣지 않으려고).
+- **EDU_API_URL**: edu.html 상단 상수. 비어 있으면 "시트가 연결되지 않았습니다" 안내만 뜬다.
+- **Apps Script 파일**: `edu-board-apps-script.txt` — **새 스프레드시트에 바인딩한 별도 프로젝트.** 강의스케쥴 API·앱갤러리·조각함과 무관.
+- **연결 시트**: `공고모음` (구분A | 제목B | 기관C | 마감일D | 일정E | 장소F | 링크G | 상태H | 메모I | 등록일J | **ID K** | **출처 L**). 마감일은 `yyyy-MM-dd` 글자로 저장(D열 서식 `@`). L열은 v2 에서 추가 — `getSheet_` 가 **기존 시트를 열 때 자동으로 넓히고 헤더를 채운다**(수동 작업 불필요).
+- **구분**: 강사모집 / 연수·교육. **상태**: 관심 / 지원함 / 합격 / 불합격 / 수료 / 패스 + **검토대기**(자동 수집분 전용). **출처**: 자동 / 직접.
+- **화면**: 구분 탭 + 상태 칩 + 검색(제목·기관·메모·장소·일정). 정렬 = 열린 공고 마감 가까운 순 → 상시 → 지난 공고. D-day 표시(7일 이내 빨강). "지원 안 하고 지난 공고 숨기기"(관심·패스 상태로 마감 지난 것) 기본 켜짐, 설정은 `localStorage.eduHidePast`.
+- **카드**: 상태 드롭다운으로 바로 변경(`update`), 수정·삭제는 모달. 액션: `list` / `add` / `update` / `delete` / **`collect`**.
+- **빈 화면 문구**: 보관한 공고가 0건일 때와 검색·필터에 안 걸릴 때를 구분해 다르게 쓴다(`emptyTitle`/`emptyDesc`를 `render()` 가 갈아끼움). 예전에는 0건일 때도 "해당하는 공고가 없습니다"가 떠서 검색이 고장 난 줄 알았다.
+
+#### 🤖 자동 수집 (2026-11-01, v2)
+"공고를 자동으로 찾아 주는 페이지"를 만들어 달라는 요청. **수집 → 분류 → 검토 → 보관** 네 단계로 나눴다.
+- **수집처는 구글 뉴스 RSS** — `news.google.com/rss/search?q=<검색어>+when:7d&hl=ko&gl=KR&ceid=KR:ko`. API 키도 로그인도 필요 없는 공개 주소라 깨질 일이 적다. 구글 알리미는 계정이 필요하고 RSS 지원이 오락가락해 쓰지 않았다.
+- `UrlFetchApp.fetchAll` 로 검색어 12개를 **한 번에** 받는다(하나씩 받으면 20초 넘게 걸린다).
+- **검색어는 `COLLECT_KEYWORDS` 한 곳**에만 있다. 고치고 저장만 하면 다음 실행부터 반영 — **재배포 불필요**.
+- **거르기는 3단 관문**(`passFilter_`). 하나라도 빠지면 쓸모없어진다 — 실측으로 확인했다.
+  1. `DROP_WORDS` 가 있으면 버림 — 성료·수료식·후기·결과 발표·**위촉식**·**신입사원**·**신입생**·공개채용·입학…
+  2. `MUST_WORDS`(모집·채용·접수·신청·공고·선발·구인·공모) 중 하나는 있어야 함. **'위촉'은 일부러 뺐다** — "사내강사 25명 위촉" 처럼 이미 끝난 기사가 걸린다(분류용 `JOB_WORDS` 에는 남아 있음).
+  3. `TOPIC_WORDS`(강사·튜터·연수·교육생·수강생·지도사·강의·코치·멘토·직무교육) 중 하나는 있어야 함.
+  - ⚠️ **3번이 없으면 못 쓴다.** 2026-11-01 실측: 1·2번만 적용 → 20건 중 **10건이 잡음**(대학원 신입생 모집, KB손해보험 신입사원 채용, 유치원 우선모집, 도서관 홍보단 모집). 3번을 넣자 **5건 전부 관련 공고**가 됐다. 건수가 줄어도 **정확도를 택한 것** — 검토함은 매일 눈으로 보는 곳이라 잡음이 섞이면 아예 안 보게 된다.
+- **분류**: `classify_` 가 제목의 `JOB_WORDS`/`EDU_WORDS` 로 판정하고, 애매하면 검색어에 지정한 `type` 을 쓴다.
+- **중복**: 제목에서 `" - 언론사"` 를 떼고(`stripSource_`) 기호·공백을 지운 **앞 20글자**로 판정(`normKey_`). 같은 공고를 여러 언론사가 쓰므로 링크로는 걸러지지 않는다.
+- ⚠️ **마감일은 '까지'·'마감'·'~' 가 붙어 있을 때만** 뽑는다(`findDeadline_`). 아무 숫자나 날짜로 보면 **멀쩡한 공고가 지난 것처럼 보여** 더 나쁘다. 못 찾으면 비워 두고 화면에 "마감일 확인 필요"로 표시한다.
+  - 실측 추출률은 **5건 중 0건** 수준이다. 기사 제목에 "11월 2일부터 접수"(시작일)는 흔해도 "~까지"(마감일)는 드물다. **이건 고장이 아니라 설계대로다** — 마감일은 링크를 열어 확인하고 보관할 때 손으로 채우면 된다.
+- **들어오는 건 공고 원문이 아니라 뉴스 기사다.** 그래서 바로 목록에 넣지 않고 **상태 `검토대기`** 로 쌓고, 페이지의 `#reviewBox`(자동 수집 검토함)에서 **보관**(→`update` 상태 '관심') / **버림**(→`delete`) 을 고른다. `render()` 가 검토대기를 목록·필터·카운터에서 전부 빼므로 잡음이 본 목록을 더럽히지 않는다.
+- **21일 지난 검토대기**는 다음 수집 때 `purgeOldReview_` 가 지운다(아래에서 위로 삭제 — 줄번호 밀림 방지).
+- **트리거**: 편집기에서 `setupCollectTrigger` 를 **한 번** 실행 → 매일 오전 7시 `collectPostings`. 페이지의 `지금 수집` 버튼은 `action:'collect'`.
+- 한 번 실행 상한: 검색어당 8건(`COLLECT_MAX_PER_KW`), 전체 40건(`COLLECT_MAX_TOTAL`).
+- 마지막 수집 시각은 스크립트 속성 `EDU_LAST_COLLECT` 에 두고 `list`·`collect` 응답으로 내려보내 검토함 소제목에 찍는다.
+- **폐기된 것**: `edu-auto.json` 폴백, 브라우저 저장 공고(`programData`), 도넛 차트(chart.js), 튜터 가이드 배너. `edu-auto.json`·`apps-script.txt` 파일은 남아 있지만 **edu.html 이 더 이상 읽지 않는다.**
+  - ⚠️ `edu-auto.json` 의 "자동"은 **자동이 아니었다.** Claude 가 그때그때 검색해 손으로 써 넣은 파일이라 금방 낡았다(`searchedAt: 2026-06-20` 에서 멈춤). 진짜 자동화는 위 v2 자동 수집이다. 같은 실수를 반복하지 말 것 — **사람이 채워야 하는 파일을 '자동'이라 부르지 않는다.**
+- ⚠️ 카카오 일일 알림(`sendDailyKakaoNotification`, 강의스케쥴 API)은 옛 `공고목록` 시트를 읽으므로 새 모음함과 연결돼 있지 않다.
+- **메뉴 이름**: index·all·schedule·edu 상단/모바일 메뉴 "강사모집·연수", 푸터 "강사모집·연수 모음함" (2026-10-29 변경). 새 페이지를 만들 때도 이 이름을 쓴다.
+  - ⚠️ **이름을 바꿀 때 메뉴만 고치면 빠진다.** 메뉴에 없는 두 페이지에도 페이지 이름이 적혀 있다 — `sns-card.html`(기능 소개 카드)·`profile-guide.html`(사이트 구조도, 2곳). 2026-10-29 개편 때 이 둘이 "교육 모니터링"으로 남아 있다가 2026-11-01 에야 고쳐졌다. 이름을 바꾸면 `grep -rn "<옛 이름>" --include=*.html .` 로 **전체를 훑을 것.**
 
 ### schedule.html — 강의 스케쥴 관리
 - **공개 여부**: PIN 보호 (XOR 인코딩 + SHA-256 + 5회 실패 시 잠금)
@@ -377,7 +408,7 @@ GET ?type=version → { code, notion, calendar, at }
 
 | 프로젝트 이름 | 편집 링크 | 담당 | 시트 연결 |
 |---|---|---|---|
-| **강의스케쥴 API** | [1OKUmoVs…](https://script.google.com/d/1OKUmoVsNX-KqFD_JqsxPCL4_dEjK_KJhCleo2Phb7MaLH_a7-nQnlvVf/edit) | schedule.html · resume-download.js · edu.html · 노션 정산 연동 | **바인딩 아님** — `경력사항` 시트를 `SPREADSHEET_ID` 로 직접 연다 |
+| **강의스케쥴 API** | [1OKUmoVs…](https://script.google.com/d/1OKUmoVsNX-KqFD_JqsxPCL4_dEjK_KJhCleo2Phb7MaLH_a7-nQnlvVf/edit) | schedule.html · resume-download.js · (2026-10-29 전까지 edu.html) · 노션 정산 연동 | **바인딩 아님** — `경력사항` 시트를 `SPREADSHEET_ID` 로 직접 연다 |
 | 제목 없는 프로젝트 (앱갤러리) | [1qkNDhNn…](https://script.google.com/d/1qkNDhNnyvbMF0zVJY3rj0roLo6CgARw5ZB679o_sZZzFrZyEK84SAf-H/edit) | all.html (앱목록) | `경력사항` 스프레드시트에 바인딩 |
 
 **규칙 1 — 스케쥴·경력서·교육공고·노션 정산 관련 수정은 `강의스케쥴 API` 프로젝트에서만 한다.**
@@ -393,11 +424,12 @@ GET ?type=version → { code, notion, calendar, at }
 
 | 스크립트 | 변수명 | 쓰는 파일 |
 |---|---|---|
-| `schedule-apps-script.txt` (+ `schedule-notion-script.txt`) | `SCHEDULE_API_URL` / `RESUME_API_URL` | schedule.html · resume-download.js · edu.html **공용** |
+| `schedule-apps-script.txt` (+ `schedule-notion-script.txt`) | `SCHEDULE_API_URL` / `RESUME_API_URL` | schedule.html · resume-download.js **공용** (edu.html 은 2026-10-29부터 안 씀) |
 | `apps-gallery-script.txt` | `APPS_API_URL` | all.html 전용 |
+| `edu-board-apps-script.txt` | `EDU_API_URL` | edu.html 전용 (2026-10-29~, 스크립트 속성 `EDU_PIN` 필요) |
 | (별도) | `FILE_API_URL` | all.html 파일 업로드 |
 
-> ⚠️ 세 페이지가 같은 URL을 공유한다. URL이 바뀌면 `schedule.html` · `resume-download.js` · `edu.html` **세 곳을 모두** 고쳐야 한다.
+> ⚠️ 두 파일이 같은 URL을 공유한다. URL이 바뀌면 `schedule.html` · `resume-download.js` **두 곳을 모두** 고쳐야 한다. (edu.html 은 2026-10-29 개편 후 `edu-board-apps-script.txt` 를 따로 쓴다.)
 
 ---
 
@@ -578,6 +610,8 @@ schedule.html 자격·연수 폼 → 자격증현황 시트 → (index 자격 �
 ## ⚠️ 배포(재배포) 주의
 - `schedule-apps-script.txt`는 **schedule.html + resume-download.js 공용**. 자격·연수 액션 추가 등 스크립트 변경 시 **재배포 필요**.
 - `apps-gallery-script.txt`는 **all.html 전용 별개 배포**. 앱 수정(update)·ID 컬럼 추가 등 변경 시 이 스크립트를 **따로 재배포**.
+- `edu-board-apps-script.txt`는 **edu.html 전용 별개 배포**(새 스프레드시트에 바인딩). `collect` 액션 추가 등 변경 시 **재배포 필요**.
+  - ⚠️ **시간 트리거와 웹앱은 서로 다른 코드를 본다.** 매일 아침 `collectPostings` 는 **저장된 최신 코드**로 돌지만, 페이지의 `지금 수집` 버튼은 **배포된 버전**을 탄다. `COLLECT_KEYWORDS` 를 고치고 저장만 하면 **다음 날 아침 수집에는 반영되지만 버튼에는 반영되지 않는다.** 둘을 맞추려면 재배포할 것.
 - 🚫 **앱갤러리 프로젝트는 재배포 금지** (위 '프로젝트 지도' 규칙 2 참조).
 - 재배포는 **"배포 관리 → 기존 배포 편집 → 버전: 새 버전"**으로 하면 **URL이 유지**되어 코드 내 URL을 바꿀 필요가 없다. (새 배포를 만들면 URL이 바뀌어 해당 파일들의 URL을 모두 갱신해야 함)
 
