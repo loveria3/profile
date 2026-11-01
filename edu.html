@@ -1442,19 +1442,26 @@ function renderReview(list) {
   const sub  = document.getElementById('reviewSub');
   const wrap = document.getElementById('reviewList');
 
-  // 수집한 적이 없고 대기 건도 없으면 상자 자체를 숨긴다
-  if (!list.length && !lastCollect) { box.hidden = true; return; }
+  // 시트가 연결돼 있으면 늘 띄운다 — 상자를 숨기면 안에 있는 '지금 수집' 버튼까지
+  // 같이 사라져서 첫 수집을 시작할 방법이 없어진다
+  if (!EDU_API_URL) { box.hidden = true; return; }
   box.hidden = false;
 
   cnt.innerText = list.length;
-  sub.innerText = list.length
-    ? '매일 아침 모아 온 후보입니다. 링크를 열어 보고 쓸 것만 보관하세요.'
-    : '지금은 검토할 것이 없습니다.';
+  if (list.length) {
+    sub.innerText = '매일 아침 모아 온 후보입니다. 링크를 열어 보고 쓸 것만 보관하세요.';
+  } else if (lastCollect) {
+    sub.innerText = '지금은 검토할 것이 없습니다.';
+  } else {
+    sub.innerText = '아직 수집한 적이 없습니다. 오른쪽 ‘지금 수집’ 을 눌러 보세요.';
+  }
   if (lastCollect) sub.innerText += ' (마지막 수집 ' + lastCollect + ')';
 
   wrap.innerHTML = '';
   if (!list.length) {
-    wrap.innerHTML = '<div class="review-empty">새로 들어온 공고가 없습니다.</div>';
+    wrap.innerHTML = '<div class="review-empty">'
+      + (lastCollect ? '새로 들어온 공고가 없습니다.' : '매일 오전 7시에 저절로 모읍니다. 지금 바로 해 보려면 위 버튼을 누르세요.')
+      + '</div>';
     return;
   }
 
