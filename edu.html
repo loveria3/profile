@@ -4,24 +4,24 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#f4ede2">
-<title>실시간 교육 모니터링 · 강지애 디지털 강사</title>
+<title>강사모집·연수 모음함 · 강지애 디지털 강사</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌼</text></svg>">
-<meta name="description" content="강지애 디지털 강사 — 제주 에듀테크 교육 공고를 실시간으로 모니터링하는 페이지. 기관별 공고를 한눈에 확인하세요.">
+<meta name="description" content="강지애 디지털 강사 — 강사모집 공고와 연수·교육 정보를 모아 두는 개인 모음함 (PIN 보호).">
 <meta property="og:type" content="website">
-<meta property="og:title" content="실시간 교육 모니터링 · 강지애 디지털 강사">
-<meta property="og:description" content="제주 에듀테크 교육 공고를 실시간으로 모니터링합니다. 기관별 공고를 한눈에 확인하세요.">
+<meta property="og:title" content="강사모집·연수 모음함 · 강지애 디지털 강사">
+<meta property="og:description" content="강사모집 공고와 연수·교육 정보를 모아 두는 개인 모음함입니다.">
 <meta property="og:image" content="https://loveria3.github.io/profile/assets/og-image.png">
 <meta property="og:url" content="https://loveria3.github.io/profile/edu.html">
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="실시간 교육 모니터링 · 강지애">
+<meta name="twitter:title" content="강사모집·연수 모음함 · 강지애">
 <meta name="twitter:image" content="https://loveria3.github.io/profile/assets/portrait.png">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="style.css" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ── edu.html 전용 보완 스타일 ── */
 .edu-main {
@@ -162,36 +162,6 @@
   margin-bottom: 16px;
 }
 
-/* 추가 버튼 */
-.btn-add {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--paper);
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, transform 0.15s;
-  flex-shrink: 0;
-}
-.btn-add:hover { background: #14201a; transform: rotate(90deg); }
-
-/* 수집기관 폼 */
-.add-source-form {
-  display: none;
-  background: rgba(42,59,46,0.04);
-  border: 1.5px solid var(--line);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  gap: 10px;
-  flex-direction: column;
-}
-.add-source-form.open { display: flex; }
-.form-row { display: grid; grid-template-columns: 60px 1fr; gap: 8px; }
 .edu-input {
   width: 100%;
   padding: 9px 12px;
@@ -205,136 +175,6 @@
   transition: border-color 0.15s;
 }
 .edu-input:focus { border-color: var(--accent); }
-.btn-save {
-  width: 100%;
-  padding: 10px;
-  background: var(--accent);
-  color: var(--paper);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s;
-  font-family: 'Pretendard', sans-serif;
-}
-.btn-save:hover { background: #14201a; }
-.form-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 14px;
-  padding: 0;
-}
-.form-close-btn:hover { color: #c0392b; }
-
-/* 수집기관 리스트 */
-.source-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 250px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-.source-list::-webkit-scrollbar { width: 4px; }
-.source-list::-webkit-scrollbar-track { background: var(--bg-deep); border-radius: 4px; }
-.source-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
-.source-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: var(--bg);
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-}
-.source-item-left { display: flex; align-items: center; gap: 10px; }
-.source-icon {
-  width: 32px; height: 32px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.source-name { font-size: 15px; font-weight: 700; color: var(--ink); }
-.source-type {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-weight: 600;
-  margin-top: 1px;
-  font-family: 'JetBrains Mono', monospace;
-}
-.source-actions { display: flex; align-items: center; gap: 4px; opacity: 0.3; transition: opacity 0.15s; }
-.source-item:hover .source-actions { opacity: 1; }
-.source-link, .source-del {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  font-size: 12px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-.source-link:hover { color: var(--accent); }
-.source-del:hover { color: #c0392b; }
-
-/* 카카오 알림 카드 — 제거됨 (placeholder) */
-.kakao-alert-card {
-  display: none;
-  border-radius: 16px;
-  padding: 20px 22px;
-}
-.kakao-alert-card h4 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #3b2e00;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.kakao-alert-card p {
-  font-size: 13px;
-  color: #7a6a40;
-  line-height: 1.55;
-  margin-bottom: 14px;
-}
-.btn-kakao-send {
-  width: 100%;
-  padding: 11px;
-  background: #f9e000;
-  color: #3b2e00;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-  font-family: 'Pretendard', sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.btn-kakao-send:hover { background: #f0d900; transform: translateY(-1px); }
-.btn-kakao-send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-.kakao-status {
-  font-size: 12px;
-  text-align: center;
-  margin-top: 8px;
-  min-height: 16px;
-  color: var(--muted);
-}
-
 /* 프로그램 등록 배너 */
 .register-banner {
   background: var(--bg-deep);
@@ -372,15 +212,6 @@
   gap: 6px;
 }
 .btn-register:hover { background: #9a6230; transform: translateY(-1px); }
-
-/* 차트 카드 */
-.chart-wrap {
-  position: relative;
-  width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
-  height: 200px;
-}
 
 /* 검색·필터 영역 */
 .search-card {
@@ -577,83 +408,6 @@
 .empty-state .empty-icon { font-size: 40px; margin-bottom: 16px; }
 .empty-state h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
 .empty-state p { font-size: 12px; color: var(--muted); margin-top: 6px; }
-
-/* 튜터 가이드 배너 */
-.tutor-banner {
-  background: var(--accent);
-  color: var(--paper);
-  border-radius: 20px;
-  padding: 44px 48px;
-  position: relative;
-  overflow: hidden;
-}
-.tutor-banner::before {
-  content: '';
-  position: absolute;
-  top: -40px; right: -40px;
-  width: 180px; height: 180px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.04);
-}
-.tutor-banner-inner {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  align-items: center;
-  position: relative;
-  z-index: 1;
-}
-.tutor-tag {
-  display: inline-block;
-  padding: 4px 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 999px;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(251,246,236,0.7);
-  margin-bottom: 12px;
-}
-.tutor-banner h2 {
-  font-family: 'Noto Serif KR', serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.tutor-banner h2 em { color: var(--gold); font-style: italic; }
-.tutor-banner p {
-  font-size: 14px;
-  color: rgba(251,246,236,0.6);
-  margin-top: 10px;
-  line-height: 1.7;
-}
-.tutor-guide-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-.guide-item {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 16px;
-  transition: background 0.15s;
-}
-.guide-item:hover { background: rgba(255,255,255,0.11); }
-.guide-tag {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gold);
-  background: rgba(201,163,91,0.12);
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-.guide-item h4 { font-size: 14px; font-weight: 700; color: var(--paper); margin-bottom: 4px; }
-.guide-item p { font-size: 13px; color: rgba(251,246,236,0.5); line-height: 1.5; }
 
 /* 모달 */
 .modal-overlay {
@@ -921,8 +675,6 @@ footer {
 @media (max-width: 960px) {
   .edu-grid { grid-template-columns: 1fr; }
   .program-grid { grid-template-columns: 1fr 1fr; }
-  .tutor-banner-inner { grid-template-columns: 1fr; }
-  .tutor-guide-grid { grid-template-columns: 1fr 1fr; }
   .summary-nums { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
@@ -934,10 +686,6 @@ footer {
   .search-input { width: 100%; }
   .search-title { font-size: 22px; }
   .program-grid { grid-template-columns: 1fr; }
-  .tutor-banner { padding: 28px 20px; }
-  .tutor-banner h2 { font-size: 24px; }
-  .tutor-guide-grid { grid-template-columns: 1fr; }
-  .tutor-banner-inner { gap: 24px; }
   .foot-grid { grid-template-columns: 1fr; gap: 28px; padding: 0 16px; }
   .foot-bottom { padding: 20px 16px 0; flex-direction: column; gap: 6px; }
   .edu-card { padding: 20px; }
@@ -951,12 +699,125 @@ footer {
   .register-banner { padding: 18px; }
 }
 
+/* ── 강사모집·연수 모음함 (2026-10-29) ── */
+body.locked main.edu-main { visibility: hidden; }
+#pinLock {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+#pinLock.hidden { display: none; }
+.pin-card {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 12px; padding: 2.8rem 2rem 2rem;
+  width: 100%; max-width: 320px; text-align: center;
+  box-shadow: 0 24px 60px -16px rgba(27,26,24,.18);
+}
+.pin-logo { margin-bottom: 1rem; }
+.pin-ttl { font-family: 'Noto Serif KR', serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); margin-bottom: .3rem; }
+.pin-desc { font-size: .68rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.8rem; }
+.pin-dots { display: flex; justify-content: center; gap: 12px; margin-bottom: 1.2rem; }
+.pd { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--line); background: transparent; transition: background .18s, border-color .18s, transform .18s; }
+.pd.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+.pd.err    { background: #c04a3a; border-color: #c04a3a; transform: scale(1.1); }
+.pin-inp {
+  width: 100%; background: var(--bg); border: 1px solid var(--line);
+  color: transparent; caret-color: var(--accent);
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 1.5rem; text-align: center; letter-spacing: .5em;
+  font-family: inherit; outline: none; transition: border-color .15s;
+}
+.pin-inp:focus { border-color: var(--accent); background: var(--paper); }
+.pin-inp.err-state { border-color: #c04a3a; }
+.pin-err { font-size: .73rem; color: #c04a3a; margin-top: .7rem; min-height: 1.1em; line-height: 1.4; }
+.pin-lockout { font-size: .72rem; color: var(--muted); background: var(--bg-deep); border: 1px solid var(--line); padding: .55rem 1rem; border-radius: 8px; margin-top: .8rem; display: none; }
+.pin-submit {
+  margin-top: 1.2rem; width: 100%;
+  background: var(--accent); color: var(--paper);
+  border: none; border-radius: 999px; padding: 12px;
+  font-size: .85rem; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .15s, opacity .15s; letter-spacing: .04em;
+}
+.pin-submit:hover { background: #14201a; }
+.pin-submit:disabled { opacity: .35; cursor: not-allowed; }
+.pin-home { display: inline-block; margin-top: 1rem; font-size: .75rem; color: var(--muted); }
+.pin-home:hover { color: var(--accent); }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+.do-shake { animation: shake .38s ease; }
+
+.edu-notice {
+  background: var(--paper); border: 1px dashed var(--accent-warm);
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+  font-size: 14px; color: var(--ink-soft); line-height: 1.6;
+}
+.edu-notice:empty { display: none; }
+.filter-row + .filter-row { border-top: none; padding-top: 10px; }
+.filter-btn .cnt { font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: .7; margin-left: 4px; }
+.hide-past { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); cursor: pointer; margin-left: auto; }
+.status-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.status-list button {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 12px; border: 1px solid var(--line-soft); border-radius: 8px;
+  background: var(--bg); color: var(--ink-soft); font-size: 14px; font-family: 'Pretendard', sans-serif; cursor: pointer;
+}
+.status-list button:hover, .status-list button.active { border-color: var(--accent); color: var(--accent); }
+.status-list .mono { font-size: 13px; }
+.card-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.type-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--bg-deep); color: var(--ink-soft); }
+.type-badge.recruit { background: rgba(179,117,58,0.14); color: #8a5626; }
+.dday { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent); }
+.dday.soon { color: #c0392b; font-weight: 700; }
+.dday.past { color: var(--muted); }
+.program-card.is-past { opacity: .72; }
+.program-org { font-size: 14px; font-weight: 600; color: var(--accent-warm); margin: -6px 0 10px; }
+.program-desc { font-style: normal; white-space: pre-line; }
+.card-actions { display: flex; gap: 8px; align-items: center; }
+.card-actions .btn-program-link { flex: 1; }
+.status-select {
+  padding: 11px 10px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg); font-size: 13px; font-weight: 700; color: var(--ink-soft);
+  font-family: 'Pretendard', sans-serif; cursor: pointer;
+}
+.status-select.st-applied { background: rgba(42,59,46,0.08); color: var(--accent); border-color: var(--accent); }
+.status-select.st-pass { background: rgba(201,163,91,0.18); color: #7a5a1c; border-color: var(--gold); }
+.edit-btn { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 2px 4px; font-family: 'Pretendard', sans-serif; }
+.edit-btn:hover { color: var(--accent); }
+.edit-btn:focus-visible, .del-btn:focus-visible, .status-select:focus-visible, .status-list button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .hide-past { margin-left: 0; width: 100%; }
+  .status-card { display: none; }
+  .card-actions { flex-direction: column; align-items: stretch; }
+}
+
 @keyframes spin { from { display:inline-block; transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spinning { display: inline-block; animation: spin 0.8s linear; }
 
 </style>
 </head>
-<body>
+<body class="locked">
+
+<!-- ──────────────── PIN LOCK (페이지 전체 보호) ──────────────── -->
+<div id="pinLock" role="dialog" aria-modal="true" aria-label="PIN 입력">
+  <div class="pin-card">
+    <div class="pin-logo">
+      <img src="assets/daisy.png" alt="" width="52" height="52" style="object-fit:contain">
+    </div>
+    <div class="pin-ttl">강사모집 · 연수 모음함</div>
+    <div class="pin-desc">Private · Kang Ji-ae</div>
+    <div class="pin-dots" id="pinDots" aria-hidden="true">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <input type="password" id="pinInp" class="pin-inp" aria-label="6자리 PIN"
+           maxlength="6" inputmode="numeric" pattern="[0-9]*"
+           autocomplete="off" autofocus>
+    <div class="pin-err" id="pinErr" role="alert"></div>
+    <div class="pin-lockout" id="pinLockout"></div>
+    <button class="pin-submit" id="pinSubmit">입장</button>
+    <a href="index.html" class="pin-home">← 프로필로 돌아가기</a>
+  </div>
+</div>
 
 <!-- ──────────────── TOPBAR ──────────────── -->
 <header class="topbar">
@@ -975,9 +836,7 @@ footer {
       <a href="index.html#experience">강의 경력</a>
       <a href="schedule.html">강의 스케쥴</a>
       <a href="all.html" class="cta alt">수업 앱 모음</a>
-      <a href="edu.html" class="cta">
-        <span class="live-dot"></span>실시간&nbsp;&nbsp;교육&nbsp;&nbsp;모니터링
-      </a>
+      <a href="edu.html" class="cta" aria-current="page">강사모집·연수</a>
     </nav>
     <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
       <span class="bar"></span>
@@ -1000,9 +859,7 @@ footer {
   <a href="schedule.html">강의 스케쥴</a>
   <div class="nav-mobile-divider"></div>
   <a href="all.html">수업 앱 모음</a>
-  <a href="edu.html" class="cta">
-    <span class="live-dot"></span>실시간 교육 모니터링
-  </a>
+  <a href="edu.html" class="cta" aria-current="page">강사모집·연수</a>
 </nav>
 
 <!-- ──────────────── MAIN ──────────────── -->
@@ -1010,13 +867,12 @@ footer {
 
   <!-- 페이지 헤더 -->
   <div class="edu-page-header">
-    <div class="eyebrow">Live Dashboard</div>
-    <h1>제주 디지털·AI 교육 실시간 모니터링</h1>
-    <p>제주 관내 디지털·AI 교육 공고를 한 곳에서 큐레이션하고 관리합니다.</p>
+    <div class="eyebrow">Recruit &amp; Training</div>
+    <h1>강사모집 · 연수 모음함</h1>
+    <p>강사모집 공고와 연수·교육 정보를 모아 두고, 마감일과 지원 여부를 한눈에 챙깁니다.</p>
     <div class="live-badge">
       <span class="live-dot"></span>
-      자동 검색 시스템 작동 중
-      <span class="mono" style="color:var(--muted); font-size:10px;" id="liveBadgeDate"></span>
+      오늘 <span class="mono" id="todayLabel"></span>
     </div>
   </div>
 
@@ -1028,159 +884,144 @@ footer {
       <!-- 요약 -->
       <div class="summary-card">
         <div class="s-label">현황 요약</div>
-        <h2>실시간 교육 매니징</h2>
+        <h2>모집 · 연수 현황</h2>
         <div class="summary-nums">
           <div class="summary-num-box">
-            <div class="num-label">전체 모집 공고</div>
-            <div class="num-value" id="totalCount">0</div>
+            <div class="num-label">열린 공고</div>
+            <div class="num-value" id="openCount">0</div>
           </div>
           <div class="summary-num-box">
-            <div class="num-label">마감 임박 건</div>
-            <div class="num-value urgent" id="urgentCount">0</div>
+            <div class="num-label">7일 안 마감</div>
+            <div class="num-value urgent" id="soonCount">0</div>
           </div>
         </div>
       </div>
 
-      <!-- 자동검색 현황 -->
-      <div class="edu-card">
-        <div class="card-title" style="margin-bottom:6px;">🔎 자동 검색 현황</div>
-        <div class="card-sub" id="autoSearchStatus">매일 오전 9시 자동 검색 실행</div>
-        <div style="margin-top:14px; display:flex; flex-wrap:wrap; gap:6px;" id="keywordTags">
-          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">IT교육</span>
-          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">AI교육</span>
-          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">디지털교육</span>
-          <span style="background:var(--bg-deep);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--ink-soft);">구글교육</span>
-        </div>
-        <div style="margin-top:12px;font-size:11px;color:var(--muted);" class="mono" id="lastSearchedLabel"></div>
-      </div>
-
-      <!-- 프로그램 직접 등록 -->
+      <!-- 새 공고 등록 -->
       <div class="register-banner">
-        <h4>지인이 알려준 공고가 있나요?</h4>
-        <p>SNS 이미지나 텍스트로 받은 개별 공고 내용을 직접 등록하여 카드화하세요.</p>
-        <button class="btn-register" onclick="toggleAddModal(true)">
-          <span>✦</span> 신규 프로그램 직접 등록
+        <h4>새 공고를 봤나요?</h4>
+        <p>강사모집 공고나 연수 안내를 링크와 마감일만 적어 바로 모아 두세요.</p>
+        <button class="btn-register" onclick="openItemModal(null)">
+          <span>✦</span> 새 공고 등록
         </button>
       </div>
 
-      <!-- 분포 차트 -->
-      <div class="edu-card">
-        <div class="card-title" style="margin-bottom:18px;">큐레이션 대상 분포</div>
-        <div class="chart-wrap">
-          <canvas id="targetDistributionChart"></canvas>
-        </div>
+      <!-- 상태별 -->
+      <div class="edu-card status-card">
+        <div class="card-title">상태별 모아보기</div>
+        <ul class="status-list" id="statusList"></ul>
       </div>
 
     </aside>
 
     <!-- ── 메인 콘텐츠 ── -->
-    <section>
+    <section aria-labelledby="boardTitle">
+
+      <div class="edu-notice" id="eduNotice" role="status"></div>
 
       <!-- 검색·필터 -->
       <div class="search-card">
         <div class="search-top">
           <div>
-            <div class="search-title">공고 탐색 센터</div>
-            <div class="search-sub">실시간으로 선별된 제주 관내 디지털 교육입니다.</div>
+            <h2 class="search-title" id="boardTitle">공고 모음</h2>
+            <div class="search-sub">마감이 가까운 순서로 보여 줍니다.</div>
           </div>
           <div class="search-actions">
             <div class="search-input-wrap">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <label for="searchInput" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">공고 검색</label>
               <input type="text" id="searchInput" oninput="handleSearch(this.value)"
-                     placeholder="교육명 검색..." class="search-input">
+                     placeholder="제목 · 기관 · 메모 검색..." class="search-input">
             </div>
-            <button id="liveRefreshBtn" onclick="loadFromJson(true)" class="btn-refresh">
+            <button id="liveRefreshBtn" onclick="loadItems(true)" class="btn-refresh">
               <span id="refreshIcon">↺</span> 새로고침
             </button>
           </div>
         </div>
-        <div class="filter-row" id="filterContainer"></div>
+        <div class="filter-row" id="typeFilter"></div>
+        <div class="filter-row" id="statusFilter"></div>
       </div>
 
       <!-- 빈 상태 -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">🍃</div>
-        <h3>해당하는 교육 정보가 없습니다.</h3>
-        <p>검색어를 변경하거나 '새로고침'을 눌러보세요.</p>
+        <h3 id="emptyTitle">해당하는 공고가 없습니다.</h3>
+        <p id="emptyDesc">검색어나 필터를 바꾸거나 '새 공고 등록'을 눌러 보세요.</p>
       </div>
 
       <!-- 공고 그리드 -->
       <div class="program-grid" id="programGrid"></div>
 
-      <!-- 튜터 가이드 배너 -->
-      <div class="tutor-banner">
-        <div class="tutor-banner-inner">
-          <div>
-            <span class="tutor-tag">튜터 전문 가이드</span>
-            <h2>디지털 튜터를 위한<br><em>맞춤 매핑 처방전</em></h2>
-            <p>수강생의 수준에 가장 적합한 교육처를 연결하여 학습 성공률을 높이세요.</p>
-          </div>
-          <div class="tutor-guide-grid" id="tutorGuideGrid"></div>
-        </div>
-      </div>
-
     </section>
   </div>
 </main>
 
-<!-- ──────────────── 모달: 신규 프로그램 등록 ──────────────── -->
-<div id="addModal" class="modal-overlay">
+<!-- ──────────────── 모달: 공고 등록·수정 ──────────────── -->
+<div id="addModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
   <div class="modal-box">
     <div class="modal-head">
       <div>
-        <h3>신규 공고 카드 생성</h3>
-        <p>이미지나 링크 정보를 교육 카드로 만드세요.</p>
+        <h3 id="itemModalTitle">새 공고 등록</h3>
+        <p>제목과 마감일, 링크만 적어도 됩니다.</p>
       </div>
-      <button class="modal-close" onclick="toggleAddModal(false)">✕</button>
+      <button class="modal-close" onclick="toggleAddModal(false)" aria-label="닫기">✕</button>
     </div>
-    <form id="addProgramForm" onsubmit="handleAddSubmit(event)" class="modal-body">
-      <div>
-        <label class="form-label">교육 명칭</label>
-        <input type="text" id="formTitle" required placeholder="[기관명] 교육 과정 제목" class="edu-input">
-      </div>
+    <form id="itemForm" onsubmit="handleItemSubmit(event)" class="modal-body">
       <div class="form-grid-2">
         <div>
-          <label class="form-label">주요 대상</label>
-          <input type="text" id="formTarget" required placeholder="예: 시니어, 청년 등" class="edu-input">
-        </div>
-        <div>
-          <label class="form-label">카테고리</label>
-          <select id="formCategory" class="edu-select">
-            <option value="일반">일반/도민</option>
-            <option value="여성">경력여성/미취업</option>
-            <option value="개발자">개발/리서처</option>
-            <option value="시니어">시니어/기초</option>
+          <label class="form-label" for="fType">구분</label>
+          <select id="fType" class="edu-select">
+            <option value="강사모집">강사모집</option>
+            <option value="연수·교육">연수·교육</option>
           </select>
         </div>
+        <div>
+          <label class="form-label" for="fStatus">상태</label>
+          <select id="fStatus" class="edu-select"></select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="fTitle">제목</label>
+        <input type="text" id="fTitle" required placeholder="예: 2027 디지털 튜터 강사 모집" class="edu-input">
       </div>
       <div class="form-grid-2">
         <div>
-          <label class="form-label">일정</label>
-          <input type="text" id="formDate" required placeholder="~ 06.30 모집" class="edu-input">
+          <label class="form-label" for="fOrg">기관</label>
+          <input type="text" id="fOrg" placeholder="예: 제주특별자치도교육청" class="edu-input">
         </div>
         <div>
-          <label class="form-label">장소</label>
-          <input type="text" id="formLocation" required placeholder="오프라인 센터 등" class="edu-input">
+          <label class="form-label" for="fDeadline">마감일 <span style="font-weight:400;color:var(--muted)">(비우면 상시)</span></label>
+          <input type="date" id="fDeadline" class="edu-input">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div>
+          <label class="form-label" for="fPeriod">일정 · 기간</label>
+          <input type="text" id="fPeriod" placeholder="예: 2027.03 ~ 12 / 11.20(목) 14시" class="edu-input">
+        </div>
+        <div>
+          <label class="form-label" for="fPlace">장소</label>
+          <input type="text" id="fPlace" placeholder="예: 온라인 / 제주시" class="edu-input">
         </div>
       </div>
       <div>
-        <label class="form-label">링크/연락처</label>
-        <input type="text" id="formLink" required placeholder="URL 또는 문의번호" class="edu-input">
+        <label class="form-label" for="fLink">링크</label>
+        <input type="url" id="fLink" placeholder="https://" class="edu-input">
       </div>
       <div>
-        <label class="form-label">교육 내용 요약</label>
-        <textarea id="formDescription" rows="3" required placeholder="주요 학습 내용과 혜택을 적어주세요." class="edu-textarea"></textarea>
+        <label class="form-label" for="fMemo">메모</label>
+        <textarea id="fMemo" rows="3" placeholder="제출 서류, 지원한 날짜, 면접 일정 등" class="edu-textarea"></textarea>
       </div>
     </form>
     <div class="modal-footer">
       <button type="button" class="btn-cancel" onclick="toggleAddModal(false)">취소</button>
-      <button type="submit" form="addProgramForm" class="btn-submit">정보 등록</button>
+      <button type="submit" form="itemForm" class="btn-submit" id="itemSubmitBtn">저장</button>
     </div>
   </div>
 </div>
 
 <!-- ──────────────── 모달: 삭제 확인 ──────────────── -->
-<div id="deleteModal" class="modal-overlay">
+<div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
   <div class="del-modal-box">
     <div class="del-modal-icon">🗑</div>
     <div class="del-modal-title" id="deleteModalTitle">정말로 삭제할까요?</div>
@@ -1212,9 +1053,9 @@ footer {
       </ul>
     </div>
     <div class="foot-col">
-      <h5>LIVE</h5>
+      <h5>PRIVATE</h5>
       <ul>
-        <li><a href="edu.html">실시간 모니터링</a></li>
+        <li><a href="edu.html">강사모집·연수 모음함</a></li>
       </ul>
     </div>
     <div class="foot-col">
@@ -1234,7 +1075,7 @@ footer {
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  📦  localStorage 유틸
+//  📦  localStorage 유틸 (화면 설정 기억용)
 // ══════════════════════════════════════════════════════════
 function lsGet(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
@@ -1245,162 +1086,318 @@ function lsSet(key, value) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  📂  자동 검색 결과 로드 (구글 시트 Apps Script)
+//  ⚙️  설정 — edu-board-apps-script.txt 배포 후 URL 붙여넣기
 // ══════════════════════════════════════════════════════════
-const SCHEDULE_API_URL = 'https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec';
+const EDU_API_URL = '';
 
-async function loadFromJson(showToastMsg) {
-  // 공통: 항목 적용 헬퍼
-  function applyData(data) {
-    const localPrg = programData.filter(p => String(p.id).startsWith('manual-'));
-    programData = [...data.items, ...localPrg];
-    lsSet('programData', programData);
-    if (data.updatedAt) {
-      const label = document.getElementById('lastSearchedLabel');
-      if (label) label.textContent = '최근 검색: ' + data.updatedAt;
-      const badge = document.getElementById('liveBadgeDate');
-      if (badge) badge.textContent = '· ' + data.updatedAt;
-    }
-    if (showToastMsg) showToast('🔍 검색 결과를 불러왔습니다.');
-  }
+const TYPES    = ['강사모집', '연수·교육'];
+const STATUSES = ['관심', '지원함', '합격', '불합격', '수료', '패스'];
+const SOON_DAYS = 7;
+const PIN_SESSION_KEY = 'kja_edu_v1';
 
-  // 1차: Apps Script
-  try {
-    const res  = await fetch(SCHEDULE_API_URL + '?sheet=자동검색결과&t=' + Date.now());
-    const data = await res.json();
-    if (data && data.items) { applyData(data); return; }
-  } catch (e) {
-    console.warn('Apps Script 로드 실패, edu-auto.json 시도합니다.', e);
-  }
-
-  // 2차 fallback: edu-auto.json
-  try {
-    const res2  = await fetch('edu-auto.json?t=' + Date.now());
-    const data2 = await res2.json();
-    if (data2 && data2.items) { applyData(data2); }
-  } catch (e2) {
-    console.warn('edu-auto.json 로드 실패, 로컬 데이터로 동작합니다.', e2);
-  }
-}
-
-// localStorage에서 불러오기 (없으면 빈 배열)
-let programData = lsGet('programData', []);
-
-const tutorGuides = [
-  { tag: "입문", title: "시니어 연계",  content: "디지털 배움터 1:1 도우미 과정으로 먼저 연계하세요." },
-  { tag: "실무", title: "마케팅 활용",  content: "여성센터의 AI 이미지 생성을 통한 브랜딩 과정을 권하세요." }
-];
-
-let currentFilter  = '전체';
-let currentSearch  = '';
-let targetChart    = null;
+let items         = [];
+let currentType   = '전체';
+let currentStatus = '전체';
+let currentSearch = '';
+let hidePast      = lsGet('eduHidePast', true);
+let editingId     = null;
 let deleteTargetId = null;
-let deleteType     = 'program';
 
-// ── 실시간 업데이트 ──
-async function triggerLiveUpdate() {
-  await loadFromJson(true);
-  renderPrograms();
-  updateChart();
+// ── 공통 헬퍼 ──
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function safeUrl(u) { return /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : ''; }
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// 마감까지 남은 날 (마감일 없으면 null)
+function daysLeft(deadline) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline || '')) return null;
+  const t = new Date(todayStr() + 'T00:00:00'), d = new Date(deadline + 'T00:00:00');
+  return Math.round((d - t) / 86400000);
+}
+function isPast(p) { const n = daysLeft(p.deadline); return n !== null && n < 0; }
+// 지원 안 하고 지나간 공고 = 숨김 대상 (지원함·합격 등은 결과 기다리는 중이라 남김)
+function isStale(p) { return isPast(p) && (p.status === '관심' || p.status === '패스' || !p.status); }
+
+// ══════════════════════════════════════════════════════════
+//  🔌  Apps Script 호출 (모든 요청 POST + PIN)
+// ══════════════════════════════════════════════════════════
+async function api(payload) {
+  const pin = sessionStorage.getItem(PIN_SESSION_KEY) || '';
+  const res = await fetch(EDU_API_URL, { method: 'POST', body: JSON.stringify({ ...payload, pin }) });
+  const data = await res.json();
+  if (data && data.error) {
+    // 화면 PIN 은 맞았는데 시트가 거절 = Apps Script 스크립트 속성 EDU_PIN 값이 다름
+    if (data.code === 'pin') throw new Error(data.message + ' (Apps Script 의 EDU_PIN 값을 확인해 주세요)');
+    throw new Error(data.message || '요청 실패');
+  }
+  return data;
 }
 
+function setNotice(html) { document.getElementById('eduNotice').innerHTML = html || ''; }
 
-// ── 공고 카드 렌더링 ──
-function renderPrograms() {
-  const grid       = document.getElementById('programGrid');
-  const emptyState = document.getElementById('emptyState');
-  grid.innerHTML   = '';
+async function loadItems(showToastMsg) {
+  if (!EDU_API_URL) {
+    setNotice('아직 시트가 연결되지 않았습니다. <b>edu-board-apps-script.txt</b> 안내대로 배포한 뒤, edu.html 의 <code>EDU_API_URL</code> 에 웹 앱 주소를 넣어 주세요.');
+    render();
+    return;
+  }
+  const icon = document.getElementById('refreshIcon');
+  icon.classList.remove('spinning'); void icon.offsetWidth; icon.classList.add('spinning');
+  try {
+    const data = await api({ action: 'list' });
+    items = Array.isArray(data.items) ? data.items : [];
+    setNotice('');
+    if (showToastMsg) showToast('목록을 새로 불러왔습니다.');
+  } catch (e) {
+    setNotice('목록을 불러오지 못했습니다: ' + esc(e.message));
+  }
+  render();
+}
 
-  const filtered = programData.filter(p => {
-    const matchesFilter = currentFilter === '전체' || p.필터 === currentFilter;
-    const matchesSearch = currentSearch === '' || p.제목.includes(currentSearch) || p.주요내용.includes(currentSearch);
-    return matchesFilter && matchesSearch;
+// ══════════════════════════════════════════════════════════
+//  🗂  목록 렌더링
+// ══════════════════════════════════════════════════════════
+function sortItems(list) {
+  // 열린 공고: 마감 가까운 순 → 상시 / 지난 공고: 최근 마감 순
+  return list.slice().sort((a, b) => {
+    const da = daysLeft(a.deadline), db = daysLeft(b.deadline);
+    const ga = da === null ? 1 : (da < 0 ? 2 : 0), gb = db === null ? 1 : (db < 0 ? 2 : 0);
+    if (ga !== gb) return ga - gb;
+    if (ga === 0) return da - db;
+    if (ga === 2) return db - da;
+    return String(b.date).localeCompare(String(a.date));
   });
+}
 
+function ddayHtml(p) {
+  const n = daysLeft(p.deadline);
+  if (n === null) return '<span class="dday">상시</span>';
+  if (n < 0)  return `<span class="dday past">마감 ${esc(p.deadline.slice(5).replace('-', '.'))}</span>`;
+  if (n === 0) return '<span class="dday soon">오늘 마감</span>';
+  return `<span class="dday${n <= SOON_DAYS ? ' soon' : ''}">D-${n}</span>`;
+}
+
+function statusClass(s) {
+  if (s === '지원함' || s === '수료') return 'st-applied';
+  if (s === '합격') return 'st-pass';
+  return '';
+}
+
+function render() {
+  const q = currentSearch.toLowerCase();
+  const base = items.filter(p => !(hidePast && isStale(p)));
+  const byType = base.filter(p => currentType === '전체' || p.type === currentType);
+  const filtered = sortItems(byType.filter(p => {
+    if (currentStatus !== '전체' && p.status !== currentStatus) return false;
+    if (!q) return true;
+    return [p.title, p.org, p.memo, p.place, p.period].some(v => String(v || '').toLowerCase().includes(q));
+  }));
+
+  renderFilters(base, byType);
+
+  const grid = document.getElementById('programGrid');
+  const emptyState = document.getElementById('emptyState');
+  grid.innerHTML = '';
   if (filtered.length === 0) {
     emptyState.style.display = 'flex';
   } else {
     emptyState.style.display = 'none';
     filtered.forEach(p => {
-      const badgeClass = p.상태 === '마감임박' ? 'urgent' : 'active';
-      const card = document.createElement('div');
-      card.className = 'program-card';
+      const card = document.createElement('article');
+      card.className = 'program-card' + (isPast(p) ? ' is-past' : '');
+      const link = safeUrl(p.link);
+      const meta = [p.deadline ? '⏰ 마감 ' + p.deadline : '', p.period ? '🗓️ ' + p.period : '', p.place ? '📍 ' + p.place : '']
+        .filter(Boolean).map(esc).join(' &nbsp;|&nbsp; ');
+      const opts = STATUSES.map(s => `<option value="${s}"${s === p.status ? ' selected' : ''}>${s}</option>`).join('');
       card.innerHTML = `
         <div>
           <div class="card-top">
-            <span class="status-badge ${badgeClass}">${p.상태}</span>
-            <button onclick="requestDeleteProgram(${p.id})" class="del-btn">🗑</button>
+            <div class="card-badges">
+              <span class="type-badge${p.type === '강사모집' ? ' recruit' : ''}">${esc(p.type || '강사모집')}</span>
+              ${ddayHtml(p)}
+            </div>
+            <div>
+              <button class="edit-btn" data-act="edit" aria-label="수정">수정</button>
+              <button class="del-btn" data-act="del" aria-label="삭제">🗑</button>
+            </div>
           </div>
-          <div class="program-title">${p.제목}</div>
-          <div class="program-meta">🗓️ ${p.일시} &nbsp;|&nbsp; 📍 ${p.장소}</div>
-          <div class="program-desc">"${p.주요내용}"</div>
+          <h3 class="program-title">${esc(p.title)}</h3>
+          ${p.org ? `<div class="program-org">${esc(p.org)}</div>` : ''}
+          ${meta ? `<div class="program-meta">${meta}</div>` : ''}
+          ${p.memo ? `<div class="program-desc">${esc(p.memo)}</div>` : ''}
         </div>
-        <a href="${p.신청링크}" class="btn-program-link" target="_blank" rel="noopener noreferrer">공고 확인 →</a>
+        <div class="card-actions">
+          ${link ? `<a href="${esc(link)}" class="btn-program-link" target="_blank" rel="noopener noreferrer">공고 보기 →</a>` : ''}
+          <select class="status-select ${statusClass(p.status)}" data-act="status" aria-label="상태 바꾸기">${opts}</select>
+        </div>
       `;
+      card.querySelector('[data-act="edit"]').onclick = () => openItemModal(p);
+      card.querySelector('[data-act="del"]').onclick  = () => requestDelete(p);
+      card.querySelector('[data-act="status"]').onchange = e => changeStatus(p, e.target);
       grid.appendChild(card);
     });
   }
   updateCounters();
 }
 
-// ── 필터 렌더링 ──
-function renderFilters() {
-  const filters   = ['전체', 'IT교육', 'AI교육', '디지털교육', '구글교육'];
-  const container = document.getElementById('filterContainer');
-  container.innerHTML = '';
-  filters.forEach(f => {
-    const btn = document.createElement('button');
-    btn.className = 'filter-btn' + (currentFilter === f ? ' active' : '');
-    btn.textContent = f === '전체' ? '전체 보기' : f;
-    btn.onclick = () => setFilter(f);
-    container.appendChild(btn);
+function filterBtn(label, count, active, onClick) {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn' + (active ? ' active' : '');
+  btn.innerHTML = `${esc(label)}<span class="cnt">${count}</span>`;
+  btn.onclick = onClick;
+  return btn;
+}
+
+function renderFilters(base, byType) {
+  const tf = document.getElementById('typeFilter');
+  tf.innerHTML = '';
+  ['전체', ...TYPES].forEach(t => {
+    const n = t === '전체' ? base.length : base.filter(p => p.type === t).length;
+    tf.appendChild(filterBtn(t === '전체' ? '전체 보기' : t, n, currentType === t, () => { currentType = t; render(); }));
+  });
+  const label = document.createElement('label');
+  label.className = 'hide-past';
+  label.innerHTML = `<input type="checkbox" ${hidePast ? 'checked' : ''}> 지원 안 하고 지난 공고 숨기기`;
+  label.querySelector('input').onchange = e => { hidePast = e.target.checked; lsSet('eduHidePast', hidePast); render(); };
+  tf.appendChild(label);
+
+  const sf = document.getElementById('statusFilter');
+  sf.innerHTML = '';
+  ['전체', ...STATUSES].forEach(s => {
+    const n = s === '전체' ? byType.length : byType.filter(p => p.status === s).length;
+    if (s !== '전체' && n === 0 && currentStatus !== s) return;
+    sf.appendChild(filterBtn(s === '전체' ? '모든 상태' : s, n, currentStatus === s, () => { currentStatus = s; render(); }));
+  });
+
+  // 사이드바 상태별 목록 (숨김 설정과 무관하게 전체 기준)
+  const sl = document.getElementById('statusList');
+  sl.innerHTML = '';
+  STATUSES.forEach(s => {
+    const li = document.createElement('li');
+    const n = items.filter(p => p.status === s).length;
+    li.innerHTML = `<button class="${currentStatus === s ? 'active' : ''}"><span>${s}</span><span class="mono">${n}</span></button>`;
+    li.querySelector('button').onclick = () => {
+      currentStatus = currentStatus === s ? '전체' : s;
+      if (currentStatus === s && hidePast && items.some(p => p.status === s && isStale(p))) { hidePast = false; lsSet('eduHidePast', false); }
+      render();
+      document.getElementById('boardTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    sl.appendChild(li);
   });
 }
 
-// ── 헬퍼 ──
-function setFilter(f)      { currentFilter = f; renderFilters(); renderPrograms(); }
-function handleSearch(v)   { currentSearch = v.trim(); renderPrograms(); }
+function handleSearch(v) { currentSearch = v.trim(); render(); }
 
+function updateCounters() {
+  const open = items.filter(p => !isPast(p) && p.status !== '패스');
+  document.getElementById('openCount').innerText = open.length;
+  document.getElementById('soonCount').innerText = open.filter(p => { const n = daysLeft(p.deadline); return n !== null && n <= SOON_DAYS; }).length;
+}
+
+// ══════════════════════════════════════════════════════════
+//  ✏️  등록 · 수정 · 상태 변경 · 삭제
+// ══════════════════════════════════════════════════════════
+function needSheet() {
+  if (EDU_API_URL) return false;
+  alert('공고를 저장하려면\nedu.html 상단의 EDU_API_URL 변수에\nApps Script URL을 입력해 주세요.\n\n(edu-board-apps-script.txt 안내 참고)');
+  return true;
+}
 
 function toggleAddModal(show) {
   document.getElementById('addModal').classList.toggle('open', show);
-}
-function handleAddSubmit(e) {
-  e.preventDefault();
-  const newItem = {
-    id: Date.now(),
-    제목: document.getElementById('formTitle').value,
-    대상: document.getElementById('formTarget').value,
-    필터: document.getElementById('formCategory').value,
-    일시: document.getElementById('formDate').value,
-    장소: document.getElementById('formLocation').value,
-    주요내용: document.getElementById('formDescription').value,
-    신청링크: document.getElementById('formLink').value,
-    상태: '진행중'
-  };
-  programData.unshift(newItem);
-  lsSet('programData', programData);
-  renderPrograms();
-  updateChart();
-  toggleAddModal(false);
-  showToast("성공적으로 등록되었습니다.");
+  if (show) setTimeout(() => document.getElementById('fTitle').focus(), 120);
 }
 
-function requestDeleteProgram(id) { deleteType = 'program'; deleteTargetId = id; showDeleteModal("공고 삭제", "이 카드를 목록에서 제거하시겠습니까?"); }
-function showDeleteModal(title, desc) {
-  document.getElementById('deleteModalTitle').innerText       = title;
-  document.getElementById('deleteModalDescription').innerText = desc;
+function openItemModal(p) {
+  if (needSheet()) return;
+  editingId = p ? p.id : null;
+  document.getElementById('itemModalTitle').innerText = p ? '공고 수정' : '새 공고 등록';
+  document.getElementById('fType').value     = p ? (p.type || TYPES[0]) : (currentType !== '전체' ? currentType : TYPES[0]);
+  document.getElementById('fStatus').value   = p ? (p.status || STATUSES[0]) : STATUSES[0];
+  document.getElementById('fTitle').value    = p ? p.title : '';
+  document.getElementById('fOrg').value      = p ? p.org : '';
+  document.getElementById('fDeadline').value = p ? p.deadline : '';
+  document.getElementById('fPeriod').value   = p ? p.period : '';
+  document.getElementById('fPlace').value    = p ? p.place : '';
+  document.getElementById('fLink').value     = p ? p.link : '';
+  document.getElementById('fMemo').value     = p ? p.memo : '';
+  toggleAddModal(true);
+}
+
+async function handleItemSubmit(e) {
+  e.preventDefault();
+  const item = {
+    type:     document.getElementById('fType').value,
+    status:   document.getElementById('fStatus').value,
+    title:    document.getElementById('fTitle').value.trim(),
+    org:      document.getElementById('fOrg').value.trim(),
+    deadline: document.getElementById('fDeadline').value,
+    period:   document.getElementById('fPeriod').value.trim(),
+    place:    document.getElementById('fPlace').value.trim(),
+    link:     document.getElementById('fLink').value.trim(),
+    memo:     document.getElementById('fMemo').value.trim()
+  };
+  const btn = document.getElementById('itemSubmitBtn');
+  btn.disabled = true; btn.innerText = '저장 중...';
+  try {
+    if (editingId) await api({ action: 'update', id: editingId, item });
+    else           await api({ action: 'add', item });
+    toggleAddModal(false);
+    showToast(editingId ? '수정했습니다.' : '등록했습니다.');
+    await loadItems(false);
+  } catch (err) {
+    showToast('저장 실패: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.innerText = '저장';
+  }
+}
+
+async function changeStatus(p, sel) {
+  const prev = p.status;
+  p.status = sel.value;
+  sel.disabled = true;
+  try {
+    await api({ action: 'update', id: p.id, item: p });
+    showToast(`'${p.title}' → ${p.status}`);
+  } catch (err) {
+    p.status = prev;
+    showToast('상태 변경 실패: ' + err.message, 'error');
+  }
+  render();
+}
+
+function requestDelete(p) {
+  deleteTargetId = p.id;
+  document.getElementById('deleteModalTitle').innerText = '공고 삭제';
+  document.getElementById('deleteModalDescription').innerText = `'${p.title}'을(를) 시트에서 지울까요? 되돌릴 수 없습니다.`;
   toggleDeleteModal(true);
 }
 function toggleDeleteModal(show) {
   document.getElementById('deleteModal').classList.toggle('open', show);
 }
-document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-  programData = programData.filter(p => p.id !== deleteTargetId);
-  lsSet('programData', programData);
-  renderPrograms(); updateChart();
-  toggleDeleteModal(false);
-  showToast("삭제 완료되었습니다.", "error");
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true;
+  try {
+    await api({ action: 'delete', id: deleteTargetId });
+    toggleDeleteModal(false);
+    showToast('삭제했습니다.', 'error');
+    await loadItems(false);
+  } catch (err) {
+    showToast('삭제 실패: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('fStatus').innerHTML = STATUSES.map(s => `<option value="${s}">${s}</option>`).join('');
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  toggleAddModal(false); toggleDeleteModal(false);
 });
 
 function showToast(msg, type = 'success') {
@@ -1411,94 +1408,119 @@ function showToast(msg, type = 'success') {
   setTimeout(() => toast.classList.add('show'), 50);
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
 }
-function updateCounters() {
-  document.getElementById('totalCount').innerText  = programData.length;
-  document.getElementById('urgentCount').innerText = programData.filter(p => p.상태 === '마감임박').length;
-}
 
-// ── 차트 ──
-function initChart() {
-  const ctx  = document.getElementById('targetDistributionChart').getContext('2d');
-  targetChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['IT교육', 'AI교육', '디지털교육', '구글교육'],
-      datasets: [{
-        data: [0, 0, 0, 0],
-        backgroundColor: ['#2a3b2e', '#b3753a', '#c9a35b', '#7a716a'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      maintainAspectRatio: false,
-      cutout: '72%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            boxWidth: 8,
-            font: { size: 10, weight: 'bold', family: 'Pretendard' },
-            color: '#3d3a36'
-          }
-        }
+// ══════════════════════════════════════════════════════════
+//  🔒  PIN 게이트 — 페이지 전체 보호 (schedule.html 과 같은 PIN)
+//  화면 잠금은 여기서, 데이터 보호는 Apps Script(EDU_PIN)가 한 번 더 확인
+// ══════════════════════════════════════════════════════════
+const _eduPin = (function () {
+  const overlay = document.getElementById('pinLock');
+  const _k = [42, 17, 93, 58, 12, 77];
+  const _e = [26, 38, 109, 8, 60, 116];
+  const _rp = () => _e.map((b, i) => String.fromCharCode(b ^ _k[i])).join('');
+  async function sha256(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  const SALT = 'kja-all-2026';
+  let _expected = null;
+  async function verify(input) {
+    if (_expected === null) _expected = await sha256(SALT + _rp());
+    return (await sha256(SALT + input)) === _expected;
+  }
+
+  const RL_KEY = 'kja_edu_rl_v1';
+  const MAX_TRY = 5, LOCK_MIN = 5;
+  const getRL = () => lsGet(RL_KEY, { n: 0, until: 0 });
+  const setRL = o => lsSet(RL_KEY, o);
+
+  const inp    = document.getElementById('pinInp');
+  const errEl  = document.getElementById('pinErr');
+  const lockEl = document.getElementById('pinLockout');
+  const btn    = document.getElementById('pinSubmit');
+  const dots   = document.querySelectorAll('#pinDots .pd');
+  let onOk = null, cdId;
+
+  function fmt(rem) { return String(Math.floor(rem / 60)).padStart(2, '0') + ':' + String(rem % 60).padStart(2, '0'); }
+  function startCountdown() {
+    if (cdId) return;
+    cdId = setInterval(() => {
+      const rl = getRL(), rem = Math.ceil((rl.until - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(cdId); cdId = null;
+        setRL({ n: 0, until: 0 });
+        inp.disabled = false; btn.disabled = false;
+        lockEl.style.display = 'none'; errEl.textContent = '';
+      } else {
+        lockEl.textContent = `⏳  ${fmt(rem)} 후 다시 시도할 수 있습니다.`;
       }
-    }
+    }, 1000);
+  }
+  function checkLockout() {
+    const rl = getRL();
+    if (rl.until <= Date.now()) return false;
+    inp.disabled = true; btn.disabled = true;
+    lockEl.style.display = ''; lockEl.textContent = `⏳  ${fmt(Math.ceil((rl.until - Date.now()) / 1000))} 후 다시 시도할 수 있습니다.`;
+    startCountdown(); return true;
+  }
+
+  inp.addEventListener('input', () => {
+    const v = inp.value.replace(/\D/g, '').slice(0, 6);
+    inp.value = v;
+    dots.forEach((d, i) => { d.classList.toggle('filled', i < v.length); d.classList.remove('err'); });
+    errEl.textContent = ''; inp.classList.remove('err-state');
+    if (v.length === 6) attemptUnlock(v);
   });
-  updateChart();
-}
-function updateChart() {
-  if (!targetChart) return;
-  const counts = { 'IT교육': 0, 'AI교육': 0, '디지털교육': 0, '구글교육': 0 };
-  programData.forEach(p => { if (counts[p.필터] !== undefined) counts[p.필터]++; });
-  targetChart.data.datasets[0].data = Object.values(counts);
-  targetChart.update();
-}
 
-// ══════════════════════════════════════════════════════════
-//  🌅  매일 자동 업데이트 체크
-// ══════════════════════════════════════════════════════════
-async function checkDailyAutoUpdate() {
-  const todayStr  = new Date().toLocaleDateString('ko-KR');
-  const lastDate  = lsGet('lastAutoUpdateDate', '');
-  if (lastDate === todayStr) return;   // 오늘 이미 실행됨
+  async function attemptUnlock(val) {
+    if (checkLockout()) return;
+    val = val ?? inp.value.trim();
+    if (val.length !== 6) { errEl.textContent = '6자리 PIN을 입력해주세요.'; return; }
+    btn.disabled = true;
+    if (await verify(val)) {
+      sessionStorage.setItem(PIN_SESSION_KEY, val);
+      setRL({ n: 0, until: 0 });
+      close();
+      const f = onOk; onOk = null;
+      if (f) f();
+    } else {
+      const rl = getRL(); rl.n++;
+      if (rl.n >= MAX_TRY) rl.until = Date.now() + LOCK_MIN * 60 * 1000;
+      setRL(rl);
+      dots.forEach(d => { d.classList.remove('filled'); d.classList.add('err'); });
+      inp.classList.add('err-state', 'do-shake');
+      inp.addEventListener('animationend', () => inp.classList.remove('do-shake'), { once: true });
+      inp.value = '';
+      if (rl.until > Date.now()) { checkLockout(); }
+      else { errEl.textContent = `PIN이 올바르지 않습니다. (남은 시도: ${MAX_TRY - rl.n}회)`; btn.disabled = false; }
+    }
+  }
 
-  // 오늘 처음 로드 → 자동 업데이트 실행
-  console.log('[AutoUpdate] 오늘 첫 로드 - 자동 업데이트 실행');
-  lsSet('lastAutoUpdateDate', todayStr);
+  function open(onSuccess) {
+    onOk = onSuccess || null;
+    document.body.classList.add('locked');
+    overlay.classList.remove('hidden');
+    errEl.textContent = ''; inp.value = '';
+    dots.forEach(d => d.classList.remove('filled', 'err'));
+    inp.disabled = false; btn.disabled = false;
+    checkLockout();
+    setTimeout(() => { if (!inp.disabled) inp.focus(); }, 120);
+  }
+  function close() {
+    overlay.classList.add('hidden');
+    document.body.classList.remove('locked');
+  }
 
-  await loadFromJson(false);
-  renderPrograms();
-  updateChart();
-  showToast('📅 자동 검색 결과 업데이트 완료');
-}
+  btn.addEventListener('click', () => attemptUnlock(inp.value));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') attemptUnlock(inp.value); });
+
+  return { open, close, isAuthed: () => !!sessionStorage.getItem(PIN_SESSION_KEY) };
+})();
 
 // ── 초기화 ──
-window.onload = async () => {
-
-  // 1) 공고 초기 렌더 (edu-auto.json 로드 후 표시)
-  renderFilters();
-  initChart();
-  await loadFromJson(false);
-  renderPrograms();
-
-  // 3) 튜터 가이드
-  const guideGrid = document.getElementById('tutorGuideGrid');
-  tutorGuides.forEach(g => {
-    guideGrid.innerHTML += `
-      <div class="guide-item">
-        <span class="guide-tag">${g.tag}</span>
-        <h4>${g.title}</h4>
-        <p>${g.content}</p>
-      </div>
-    `;
-  });
-
-  // 4) 매일 자동 업데이트 체크 (오늘 첫 로드 시에만 실행)
-  await checkDailyAutoUpdate();
-};
-
-// ── 패널 외부 클릭 닫기 (DOMContentLoaded 이후 등록) ──
-// (이미 위에서 document.addEventListener로 등록됨)
+document.getElementById('todayLabel').textContent = todayStr();
+if (_eduPin.isAuthed()) { _eduPin.close(); loadItems(false); }
+else _eduPin.open(() => loadItems(false));
 
 // ── 햄버거 메뉴 ──
 const navToggle = document.getElementById('navToggle');
