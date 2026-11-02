@@ -463,6 +463,9 @@ a { color: inherit; text-decoration: none; }
 }
 .school-chip.training .chip-type { background: var(--accent); color: var(--paper); }
 .school-chip.interview .chip-type { background: var(--accent-warm); color: var(--paper); }
+/* 아직 운영 전인 일정 — 테두리까지 웜 카퍼로 구분한다 */
+.school-chip.upcoming { border-color: var(--accent-warm); }
+.school-chip.upcoming .chip-type { background: var(--accent-warm); color: var(--paper); }
 
 /* ── Philosophy ── */
 .philo { background: var(--accent); color: var(--paper); }

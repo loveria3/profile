@@ -206,9 +206,19 @@ profile/
     - ⚠️ 통계 그리드는 `stats.json` 을 받아 그리므로 시트 연동 스크립트와 **순서가 엇갈린다.** 예전에는 150ms×15회 재시도 후 포기해 값이 20+ 에 머무는 일이 있었다. 이제 **양쪽이 서로를 부른다** — 시트 값이 오면 `applyStatNumbers`, 그리드가 그려지면 `window.__applyStatCounts()`. 나중에 준비된 쪽이 반영한다.
     - 실측(2026-09-09): 출강 34개소 → 30+, 자격증 13종 → 10+.
   - **자격·연수 카드**: 시트 `certificates`를 자격 섹션 카드로 **새 항목만 중복 없이 추가**. 분류는 `group`(edtech/national) → 비었으면 발급기관 자동분류, `연수/교육`→연수 탭. 급수(`extra`)·이수시간 표시.
+- **강의 경력 블록 추가하는 법** (2026-11-02 디지털새싹 추가하며 정리): `#experience` 안의 `.tl-item` 을 복사해 쓴다. 진행 중이면 `.tl-item.current` + `.tl-date` 안에 `<div class="badge">CURRENT</div>`. 구성은 `h4`(기관·역할) → `span.org`(영문·부연) → `p`(설명) → `div.schools[data-org-prefix]`(학교 칩) 순서 고정.
+  - **프로그램 이름은 넣지 않는다.** 기존 블록들이 전부 학교 칩만 보여 주므로 형식을 맞춘다.
+  - **아직 운영 전인 곳**은 `.school-chip.upcoming` + 안쪽에 `<span class="chip-type">예정</span>`. `.chip-type`·`.chip-date` 는 `style.css` 에 이미 있던(쓰이지 않던) 규칙이고, `.upcoming` 변형만 2026-11-02 에 추가했다(테두리·태그를 `--accent-warm` 으로).
+  - ⚠️ `data-org-prefix` 를 넣으면 그 칩들이 **출강개소 통계에 집계**되고(중복은 `norm()` 으로 제거), 시트 경력의 `기관/직장명` 이 그 접두사로 **시작하는** 행에서 학교가 자동 추가된다. 디지털새싹은 시트상 기관명이 운영기관(제주대·순천향대 등)이라 자동 추가가 일어나지 않는다 — 손으로 넣은 칩만 남는다.
+  - ⚠️ `syncChips` 는 `norm(칩 textContent)` 로 중복을 판정한다. `예정` 태그가 textContent 에 들어가므로, 같은 학교가 나중에 시트에서 들어오면 칩이 하나 더 생길 수 있다. 운영이 끝나면 `예정` 태그를 떼는 게 깔끔하다.
+  - **디지털새싹 현황(2026-11-02)**: 방문형 8개 과정 · 주강사 1(서귀포여자중·국립목포대) · 보조강사 7. 운영 예정 3건 = 효돈중(11/03·11/16) · 한림중(12/30).
+  - **제주도민대학(2026-11-02 추가)**: 운영 주체는 **(재)제주평생교육장학진흥원**(시트에는 `제주평생교육진흥원` 으로 적혀 있음 — 장학 빠짐). 2026.08~12 에 회당 2시간 × 20회 = 40시간. 본원 과정 3개(8월 클로드 기초 6회 · 10월 「클로드로 만드는 내 일상」 6회 · 11월 클로드 유료계정 4회) + **열린강의실** 과정 1개(11.12~12.03 클로드 기초 4회 · 마음에온 도순).
+    - ⚠️ 칩 글자는 **시트의 `주요업무` 에서 뽑히는 이름과 똑같이** 써야 중복 칩이 안 생긴다. `extractSchool` 이 `"제주평생교육진흥원 (2h) — 클로드기초"` → `제주평생교육진흥원` 을 뽑으므로 칩도 그대로 `제주평생교육진흥원` 이다. 공식 명칭은 `span.org` 줄에 적어 뒀다. 실제로 시트 연동을 켠 상태로 확인해 **중복 0건**.
+    - ⚠️ 시트 강의스케쥴의 장소가 `마음에도순` 으로 적혀 있다(올바른 이름은 **마음에온 도순**, JDC 운영 공간). 11~12월 건을 경력등록하면 `마음에도순` 칩이 따로 생긴다 — **시트를 고쳐 두는 게 낫다.**
 
 ### resume-download.js — 경력서 PDF 생성 스크립트
-- **RESUME_API_URL**: `https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec`
+- **RESUME_API_URL**: `https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec`
+  - ⚠️ 2026-11-01 정정. 예전에 적혀 있던 `AKfycbzu3aLNJ…` 는 **보관처리된 옛 배포**다. 그 주소도 여전히 응답하지만 **옛 코드가 그대로 돌아간다**(`?type=version` 에 버전 대신 경력서가 나오고 `settled`·`role`·`expected` 가 빠진다). 문서만 보고 그 주소를 찔러 "배포가 낡았다"고 오진한 적이 있다. **주소는 문서가 아니라 `schedule.html`·`resume-download.js` 의 상수에서 확인할 것.**
 - ⚠️ **schedule.html의 SCHEDULE_API_URL과 완전히 동일한 URL** — 같은 Apps Script 웹앱 사용
 - 연결 시트: `학력사항`, `경력사항`, `자격증현황`
 - PDF 출력 순서: 학력사항 → 경력사항(+에듀인/찾아가는 그룹) → 자격증 → 연수 및 교육
@@ -270,8 +280,9 @@ profile/
 
 ### schedule.html — 강의 스케쥴 관리
 - **공개 여부**: PIN 보호 (XOR 인코딩 + SHA-256 + 5회 실패 시 잠금)
-- **SCHEDULE_API_URL**: `https://script.google.com/macros/s/AKfycbzu3aLNJNMPlwmf1648mua6sED-94nHXEIdpJXoQl7mfFtyYxmMu9EJVjTrnZ2ine6nhA/exec`
+- **SCHEDULE_API_URL**: `https://script.google.com/macros/s/AKfycbxZsgsakUwZJES61mpJNK7amyIFI7IYOpxwrHgAGeD0LkYqQ3Tb3ak1DLO-8ygF3no/exec` (2026-11-01 정정 — 위 RESUME_API_URL 항목의 경고 참조)
 - ⚠️ **resume-download.js의 RESUME_API_URL과 완전히 동일** — 하나의 Apps Script로 통합 관리
+- **배포 확인법**: `GET <URL>?type=version` → `{"code":"2026-10-22a","notion":"2026-10-22a","calendar":"v2.2 (2026-09-09)","at":"…"}`. 경력서 JSON 이 돌아오면 **옛 배포 주소를 보고 있는 것**이다.
 - **Apps Script 파일**: `schedule-apps-script.txt` (resume + schedule + 카카오 통합)
 - **연결 시트**: `강의스케쥴` (14컬럼), `경력사항` (경력등록), **`자격증현황` (자격·연수 관리)**
 
