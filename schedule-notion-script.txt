@@ -5,7 +5,7 @@
 //  · 금액은 보내지 않는다 — 입금 확인 후 노션에서 직접 입력
 // ============================================================
 
-var NOTION_VERSION = '2026-10-08a';   // Code.gs 의 ?type=version 에서 보고한다
+var NOTION_VERSION = '2026-11-12a';   // Code.gs 의 ?type=version 에서 보고한다
 var NOTION_DB_ID = '36b1717c-f78e-4efe-ac2e-2e1e404b4d5b';
 var NOTION_VER   = '2022-06-28';
 var COL_SETTLED  = 12;   // 강의스케쥴 시트 L열 = 정산등록
@@ -262,6 +262,90 @@ function handleNotionSettle_(ss, data) {
   }
 
   return jsonOutput({ success: true, created: created, updated: updated, failed: failed });
+}
+
+// ============================================================
+//  정산 되돌리기 — 잘못 등록한 정산을 취소 (2026-11-12)
+//  ------------------------------------------------------------
+//  왜 필요했나: 폰에서 엉뚱한 강의를 골라 정산해 버린 일이 있었다.
+//  그때는 되돌릴 방법이 없어 노션은 손으로 고치고 시트 L열은 직접 지웠는데,
+//  네 행이 나란히 붙어 있어 엉뚱한 칸을 지우는 2차 사고가 났다.
+//  payload = { action:'notionUnsettle', ids:['mtr798lrycu6','mtr79ptj5fd6'] }
+//            (한 건이면 { action:'notionUnsettle', id:'...' } 도 받는다)
+//  하는 일 — 일정ID 당 두 가지:
+//    1. 시트 L열 '정산등록' 을 비운다  → 페이지에 정산 버튼이 다시 뜬다
+//    2. 같은 일정ID 의 노션 행을 '입금 전' 상태로 돌린다
+//       입금여부=입금대기 · 완료여부=예정 ·
+//       세전총액/원천징수세액/실입금액/페이백/페이백대상/입금일 모두 비움
+//  건드리지 않는 것: 예상금액, 비고, 강의명, 기간, 출강학교, 주관업체, 참여형태, 구분.
+//    예상금액을 남기므로 되돌린 즉시 '예정 수입' 으로 다시 잡힌다.
+//    비고는 사용자가 쓴 메모일 수 있어 절대 덮어쓰지 않는다.
+//  멱등: 이미 되돌린 건을 다시 불러도 오류가 아니다(그대로 입금대기).
+//  시트에 행이 없어도(이미 삭제된 일정) 노션 쪽은 되돌린다.
+// ============================================================
+function handleNotionUnsettle_(ss, data) {
+  var sheet = ss.getSheetByName(SHEET_SCHEDULE);
+  if (!sheet) return errorOutput('강의스케쥴 시트를 찾을 수 없습니다.');
+
+  var ids = data.ids || (data.id ? [data.id] : []);
+  if (!ids.length) return errorOutput('되돌릴 일정ID가 없습니다.');
+
+  ensureSettledColumn_(sheet);
+
+  var cleared = 0, reverted = 0, notFound = [], failed = [];
+
+  for (var i = 0; i < ids.length; i++) {
+    var id = String(ids[i] || '').trim();
+    if (!id) continue;
+
+    try {
+      // 1) 시트 L열 비우기
+      var rowIdx = findRowById_(sheet, id);
+      if (rowIdx > 0) {
+        sheet.getRange(rowIdx, COL_SETTLED).setValue('');
+        cleared++;
+      }
+
+      // 2) 노션 행을 입금 전 상태로
+      var pageId = notionFindPage_(id);
+      if (!pageId) { notFound.push(id); continue; }
+
+      var props = {
+        '입금여부':     { select: { name: '입금대기' } },
+        '완료여부':     { select: { name: '예정' } },
+        '세전총액':     { number: null },
+        '원천징수세액': { number: null },
+        '실입금액':     { number: null },
+        '페이백':       { number: null },
+        '페이백대상':   { select: null },
+        '입금일':       { date: null }
+      };
+
+      var res = UrlFetchApp.fetch('https://api.notion.com/v1/pages/' + pageId, {
+        method: 'patch',
+        headers: notionHeaders_(),
+        payload: JSON.stringify({ properties: props }),
+        muteHttpExceptions: true
+      });
+
+      if (res.getResponseCode() !== 200) {
+        failed.push(id + ' (' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 120) + ')');
+        continue;
+      }
+      reverted++;
+
+    } catch (err) {
+      failed.push(id + ' (' + err + ')');
+    }
+  }
+
+  return jsonOutput({
+    success: true,
+    cleared: cleared,       // 시트 L열을 비운 건수
+    reverted: reverted,     // 노션에서 입금 전으로 돌린 건수
+    notFound: notFound,     // 노션에 해당 일정ID 행이 없던 건
+    failed: failed
+  });
 }
 
 // ============================================================
